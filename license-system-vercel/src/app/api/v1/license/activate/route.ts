@@ -7,6 +7,16 @@ import { logAudit, getClientIp, getUserAgent } from '@/lib/audit';
 
 let dbInitialized = false;
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
   const userAgent = getUserAgent(request);
@@ -22,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
         { ok: false, code: 'RATE_LIMITED', message: 'Too many requests', retry_after: rateLimitResult.retryAfter },
-        { status: 429 }
+        { status: 429, headers: corsHeaders }
       );
     }
 
@@ -32,7 +42,7 @@ export async function POST(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { ok: false, code: 'BAD_REQUEST', message: 'Invalid request', details: validation.error.flatten() },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -49,7 +59,7 @@ export async function POST(request: NextRequest) {
       await logAudit({ event: 'ACTIVATE_FAIL', ip, userAgent, details: { reason: 'License not found' } });
       return NextResponse.json(
         { ok: false, code: 'LICENSE_NOT_FOUND', message: 'Invalid license key' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -60,7 +70,7 @@ export async function POST(request: NextRequest) {
       await logAudit({ event: 'ACTIVATE_FAIL', licenseId: license.id as string, ip, userAgent, details: { reason: 'License revoked' } });
       return NextResponse.json(
         { ok: false, code: 'LICENSE_REVOKED', message: 'License has been revoked' },
-        { status: 403 }
+        { status: 403, headers: corsHeaders }
       );
     }
 
@@ -69,7 +79,7 @@ export async function POST(request: NextRequest) {
       await logAudit({ event: 'ACTIVATE_FAIL', licenseId: license.id as string, ip, userAgent, details: { reason: 'License expired' } });
       return NextResponse.json(
         { ok: false, code: 'LICENSE_EXPIRED', message: 'License has expired' },
-        { status: 403 }
+        { status: 403, headers: corsHeaders }
       );
     }
 
@@ -101,7 +111,7 @@ export async function POST(request: NextRequest) {
         await logAudit({ event: 'ACTIVATE_FAIL', licenseId: license.id as string, ip, userAgent, details: { reason: 'Max activations reached' } });
         return NextResponse.json(
           { ok: false, code: 'MAX_ACTIVATIONS', message: 'Maximum activations reached', max: license.max_activations },
-          { status: 403 }
+          { status: 403, headers: corsHeaders }
         );
       }
 
@@ -145,12 +155,12 @@ export async function POST(request: NextRequest) {
       plan: license.plan,
       max_activations: license.max_activations,
       current_activations: activationsResult.rows.length + (existingActivation ? 0 : 1),
-    });
+    }, { headers: corsHeaders });
   } catch (error) {
     console.error('Activate error:', error);
     return NextResponse.json(
       { ok: false, code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
