@@ -7,7 +7,7 @@
 
 // Configuration - these will be replaced at build time
 const CONFIG = {
-  API_BASE_URL: 'https://gle-two.vercel.app',
+  API_BASE_URL: 'https://gle3.vercel.app',
   GRACE_PERIOD_MS: 86400000, // 24 hours
   VALIDATION_INTERVAL_MS: 3600000, // 1 hour
   STORAGE_KEY_TOKEN: '__maps_ext_token__',

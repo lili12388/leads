@@ -285,29 +285,7 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
                     }}
                   >
                     <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: '#111827' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <div>{lic.id}</div>
-                        {ephemeralKeys[lic.id] && (
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            <div style={{ fontFamily: 'monospace', background: '#f8fafc', padding: '4px 8px', borderRadius: 6, fontSize: 13 }}>{ephemeralKeys[lic.id]}</div>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(ephemeralKeys[lic.id]);
-                                  alert('License key copied');
-                                } catch (e) {
-                                  alert('Copy failed');
-                                }
-                              }}
-                              style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 12 }}
-                            >Copy</button>
-                            <button
-                              onClick={() => { setEphemeralKeys(prev => { const c = { ...prev }; delete c[lic.id]; return c; }); }}
-                              style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontSize: 12 }}
-                            >Dismiss</button>
-                          </div>
-                        )}
-                      </div>
+                      {lic.id}
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -570,9 +548,9 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
               boxShadow: '0 20px 50px rgba(15,23,42,0.35)',
             }}
           >
-            <h3 style={{ marginTop: 0, marginBottom: 6, fontSize: 18, fontWeight: 600 }}>License created</h3>
+            <h3 style={{ marginTop: 0, marginBottom: 6, fontSize: 18, fontWeight: 600 }}>License Created Successfully</h3>
             <p style={{ marginTop: 0, marginBottom: 12, fontSize: 13, color: '#6b7280' }}>
-              This is the only time the plaintext license key will be shown. Copy it now and store it safely.
+              The license key is shown below and will always be visible in the table.
             </p>
             <div style={{ fontFamily: 'monospace', background: '#f3f4f6', padding: 12, borderRadius: 8, fontSize: 14 }}>
               {newLicenseKey}
