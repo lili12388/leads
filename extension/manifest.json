@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Google Maps Lead Extractor",
+  "version": "1.0.0",
+  "description": "Extract business leads from Google Maps search results",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://www.google.com/maps/*",
+    "https://www.google.co.uk/maps/*",
+    "https://www.google.fr/maps/*",
+    "https://www.google.it/maps/*",
+    "https://www.google.de/maps/*",
+    "https://www.google.es/maps/*",
+    "https://www.google.tn/maps/*",
+    "https://gle-two.vercel.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Maps Lead Extractor"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.google.com/maps/*",
+        "https://www.google.co.uk/maps/*",
+        "https://www.google.fr/maps/*",
+        "https://www.google.it/maps/*",
+        "https://www.google.de/maps/*",
+        "https://www.google.es/maps/*",
+        "https://www.google.tn/maps/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["injected.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
