@@ -1,0 +1,740 @@
+// Content script - Google Maps Lead Extractor
+// Floating panel with Auto-Capture mode
+(function() {
+  "use strict";
+  
+  let extractedLeads = new Map();
+  let leads_lnglat = new Set();  // For placeID deduplication
+  let leads_phones = new Set();   // For phone deduplication
+  let isAlwaysCapture = false;    // Always-on capture mode
+  let isExtracting = false;
+  let scrollCount = 0;
+  let autoScrollInterval = null;
+  let isLicenseValid = false;     // License status
+  
+  // ============================================
+  // LICENSE CHECK
+  // ============================================
+  
+  async function checkLicenseStatus() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['licenseActivated'], (result) => {
+        isLicenseValid = result.licenseActivated === true;
+        resolve(isLicenseValid);
+      });
+    });
+  }
+  
+  // Listen for license status changes from popup
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.licenseActivated) {
+      isLicenseValid = changes.licenseActivated.newValue === true;
+      // Remove and recreate panel with new state
+      const panel = document.getElementById('gme-floating-panel');
+      if (panel) panel.remove();
+      createFloatingPanel();
+      if (isLicenseValid) {
+        setupSearchListeners();
+      }
+    }
+  });
+  
+  // Activate license from floating panel
+  async function activateLicenseFromPanel() {
+    const input = document.getElementById('gme-license-input');
+    const errorEl = document.getElementById('gme-license-error');
+    const btn = document.getElementById('gme-activate-btn');
+    
+    const key = input.value.trim().toUpperCase();
+    
+    if (!key || key.length < 10) {
+      errorEl.textContent = 'Please enter a valid license key';
+      errorEl.style.display = 'block';
+      input.classList.add('error');
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = '⏳ Activating...';
+    errorEl.style.display = 'none';
+    input.classList.remove('error');
+    
+    try {
+      // Send message to background/popup to activate
+      chrome.runtime.sendMessage({ 
+        action: 'activateLicense', 
+        key: key 
+      }, (response) => {
+        if (response && response.success) {
+          // License activated successfully
+          isLicenseValid = true;
+          const panel = document.getElementById('gme-floating-panel');
+          if (panel) panel.remove();
+          createFloatingPanel();
+          setupSearchListeners();
+        } else {
+          errorEl.textContent = response?.error || 'Activation failed. Please check your license key.';
+          errorEl.style.display = 'block';
+          input.classList.add('error');
+          btn.disabled = false;
+          btn.textContent = '🔓 Activate License';
+        }
+      });
+    } catch (e) {
+      errorEl.textContent = 'Connection error. Please try again.';
+      errorEl.style.display = 'block';
+      input.classList.add('error');
+      btn.disabled = false;
+      btn.textContent = '🔓 Activate License';
+    }
+  }
+  
+  // ============================================
+  // INJECT THE XHR INTERCEPTOR SCRIPT
+  // ============================================
+  
+  function injectScript() {
+    const script = document.createElement("script");
+    script.src = chrome.runtime.getURL("injected.js");
+    script.onload = function() { this.remove(); };
+    (document.head || document.documentElement).appendChild(script);
+  }
+  
+  // Inject immediately
+  injectScript();
+  
+  // ============================================
+  // CREATE FLOATING PANEL
+  // ============================================
+  
+  function createFloatingPanel() {
+    if (document.getElementById('gme-floating-panel')) return;
+    
+    const panel = document.createElement('div');
+    panel.id = 'gme-floating-panel';
+    
+    if (!isLicenseValid) {
+      // Show locked license activation UI
+      panel.innerHTML = `
+        <div class="gme-header">
+          <h3>📍 Lead Extractor</h3>
+          <button class="gme-minimize" title="Minimize">−</button>
+        </div>
+        <div class="gme-license-lock">
+          <div class="gme-lock-icon">🔒</div>
+          <h3>Activate Your License</h3>
+          <p>Enter your license key to unlock all features and start extracting leads.</p>
+          <input type="text" id="gme-license-input" class="gme-license-input" placeholder="LIC-XXXX-XXXX-XXXX-XXXX" maxlength="23">
+          <div class="gme-license-error" id="gme-license-error"></div>
+          <button class="gme-btn gme-btn-primary" id="gme-activate-btn">🔓 Activate License</button>
+          <div class="gme-license-link">
+            If any error occurred, contact Laith Hamada
+          </div>
+        </div>
+      `;
+    } else {
+      // Show normal extraction UI
+      panel.innerHTML = `
+        <div class="gme-header">
+          <h3>📍 Lead Extractor</h3>
+          <button class="gme-minimize" title="Minimize">−</button>
+        </div>
+        <div class="gme-stats">
+          <div class="gme-stat">
+            <div class="gme-stat-value" id="gme-total">0</div>
+            <div class="gme-stat-label">Total Leads</div>
+          </div>
+          <div class="gme-stat">
+            <div class="gme-stat-value green" id="gme-no-website">0</div>
+            <div class="gme-stat-label">No Website</div>
+          </div>
+          <div class="gme-stat">
+            <div class="gme-stat-value" id="gme-with-phone">0</div>
+            <div class="gme-stat-label">With Phone</div>
+          </div>
+          <div class="gme-stat">
+            <div class="gme-stat-value orange" id="gme-scrolls">0</div>
+            <div class="gme-stat-label">Scrolls</div>
+          </div>
+        </div>
+        <div class="gme-status" id="gme-status">
+          <span class="gme-status-dot"></span>
+          <span id="gme-status-text">Ready - Click Start to extract</span>
+        </div>
+        <div class="gme-buttons">
+          <div class="gme-btn-row">
+            <button class="gme-btn gme-btn-primary" id="gme-start-btn">▶ Start</button>
+            <button class="gme-btn gme-btn-auto" id="gme-always-btn">🔄 Always On</button>
+          </div>
+          <button class="gme-btn gme-btn-success" id="gme-export-btn">📥 Export CSV</button>
+          <button class="gme-btn gme-btn-secondary" id="gme-clear-btn">🗑 Clear</button>
+          <div class="gme-options">
+            <label class="gme-checkbox">
+              <input type="checkbox" id="gme-auto-scroll" checked>
+              <span>Auto-scroll for more results</span>
+            </label>
+            <label class="gme-checkbox">
+              <input type="checkbox" id="gme-only-no-website">
+              <span>Export only leads WITHOUT website</span>
+            </label>
+          </div>
+        </div>
+      `;
+    }
+    
+    document.body.appendChild(panel);
+    
+    // Make panel draggable
+    makeDraggable(panel);
+    
+    // Event listeners
+    panel.querySelector('.gme-minimize').addEventListener('click', () => {
+      panel.classList.toggle('minimized');
+    });
+    
+    if (!isLicenseValid) {
+      // License activation listeners
+      const licenseInput = panel.querySelector('#gme-license-input');
+      const activateBtn = panel.querySelector('#gme-activate-btn');
+      
+      // Format license key input
+      licenseInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        let formatted = '';
+        for (let i = 0; i < value.length && i < 19; i++) {
+          if (i === 3 || i === 7 || i === 11 || i === 15) {
+            formatted += '-';
+          }
+          formatted += value[i];
+        }
+        e.target.value = formatted;
+      });
+      
+      // Activate license
+      activateBtn.addEventListener('click', () => activateLicenseFromPanel());
+      licenseInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') activateLicenseFromPanel();
+      });
+    } else {
+      // Normal extraction listeners
+      panel.querySelector('#gme-start-btn').addEventListener('click', toggleManualExtraction);
+      panel.querySelector('#gme-always-btn').addEventListener('click', toggleAlwaysCapture);
+      panel.querySelector('#gme-export-btn').addEventListener('click', exportCSV);
+      panel.querySelector('#gme-clear-btn').addEventListener('click', clearData);
+    }
+  }
+  
+  function makeDraggable(element) {
+    const header = element.querySelector('.gme-header');
+    let isDragging = false;
+    let offsetX, offsetY;
+    
+    header.addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('gme-minimize')) return;
+      isDragging = true;
+      offsetX = e.clientX - element.getBoundingClientRect().left;
+      offsetY = e.clientY - element.getBoundingClientRect().top;
+      element.style.transition = 'none';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      element.style.left = (e.clientX - offsetX) + 'px';
+      element.style.top = (e.clientY - offsetY) + 'px';
+      element.style.right = 'auto';
+    });
+    
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      element.style.transition = '';
+    });
+  }
+  
+  // ============================================
+  // ALWAYS-ON CAPTURE MODE
+  // ============================================
+  
+  function toggleAlwaysCapture() {
+    const btn = document.getElementById('gme-always-btn');
+    const startBtn = document.getElementById('gme-start-btn');
+    
+    if (isAlwaysCapture) {
+      // Turn off always capture - STOP EVERYTHING
+      isAlwaysCapture = false;
+      isExtracting = false;  // Stop any ongoing scrolling
+      btn.textContent = '🔄 Always On';
+      btn.classList.remove('active');
+      startBtn.disabled = false;
+      updateStatus('ready', '✅ Stopped. ' + extractedLeads.size + ' leads captured');
+      console.log("🔄 Always-on capture disabled - stopped all scrolling");
+    } else {
+      // Turn on always capture
+      isAlwaysCapture = true;
+      isExtracting = false;  // Will be set true when scrolling starts
+      btn.textContent = '⏹ Stop';
+      btn.classList.add('active');
+      startBtn.disabled = true;
+      updateStatus('extracting', '🔄 Always-on: Waiting for search...');
+      console.log("🔄 Always-on capture enabled - waiting for search data");
+      
+      // If there's already a feed visible, start scrolling immediately
+      const feed = document.querySelector('[role="feed"]');
+      const autoScrollEnabled = document.getElementById('gme-auto-scroll');
+      if (feed && autoScrollEnabled && autoScrollEnabled.checked) {
+        isExtracting = true;
+        setTimeout(autoScroll, 500);
+      }
+    }
+  }
+
+  function toggleManualExtraction() {
+    const btn = document.getElementById('gme-start-btn');
+    
+    if (isExtracting) {
+      stopExtraction();
+      btn.textContent = '▶ Start';
+    } else {
+      startExtraction();
+      btn.textContent = '⏹ Stop';
+    }
+  }
+
+  // ============================================
+  // LISTEN FOR SEARCH DATA FROM INJECTED SCRIPT
+  // ============================================
+  
+  window.addEventListener("message", function(event) {
+    if (event.data && event.data.type === "search" && event.data.data) {
+      // Always capture if Always-On mode is enabled, or if manually extracting
+      if (!isAlwaysCapture && !isExtracting) {
+        return;  // Not capturing
+      }
+      
+      try {
+        // Parse the response exactly like the paid extension does
+        var rawData = JSON.parse(event.data.data.replace('/*""*/', ""));
+        var results = JSON.parse(rawData.d.slice(5));
+        var feed = results[64];
+        
+        if (!feed || !feed.length) {
+          console.log("📭 No feed data in response");
+          return;
+        }
+        
+        var newCount = 0;
+        
+        for (var i = 0; i < feed.length; i++) {
+          try {
+            var item = feed[i];
+            var e = item[item.length - 1];
+            
+            // Name (index 11)
+            var name = e[11] || "";
+            if (!name) continue;
+            
+            // Website (index 7[0])
+            var website = "";
+            try { website = e[7][0] || ""; } catch(err) {}
+            
+            // Phone (index 178[0][0])
+            var phone = "";
+            try { phone = e[178][0][0] || ""; } catch(err) {}
+            
+            // Review count (index 4[8])
+            var reviewCount = "";
+            try { reviewCount = e[4][8] || ""; } catch(err) {}
+            
+            // Rating (index 4[7])
+            var averageRating = "";
+            try { averageRating = e[4][7] || ""; } catch(err) {}
+            
+            // Category (index 13)
+            var category = "";
+            try { category = (e[13] || []).join("; "); } catch(err) {}
+            
+            // Place ID (index 78)
+            var placeID = "";
+            try { placeID = e[78] || ""; } catch(err) {}
+            
+            // Address (index 2)
+            var address = "";
+            try { address = (e[2] || []).join(", "); } catch(err) {}
+            
+            // Coordinates (index 9)
+            var latitude = "";
+            var longitude = "";
+            try { 
+              latitude = e[9][2]; 
+              longitude = e[9][3]; 
+            } catch(err) {}
+            
+            // Skip duplicates by placeID
+            if (placeID && leads_lnglat.has(placeID)) continue;
+            if (placeID) leads_lnglat.add(placeID);
+            
+            // Process website - check if it's real
+            var hasWebsite = false;
+            var facebook = "";
+            var instagram = "";
+            
+            if (website) {
+              var lowerUrl = website.toLowerCase();
+              if (lowerUrl.includes("facebook.com")) {
+                facebook = website;
+                website = "";
+              } else if (lowerUrl.includes("instagram.com")) {
+                instagram = website;
+                website = "";
+              } else if (lowerUrl.includes("google.com") || lowerUrl.includes("goo.gl")) {
+                website = "";
+              } else {
+                hasWebsite = true;
+              }
+            }
+            
+            var lead = {
+              name: name,
+              phone: phone,
+              website: website,
+              address: address,
+              category: category,
+              review_count: reviewCount,
+              rating: averageRating,
+              facebook: facebook,
+              instagram: instagram,
+              has_website: hasWebsite,
+              latitude: latitude,
+              longitude: longitude
+            };
+            
+            var key = placeID || name.toLowerCase();
+            if (!extractedLeads.has(key)) {
+              extractedLeads.set(key, lead);
+              newCount++;
+              
+              var phoneIcon = phone ? " 📞" : "";
+              var webIcon = hasWebsite ? " 🌐" : "";
+              console.log("✅ " + name + phoneIcon + webIcon);
+            }
+            
+          } catch(itemErr) {
+            console.warn("Error processing item:", itemErr);
+          }
+        }
+        
+        if (newCount > 0) {
+          console.log("📊 Added " + newCount + " leads. Total: " + extractedLeads.size);
+          updateStats();
+          
+          if (isAlwaysCapture) {
+            updateStatus('extracting', '🔄 Always-on: ' + extractedLeads.size + ' leads (no duplicates)');
+            
+            // Start auto-scrolling if enabled and not already scrolling
+            const autoScrollEnabled = document.getElementById('gme-auto-scroll');
+            if (autoScrollEnabled && autoScrollEnabled.checked && !isExtracting) {
+              isExtracting = true;
+              setTimeout(autoScroll, 1500);
+            }
+          }
+        }
+        
+      } catch(err) {
+        console.warn("Parse error:", err);
+      }
+    }
+  });
+  
+  // ============================================
+  // MANUAL EXTRACTION WITH AUTO-SCROLL
+  // ============================================
+  
+  function startExtraction() {
+    if (isExtracting) return;
+    isExtracting = true;
+    scrollCount = 0;
+    
+    // Check if auto-scroll is enabled
+    const autoScrollEnabled = document.getElementById('gme-auto-scroll');
+    const shouldAutoScroll = autoScrollEnabled && autoScrollEnabled.checked;
+    
+    if (shouldAutoScroll) {
+      console.log("🚀 Starting extraction with auto-scroll...");
+      updateStatus('extracting', '🔄 Extracting with auto-scroll...');
+      updateStats();
+      // Start auto-scrolling after a short delay
+      setTimeout(autoScroll, 500);
+    } else {
+      console.log("🚀 Starting extraction (manual scroll mode)...");
+      updateStatus('extracting', '🔄 Extracting... scroll manually for more');
+      updateStats();
+    }
+  }
+  
+  async function autoScroll() {
+    // Stop if not extracting AND not in always-on mode
+    if (!isExtracting && !isAlwaysCapture) return;
+    
+    // Also stop if isExtracting was turned off (by clicking Stop)
+    if (!isExtracting) return;
+    
+    // Check if auto-scroll is still enabled
+    const autoScrollEnabled = document.getElementById('gme-auto-scroll');
+    if (!autoScrollEnabled || !autoScrollEnabled.checked) {
+      updateStatus('extracting', '🔄 Auto-scroll disabled, scroll manually');
+      return;
+    }
+    
+    var feed = document.querySelector('[role="feed"]');
+    if (!feed) {
+      console.log("⚠️ Feed not found, waiting...");
+      if (isAlwaysCapture) {
+        // In always-on mode, keep waiting for a feed
+        setTimeout(autoScroll, 2000);
+      }
+      return;
+    }
+    
+    var prevHeight = feed.scrollHeight;
+    
+    // Smooth scroll to bottom
+    feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+    scrollCount++;
+    
+    // Wait for content to load (1500ms)
+    await sleep(1500);
+    
+    // Check if reached end
+    if (document.getElementsByClassName("HlvSq").length > 0) {
+      console.log("📍 No more results in this area");
+      isExtracting = false;
+      scrollCount = 0;
+      if (isAlwaysCapture) {
+        updateStatus('extracting', '🔄 Always-on: ' + extractedLeads.size + ' leads - search another area!');
+      } else {
+        stopExtraction();
+      }
+      return;
+    }
+    
+    // Check if stuck (height didn't change after 30 scrolls)
+    if (feed.scrollHeight === prevHeight) {
+      // Try clicking a result to trigger more loading
+      var items = feed.querySelectorAll('[role="article"]');
+      if (items.length > 0) {
+        var lastItem = items[items.length - 1];
+        lastItem.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        await sleep(500);
+        feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+        await sleep(1000);
+      }
+      
+      if (scrollCount > 30) {
+        console.log("📍 Feed not loading more, waiting for new search...");
+        isExtracting = false;  // Stop scrolling but don't fully stop if Always On
+        scrollCount = 0;
+        if (isAlwaysCapture) {
+          updateStatus('extracting', '🔄 Always-on: ' + extractedLeads.size + ' leads - search another area!');
+        } else {
+          stopExtraction();
+        }
+        return;
+      }
+    }
+    
+    updateStats();
+    
+    // Continue scrolling ONLY if isExtracting is true (not just isAlwaysCapture)
+    // isExtracting gets set to false when list is done, and true again when new data comes in
+    const stillEnabled = document.getElementById('gme-auto-scroll');
+    if (isExtracting && stillEnabled && stillEnabled.checked) {
+      setTimeout(autoScroll, 1500);
+    }
+  }
+  
+  function stopExtraction() {
+    isExtracting = false;
+    console.log("⏹️ Extraction stopped. Total: " + extractedLeads.size);
+    
+    const btn = document.getElementById('gme-start-btn');
+    if (btn) btn.textContent = '▶ Start';
+    
+    if (!isAlwaysCapture) {
+      updateStatus('ready', '✅ Done! ' + extractedLeads.size + ' leads extracted');
+    }
+    updateStats();
+  }
+  
+  function sleep(ms) {
+    return new Promise(function(resolve) { setTimeout(resolve, ms); });
+  }
+  
+  // ============================================
+  // UI UPDATES
+  // ============================================
+  
+  function updateStats() {
+    var leads = Array.from(extractedLeads.values());
+    
+    var total = leads.length;
+    var withPhone = leads.filter(l => l.phone).length;
+    var noWebsite = leads.filter(l => !l.has_website).length;
+    
+    const totalEl = document.getElementById('gme-total');
+    const noWebsiteEl = document.getElementById('gme-no-website');
+    const withPhoneEl = document.getElementById('gme-with-phone');
+    const scrollsEl = document.getElementById('gme-scrolls');
+    
+    if (totalEl) totalEl.textContent = total;
+    if (noWebsiteEl) noWebsiteEl.textContent = noWebsite;
+    if (withPhoneEl) withPhoneEl.textContent = withPhone;
+    if (scrollsEl) scrollsEl.textContent = scrollCount;
+  }
+  
+  function updateStatus(state, text) {
+    const statusEl = document.getElementById('gme-status');
+    const textEl = document.getElementById('gme-status-text');
+    
+    if (statusEl) {
+      statusEl.className = 'gme-status ' + state;
+    }
+    if (textEl) {
+      textEl.textContent = text;
+    }
+  }
+  
+  // ============================================
+  // EXPORT & CLEAR
+  // ============================================
+  
+  function exportCSV() {
+    let leads = Array.from(extractedLeads.values());
+    
+    // Check if we should export only leads without website
+    const onlyNoWebsite = document.getElementById('gme-only-no-website');
+    if (onlyNoWebsite && onlyNoWebsite.checked) {
+      leads = leads.filter(l => !l.has_website);
+    }
+    
+    if (leads.length === 0) {
+      alert('No leads to export!' + (onlyNoWebsite && onlyNoWebsite.checked ? ' (filtered to no-website only)' : ''));
+      return;
+    }
+    
+    const headers = ['Name', 'Phone', 'Email', 'Website', 'Address', 'Instagram', 'Facebook', 'ReviewCount', 'AverageRating', 'Category'];
+    
+    const csvContent = [
+      headers.join(','),
+      ...leads.map(lead => [
+        `"${(lead.name || '').replace(/"/g, '""')}"`,
+        `"${(lead.phone || '').replace(/"/g, '""')}"`,
+        `""`,  // Email placeholder
+        `"${(lead.website || '').replace(/"/g, '""')}"`,
+        `"${(lead.address || '').replace(/"/g, '""')}"`,
+        `"${(lead.instagram || '').replace(/"/g, '""')}"`,
+        `"${(lead.facebook || '').replace(/"/g, '""')}"`,
+        `"${lead.review_count || ''}"`,
+        `"${lead.rating || ''}"`,
+        `"${(lead.category || '').replace(/"/g, '""')}"`
+      ].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `google_maps_leads_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    console.log("📥 Exported " + leads.length + " leads to CSV");
+  }
+  
+  function clearData() {
+    if (extractedLeads.size > 0 && !confirm('Clear all ' + extractedLeads.size + ' leads?')) {
+      return;
+    }
+    
+    extractedLeads.clear();
+    leads_lnglat.clear();
+    scrollCount = 0;
+    updateStats();
+    updateStatus('ready', 'Data cleared - ready to extract');
+    console.log("🗑 Data cleared");
+  }
+  
+  // ============================================
+  // COMMUNICATION WITH POPUP (backward compat)
+  // ============================================
+  
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.type === 'GET_STATS') {
+      const leads = Array.from(extractedLeads.values());
+      sendResponse({
+        total: leads.length,
+        withPhone: leads.filter(l => l.phone).length,
+        noWebsite: leads.filter(l => !l.has_website).length,
+        scrolls: scrollCount,
+        isExtracting: isExtracting
+      });
+    } else if (msg.type === 'EXPORT') {
+      exportCSV();
+      sendResponse({ success: true });
+    } else if (msg.type === 'CLEAR') {
+      extractedLeads.clear();
+      leads_lnglat.clear();
+      scrollCount = 0;
+      updateStats();
+      sendResponse({ success: true });
+    }
+    return true;
+  });
+  
+  // ============================================
+  // SETUP SEARCH LISTENERS (for Always-On mode)
+  // ============================================
+  
+  function setupSearchListeners() {
+    // This function is called after license is activated
+    // It ensures that new searches trigger auto-extraction in Always-On mode
+    console.log('🔍 Search listeners ready for Always-On mode');
+  }
+  
+  // ============================================
+  // INITIALIZE
+  // ============================================
+  
+  async function init() {
+    // Wait for page to load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+      return;
+    }
+    
+    // Check license status
+    await checkLicenseStatus();
+    
+    // Always create floating panel (locked or unlocked based on license)
+    createFloatingPanel();
+    
+    // Setup search button listeners only if licensed
+    if (isLicenseValid) {
+      setupSearchListeners();
+    }
+    
+    // Re-setup listeners when page content changes (SPA navigation)
+    const observer = new MutationObserver(async () => {
+      if (!document.getElementById('gme-floating-panel')) {
+        createFloatingPanel();
+        if (isLicenseValid) {
+          setupSearchListeners();
+        }
+      }
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+  
+  // Start
+  init();
+  
+})();
