@@ -1,8 +1,13 @@
 // Background script for Google Sheets integration
+// Works on all Chromium browsers: Chrome, Edge, Brave, Opera, Opera GX
 
 const GOOGLE_SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const CLIENT_ID = '373635363134-uis4eu7hql11i4gkgl4sgbq66cr3m1o0.apps.googleusercontent.com';
+
+// Cache the token to avoid re-authenticating every time
+let cachedToken = null;
+let tokenExpiry = 0;
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -37,24 +42,13 @@ async function exportToGoogleSheets(leads) {
   }
 }
 
-// Get OAuth token - tries Chrome method first, falls back to web flow for Edge
-function getAuthToken() {
-  return new Promise((resolve, reject) => {
-    // First try the Chrome-specific method
-    chrome.identity.getAuthToken({ interactive: true }, (token) => {
-      if (chrome.runtime.lastError) {
-        console.log('getAuthToken failed, trying launchWebAuthFlow:', chrome.runtime.lastError.message);
-        // Fall back to launchWebAuthFlow for Edge
-        getAuthTokenViaWebFlow().then(resolve).catch(reject);
-      } else {
-        resolve(token);
-      }
-    });
-  });
-}
-
-// OAuth via launchWebAuthFlow (works in Edge and Chrome)
-function getAuthTokenViaWebFlow() {
+// Get OAuth token using launchWebAuthFlow - works on ALL Chromium browsers
+async function getAuthToken() {
+  // Return cached token if still valid (with 5 min buffer)
+  if (cachedToken && Date.now() < tokenExpiry - 300000) {
+    return cachedToken;
+  }
+  
   return new Promise((resolve, reject) => {
     const redirectUrl = chrome.identity.getRedirectURL();
     const scopes = [GOOGLE_SHEETS_SCOPE, GOOGLE_DRIVE_SCOPE];
@@ -84,8 +78,12 @@ function getAuthTokenViaWebFlow() {
           const hash = url.hash.substring(1);
           const params = new URLSearchParams(hash);
           const accessToken = params.get('access_token');
+          const expiresIn = parseInt(params.get('expires_in') || '3600', 10);
           
           if (accessToken) {
+            // Cache the token
+            cachedToken = accessToken;
+            tokenExpiry = Date.now() + (expiresIn * 1000);
             resolve(accessToken);
           } else {
             reject(new Error('No access token in response'));
