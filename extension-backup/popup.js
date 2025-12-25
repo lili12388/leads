@@ -52,106 +52,78 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   
-  // Periodic license validation (every 5 minutes)
+  // Periodic license validation (every 1 minute) - ONLY runs after popup is shown
   function startLicenseValidation() {
     if (validationInterval) clearInterval(validationInterval);
     
     validationInterval = setInterval(async () => {
       if (licenseClient) {
-        const result = await licenseClient.validate(false); // Force server check
-        if (!result.valid) {
-          // Only lock out for explicit revocation, not for temporary errors
-          const criticalErrors = ['LICENSE_REVOKED', 'ACTIVATION_INVALID', 'LICENSE_EXPIRED'];
-          if (criticalErrors.includes(result.error)) {
-            await chrome.storage.local.set({ licenseActivated: false });
-            showLicenseScreen(result.message || 'License has been revoked.');
+        try {
+          const result = await licenseClient.validate(false); // Force server check
+          if (!result.valid) {
+            // Only lock out for explicit revocation
+            const criticalErrors = ['LICENSE_REVOKED', 'ACTIVATION_INVALID', 'LICENSE_EXPIRED'];
+            if (criticalErrors.includes(result.error)) {
+              await chrome.storage.local.set({ licenseActivated: false });
+              showLicenseScreen(result.message || 'License has been revoked.');
+            }
+            // Any other error - ignore, user stays logged in
           }
+        } catch (e) {
+          // Network error - ignore completely
+          console.log('Background validation network error, ignoring');
         }
       }
     }, 60 * 1000); // Every 1 minute
   }
   
-  // Check license status
+  // Check license status - ONLY checks local storage, no server call on open
   async function checkLicense() {
     if (!licenseClient) {
       initLicenseClient();
     }
     
     if (!licenseClient) {
-      // License client not loaded - show error
       showLicenseScreen('License system error. Please reinstall the extension.');
       return false;
     }
     
+    // ONLY check local storage - no server validation on popup open
+    const stored = await chrome.storage.local.get(['licenseActivated', '__maps_ext_token__']);
+    
+    // No token at all - show license screen
+    if (!stored.__maps_ext_token__) {
+      showLicenseScreen();
+      return false;
+    }
+    
+    // If previously activated, show main content immediately - NO server check
+    if (stored.licenseActivated === true) {
+      const info = await licenseClient.getLicenseInfo();
+      showMainContent(info);
+      // Start background validation (runs after 1 minute, not immediately)
+      startLicenseValidation();
+      return true;
+    }
+    
+    // Has token but licenseActivated is not true - this shouldn't happen normally
+    // but if it does, try to validate once
     try {
-      // First check if we have stored license state
-      const stored = await chrome.storage.local.get(['licenseActivated', '__maps_ext_token__']);
-      
-      // No token at all - show license screen
-      if (!stored.__maps_ext_token__) {
-        showLicenseScreen();
-        return false;
-      }
-      
-      // If previously activated, show main content immediately (don't block on server)
-      if (stored.licenseActivated === true) {
-        const info = await licenseClient.getLicenseInfo();
-        showMainContent(info);
-        
-        // Do background validation (non-blocking)
-        startLicenseValidation();
-        
-        // Also do an immediate background check
-        licenseClient.validate(false).then(result => {
-          if (!result.valid) {
-            const criticalErrors = ['LICENSE_REVOKED', 'ACTIVATION_INVALID', 'LICENSE_EXPIRED'];
-            if (criticalErrors.includes(result.error)) {
-              chrome.storage.local.set({ licenseActivated: false });
-              showLicenseScreen(result.message || 'License has been revoked.');
-            }
-          }
-        }).catch(() => {
-          // Network error - ignore, user stays logged in
-        });
-        
-        return true;
-      }
-      
-      // Has token but not marked as activated - try to validate
-      const result = await licenseClient.validate(true); // Use cache if available
-      
+      const result = await licenseClient.validate(true); // Use cache
       if (result.valid) {
         const info = await licenseClient.getLicenseInfo();
         await chrome.storage.local.set({ licenseActivated: true });
         showMainContent(info);
         startLicenseValidation();
         return true;
-      } else {
-        // Validation failed - but only lock out for critical errors
-        const criticalErrors = ['LICENSE_REVOKED', 'ACTIVATION_INVALID', 'LICENSE_EXPIRED'];
-        if (criticalErrors.includes(result.error)) {
-          await chrome.storage.local.set({ licenseActivated: false });
-          showLicenseScreen(result.message || 'License validation failed.');
-        } else {
-          // Non-critical error (network, etc.) - show license screen to re-enter
-          showLicenseScreen();
-        }
-        return false;
       }
     } catch (e) {
-      console.error('License check error:', e);
-      // Network error - check if we have cached data
-      const stored = await chrome.storage.local.get(['licenseActivated']);
-      if (stored.licenseActivated) {
-        // Was previously valid, show main content (grace period)
-        const info = await licenseClient.getLicenseInfo();
-        showMainContent(info);
-        startLicenseValidation();
-        return true;
-      }
-      showLicenseScreen();
-      return false;
+      // Ignore errors
     }
+    
+    // Fall back to showing license screen
+    showLicenseScreen();
+    return false;
   }
   
   // Show license activation screen
