@@ -79,11 +79,14 @@ function generateInstallationId() {
 /**
  * Get cached license data
  */
-function getCachedLicense() {
+async function getCachedLicense() {
   try {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      const res = await chrome.storage.local.get([CONFIG.STORAGE_KEY_CACHE]);
+      return res[CONFIG.STORAGE_KEY_CACHE] || null;
+    }
     const cached = localStorage.getItem(CONFIG.STORAGE_KEY_CACHE);
     if (!cached) return null;
-    
     const data = JSON.parse(cached);
     return data;
   } catch (e) {
@@ -94,13 +97,17 @@ function getCachedLicense() {
 /**
  * Cache license data
  */
-function cacheLicense(data) {
+async function cacheLicense(data) {
   try {
     const cacheData = {
       ...data,
       cachedAt: Date.now(),
     };
-    localStorage.setItem(CONFIG.STORAGE_KEY_CACHE, JSON.stringify(cacheData));
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      await chrome.storage.local.set({ [CONFIG.STORAGE_KEY_CACHE]: cacheData });
+    } else {
+      localStorage.setItem(CONFIG.STORAGE_KEY_CACHE, JSON.stringify(cacheData));
+    }
   } catch (e) {
     console.error('Failed to cache license:', e);
   }
@@ -109,8 +116,12 @@ function cacheLicense(data) {
 /**
  * Get stored token
  */
-function getStoredToken() {
+async function getStoredToken() {
   try {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      const res = await chrome.storage.local.get([CONFIG.STORAGE_KEY_TOKEN]);
+      return res[CONFIG.STORAGE_KEY_TOKEN] || null;
+    }
     return localStorage.getItem(CONFIG.STORAGE_KEY_TOKEN);
   } catch (e) {
     return null;
@@ -120,9 +131,13 @@ function getStoredToken() {
 /**
  * Store token
  */
-function storeToken(token) {
+async function storeToken(token) {
   try {
-    localStorage.setItem(CONFIG.STORAGE_KEY_TOKEN, token);
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      await chrome.storage.local.set({ [CONFIG.STORAGE_KEY_TOKEN]: token });
+    } else {
+      localStorage.setItem(CONFIG.STORAGE_KEY_TOKEN, token);
+    }
   } catch (e) {
     console.error('Failed to store token:', e);
   }
@@ -131,10 +146,14 @@ function storeToken(token) {
 /**
  * Clear all license data
  */
-function clearLicenseData() {
+async function clearLicenseData() {
   try {
-    localStorage.removeItem(CONFIG.STORAGE_KEY_TOKEN);
-    localStorage.removeItem(CONFIG.STORAGE_KEY_CACHE);
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      await chrome.storage.local.remove([CONFIG.STORAGE_KEY_TOKEN, CONFIG.STORAGE_KEY_CACHE]);
+    } else {
+      localStorage.removeItem(CONFIG.STORAGE_KEY_TOKEN);
+      localStorage.removeItem(CONFIG.STORAGE_KEY_CACHE);
+    }
   } catch (e) {
     // Ignore
   }
@@ -256,8 +275,8 @@ class LicenseClient {
       }
       
       // Store token and cache data
-      storeToken(data.token);
-      cacheLicense({
+        await storeToken(data.token);
+        await cacheLicense({
         plan: data.plan,
         expiresAt: data.expires_at,
         graceSeconds: data.grace_seconds,
@@ -313,7 +332,7 @@ class LicenseClient {
     
     // Check cache first if allowed
     if (useCache) {
-      const cached = getCachedLicense();
+        const cached = await getCachedLicense();
       if (cached) {
         const cacheAge = Date.now() - (cached.cachedAt || 0);
         if (cacheAge < CONFIG.VALIDATION_INTERVAL_MS) {
@@ -353,7 +372,7 @@ class LicenseClient {
         if (hardFailCodes.has(errorCode)) {
           this._isValid = false;
           this._plan = null;
-          clearLicenseData();
+            await clearLicenseData();
           this._emit('onInvalid', { code: errorCode, message: data.message });
           return { valid: false, error: errorCode, message: data.message };
         }
@@ -369,7 +388,7 @@ class LicenseClient {
         
         this._isValid = false;
         this._plan = null;
-        clearLicenseData();
+          await clearLicenseData();
 
         if (errorCode === 'LICENSE_EXPIRED') {
           this._emit('onExpired', {});
@@ -389,7 +408,7 @@ class LicenseClient {
       
       // Update token if refreshed
       if (data.refreshed_token) {
-        storeToken(data.refreshed_token);
+          await storeToken(data.refreshed_token);
       }
       
       this._isValid = true;

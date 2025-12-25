@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const isValid = await licenseClient.init();
       if (isValid) {
-        const info = licenseClient.getLicenseInfo();
+        const info = await licenseClient.getLicenseInfo();
         // Save valid license state
         await chrome.storage.local.set({ licenseActivated: true });
         showMainContent(info);
