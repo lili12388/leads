@@ -2,7 +2,7 @@
 
 const GOOGLE_SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
-const CLIENT_ID = '373635363134-bf3nbcom0hdskjriegmi9iv0g1edhsav.apps.googleusercontent.com';
+const CLIENT_ID = '373635363134-uis4eu7hql11i4gkgl4sgbq66cr3m1o0.apps.googleusercontent.com';
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
