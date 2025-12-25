@@ -267,6 +267,7 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
             <thead>
               <tr style={{ textAlign: 'left', background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>License Key</th>
+                <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Customer</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>License ID</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Plan</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Status</th>
@@ -279,7 +280,7 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
               {visibleLicenses.length === 0 && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     style={{
                       padding: 24,
                       textAlign: 'center',
@@ -331,6 +332,19 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
                             }}
                             style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 11 }}
                           >Copy</button>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ padding: '10px 14px', color: '#111827' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {lic.customer_name && (
+                          <div style={{ fontWeight: 500, fontSize: 12 }}>{lic.customer_name}</div>
+                        )}
+                        {lic.customer_email && (
+                          <div style={{ fontSize: 11, color: '#6b7280' }}>{lic.customer_email}</div>
+                        )}
+                        {!lic.customer_name && !lic.customer_email && (
+                          <span style={{ fontSize: 11, color: '#9ca3af' }}>-</span>
                         )}
                       </div>
                     </td>
