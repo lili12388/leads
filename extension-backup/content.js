@@ -420,7 +420,7 @@
             var lead = {
               name: name,
               phone: phone,
-              website: website,
+              website: website || "NO WEBSITE FOUND",
               address: address,
               category: category,
               review_count: reviewCount,
