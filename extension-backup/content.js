@@ -11,6 +11,7 @@
   let scrollCount = 0;
   let autoScrollInterval = null;
   let isLicenseValid = false;     // License status
+  let hasClickedSearchArea = false; // Track if we've auto-clicked "Search this area"
   
   // ============================================
   // LICENSE CHECK
@@ -38,6 +39,65 @@
       }
     }
   });
+  
+  // ============================================
+  // CLICK "SEARCH THIS AREA" BUTTON
+  // ============================================
+  
+  function clickSearchThisAreaButton() {
+    // Common text variations in different languages
+    const searchTexts = [
+      'Search this area',           // English
+      'Rechercher cette zone',      // French
+      'Buscar en esta área',        // Spanish
+      'In dieser Region suchen',    // German
+      'Cerca in questa zona',       // Italian
+      'Pesquisar nesta área',       // Portuguese
+      'この地域を検索',              // Japanese
+      '이 지역 검색',               // Korean
+      '搜索此区域',                 // Chinese (Simplified)
+      'Zoek in dit gebied',         // Dutch
+      'Sök i detta område',         // Swedish
+      'Szukaj w tym obszarze',      // Polish
+      'Bu bölgede ara',             // Turkish
+      'Найти в этом районе',        // Russian
+      'Search this',                // Partial match
+      'Rechercher',                 // Partial French
+    ];
+    
+    // Method 1: Try to find by button text content
+    const allButtons = document.querySelectorAll('button');
+    for (const btn of allButtons) {
+      const btnText = btn.textContent?.trim() || '';
+      for (const searchText of searchTexts) {
+        if (btnText.includes(searchText) || btnText.toLowerCase().includes(searchText.toLowerCase())) {
+          console.log('🔍 Found "Search this area" button, clicking it...');
+          btn.click();
+          return true;
+        }
+      }
+    }
+    
+    // Method 2: Try the specific Google Maps class for "Search this area" button
+    // This button often has a specific structure
+    const searchAreaBtn = document.querySelector('button.miFGmb');
+    if (searchAreaBtn) {
+      console.log('🔍 Found "Search this area" button by class, clicking it...');
+      searchAreaBtn.click();
+      return true;
+    }
+    
+    // Method 3: Look for button with refresh/redo icon near the search
+    const redoButtons = document.querySelectorAll('button[aria-label*="earch"], button[aria-label*="zone"], button[aria-label*="area"]');
+    if (redoButtons.length > 0) {
+      console.log('🔍 Found search area button by aria-label, clicking it...');
+      redoButtons[0].click();
+      return true;
+    }
+    
+    console.log('⚠️ Could not find "Search this area" button');
+    return false;
+  }
   
   // ============================================
   // INJECT THE XHR INTERCEPTOR SCRIPT
@@ -189,6 +249,18 @@
       startBtn.disabled = true;
       updateStatus('extracting', '🔄 Always-on: Waiting for search...');
       console.log("🔄 Always-on capture enabled - waiting for search data");
+      
+      // Auto-click "Search this area" on first activation to ensure data is fetched
+      if (!hasClickedSearchArea) {
+        hasClickedSearchArea = true;
+        console.log("🔍 First activation - attempting to click 'Search this area' button...");
+        setTimeout(() => {
+          const clicked = clickSearchThisAreaButton();
+          if (clicked) {
+            updateStatus('extracting', '🔄 Refreshing search results...');
+          }
+        }, 300);
+      }
       
       // If there's already a feed visible, start scrolling immediately
       const feed = document.querySelector('[role="feed"]');
@@ -366,6 +438,25 @@
     isExtracting = true;
     scrollCount = 0;
     
+    // Auto-click "Search this area" on first extraction to ensure data is fetched
+    if (!hasClickedSearchArea) {
+      hasClickedSearchArea = true;
+      console.log("🔍 First extraction - attempting to click 'Search this area' button...");
+      const clicked = clickSearchThisAreaButton();
+      if (clicked) {
+        updateStatus('extracting', '🔄 Refreshing search results...');
+        // Wait for the search to complete before starting scroll
+        setTimeout(() => {
+          continueExtraction();
+        }, 1500);
+        return;
+      }
+    }
+    
+    continueExtraction();
+  }
+  
+  function continueExtraction() {
     // Check if auto-scroll is enabled
     const autoScrollEnabled = document.getElementById('gme-auto-scroll');
     const shouldAutoScroll = autoScrollEnabled && autoScrollEnabled.checked;
