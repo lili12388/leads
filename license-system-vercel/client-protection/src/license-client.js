@@ -9,7 +9,7 @@
 const CONFIG = {
   API_BASE_URL: 'https://gle3-git-main-rimenehmaid-3753s-projects.vercel.app',
   GRACE_PERIOD_MS: 86400000, // 24 hours
-  VALIDATION_INTERVAL_MS: 3600000, // 1 hour
+  VALIDATION_INTERVAL_MS: 60000, // 1 minute
   STORAGE_KEY_TOKEN: '__maps_ext_token__',
   STORAGE_KEY_CACHE: '__maps_ext_cache__',
 };
