@@ -9,7 +9,14 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
   const [showRevoked, setShowRevoked] = useState(false);
   const [newLicenseKey, setNewLicenseKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
-  const [ephemeralKeys, setEphemeralKeys] = useState<Record<string, string>>({});
+  const [ephemeralKeys, setEphemeralKeys] = useState<Record<string, string>>(() => {
+    try {
+      const raw = localStorage.getItem('admin_ephemeral_keys');
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  });
   const [form, setForm] = useState({ plan: 'lifetime', max_activations: 2, expires_days: 0, customer_email: '', customer_name: '', notes: '' });
 
   function buildCreatePayload() {
@@ -80,7 +87,12 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
         setNewLicenseKey(data.license_key);
         // Keep the plaintext visible in the table briefly (session-only)
         try {
-          setEphemeralKeys(prev => ({ ...prev, [data.license_id]: String(data.license_key) }));
+          const k = String(data.license_key);
+          setEphemeralKeys(prev => {
+            const next = { ...prev, [data.license_id]: k };
+            try { localStorage.setItem('admin_ephemeral_keys', JSON.stringify(next)); } catch (e) {}
+            return next;
+          });
         } catch (e) {}
         try {
           await navigator.clipboard.writeText(String(data.license_key));
@@ -309,7 +321,27 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
                         )}
                       </div>
                     </td>
-                    <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: '#4b5563' }}>{(lic.license_key_hash || '').slice(0, 16)}…</td>
+                    <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: '#111827' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <code style={{ fontFamily: 'monospace', background: '#f3f4f6', padding: '4px 8px', borderRadius: 6, fontSize: 12, color: '#111827' }}>
+                          {ephemeralKeys[lic.id] || lic.license_key_plaintext || ((lic.license_key_hash || '').slice(0, 16) + '…')}
+                        </code>
+                        {(ephemeralKeys[lic.id] || lic.license_key_plaintext) && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const toCopy = ephemeralKeys[lic.id] || lic.license_key_plaintext;
+                                await navigator.clipboard.writeText(String(toCopy));
+                                alert('License key copied!');
+                              } catch (e) {
+                                alert('Copy failed');
+                              }
+                            }}
+                            style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 11 }}
+                          >Copy</button>
+                        )}
+                      </div>
+                    </td>
                     <td style={{ padding: '10px 14px', textTransform: 'capitalize', color: '#111827' }}>{lic.plan}</td>
                     <td style={{ padding: '10px 14px' }}>
                       <span
