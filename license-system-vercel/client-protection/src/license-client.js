@@ -313,18 +313,18 @@ class LicenseClient {
    * Validate current token
    */
   async validate(useCache = false) {
-    const token = getStoredToken();
-    
+    const token = await getStoredToken();
+
     if (!token) {
       // No token - try cached data
-      const cached = getCachedLicense();
+      const cached = await getCachedLicense();
       if (cached && this._isWithinGracePeriod(cached)) {
         this._isValid = true;
         this._plan = cached.plan;
         this._emit('onValid', { plan: cached.plan, fromCache: true });
         return { valid: true, fromCache: true };
       }
-      
+
       this._isValid = false;
       this._emit('onInvalid', { reason: 'No token' });
       return { valid: false, reason: 'No token' };
@@ -378,7 +378,7 @@ class LicenseClient {
         }
 
         // Check if we're within grace period
-        const cached = getCachedLicense();
+        const cached = await getCachedLicense();
         if (cached && this._isWithinGracePeriod(cached)) {
           this._isValid = true;
           this._plan = cached.plan;
@@ -420,7 +420,7 @@ class LicenseClient {
       
     } catch (error) {
       // Network error - check grace period
-      const cached = getCachedLicense();
+      const cached = await getCachedLicense();
       if (cached && this._isWithinGracePeriod(cached)) {
         this._isValid = true;
         this._plan = cached.plan;
@@ -474,8 +474,8 @@ class LicenseClient {
   /**
    * Get license info
    */
-  getLicenseInfo() {
-    const cached = getCachedLicense();
+  async getLicenseInfo() {
+    const cached = await getCachedLicense();
     return {
       isValid: this._isValid,
       plan: this._plan,
