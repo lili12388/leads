@@ -86,16 +86,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Save valid license state
         await chrome.storage.local.set({ licenseActivated: true });
         showMainContent(info);
+        // Start periodic validation to check for revocation
+        startLicenseValidation();
         return true;
       } else {
-        // Clear license state if validation failed
-        await chrome.storage.local.set({ licenseActivated: false });
-        showLicenseScreen();
-        return false;
+        // Only show lock screen if no token at all
+        const stored = await chrome.storage.local.get(['__maps_ext_token__']);
+        if (!stored.__maps_ext_token__) {
+          showLicenseScreen();
+          return false;
+        }
+        // Has token but init failed - might be network issue, show main content
+        const info = await licenseClient.getLicenseInfo();
+        showMainContent(info);
+        return true;
       }
     } catch (e) {
-      // Clear license state on error
-      await chrome.storage.local.set({ licenseActivated: false });
+      console.error('License check error:', e);
+      // Don't lock out on errors - might be network issue
       showLicenseScreen();
       return false;
     }

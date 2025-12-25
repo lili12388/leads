@@ -249,8 +249,8 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ textAlign: 'left', background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>License Key</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>License ID</th>
-                <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Key (hash)</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Plan</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Status</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Active Activations</th>
@@ -297,31 +297,6 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
                     }}
                   >
                     <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: '#111827' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <div>{lic.id}</div>
-                        {ephemeralKeys[lic.id] && (
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            <div style={{ fontFamily: 'monospace', background: '#f8fafc', padding: '4px 8px', borderRadius: 6, fontSize: 13 }}>{ephemeralKeys[lic.id]}</div>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(ephemeralKeys[lic.id]);
-                                  alert('License key copied');
-                                } catch (e) {
-                                  alert('Copy failed');
-                                }
-                              }}
-                              style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 12 }}
-                            >Copy</button>
-                            <button
-                              onClick={() => { setEphemeralKeys(prev => { const c = { ...prev }; delete c[lic.id]; return c; }); }}
-                              style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontSize: 12 }}
-                            >Dismiss</button>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: '#111827' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <code style={{ fontFamily: 'monospace', background: '#f3f4f6', padding: '4px 8px', borderRadius: 6, fontSize: 12, color: '#111827' }}>
                           {ephemeralKeys[lic.id] || lic.license_key_plaintext || ((lic.license_key_hash || '').slice(0, 16) + '…')}
@@ -341,6 +316,9 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
                           >Copy</button>
                         )}
                       </div>
+                    </td>
+                    <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: '#111827', fontSize: 11, color: '#6b7280' }}>
+                      {lic.id}
                     </td>
                     <td style={{ padding: '10px 14px', textTransform: 'capitalize', color: '#111827' }}>{lic.plan}</td>
                     <td style={{ padding: '10px 14px' }}>

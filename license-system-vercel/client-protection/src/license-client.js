@@ -316,7 +316,7 @@ class LicenseClient {
     const token = await getStoredToken();
 
     if (!token) {
-      // No token - try cached data
+      // No token - try cached data (within grace period)
       const cached = await getCachedLicense();
       if (cached && this._isWithinGracePeriod(cached)) {
         this._isValid = true;
@@ -326,7 +326,7 @@ class LicenseClient {
       }
 
       this._isValid = false;
-      this._emit('onInvalid', { reason: 'No token' });
+      // Don't clear data here - user might have just opened popup
       return { valid: false, reason: 'No token' };
     }
     
@@ -360,24 +360,22 @@ class LicenseClient {
       
       if (!response.ok) {
         const errorCode = data.code || data.error;
-        const hardFailCodes = new Set([
+        // Only clear storage for revocation/activation errors (not fingerprint mismatches during init)
+        const clearStorageCodes = new Set([
           'LICENSE_REVOKED',
           'ACTIVATION_INVALID',
-          'DEVICE_MISMATCH',
-          'FINGERPRINT_MISMATCH',
-          'TOKEN_INVALID',
-          'TOKEN_EXPIRED',
         ]);
 
-        if (hardFailCodes.has(errorCode)) {
+        if (clearStorageCodes.has(errorCode)) {
+          // Critical failure - clear everything
           this._isValid = false;
           this._plan = null;
-            await clearLicenseData();
+          await clearLicenseData();
           this._emit('onInvalid', { code: errorCode, message: data.message });
           return { valid: false, error: errorCode, message: data.message };
         }
 
-        // Check if we're within grace period
+        // For other errors, check grace period before failing
         const cached = await getCachedLicense();
         if (cached && this._isWithinGracePeriod(cached)) {
           this._isValid = true;
@@ -388,7 +386,6 @@ class LicenseClient {
         
         this._isValid = false;
         this._plan = null;
-          await clearLicenseData();
 
         if (errorCode === 'LICENSE_EXPIRED') {
           this._emit('onExpired', {});
