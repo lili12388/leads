@@ -17,7 +17,7 @@
     "https://www.google.de/maps/*",
     "https://www.google.es/maps/*",
     "https://www.google.tn/maps/*",
-    "https://gle-two.vercel.com/*"
+    "https://*.vercel.app/*"
   ],
   "action": {
     "default_popup": "popup.html",
