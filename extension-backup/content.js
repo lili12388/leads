@@ -70,8 +70,6 @@
     
     const panel = document.createElement('div');
     panel.id = 'gme-floating-panel';
-    const panel = document.createElement('div');
-    panel.id = 'gme-floating-panel';
     
     // Only show normal extraction UI (license is valid)
     panel.innerHTML = `

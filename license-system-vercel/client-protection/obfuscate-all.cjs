@@ -44,36 +44,22 @@ const obfuscationOptions = {
 
 console.log('🔒 Obfuscating all extension JavaScript files...\n');
 
-// Create backup
-if (!fs.existsSync(backupDir)) {
-  fs.mkdirSync(backupDir, { recursive: true });
-  console.log('📦 Creating backup at:', backupDir);
-  filesToObfuscate.forEach(file => {
-    const source = path.join(extensionDir, file);
-    const dest = path.join(backupDir, file);
-    if (fs.existsSync(source)) {
-      fs.copyFileSync(source, dest);
-      console.log(`   ✓ Backed up ${file}`);
-    }
-  });
-  console.log();
-}
-
-// Obfuscate each file
+// Read from backup (source), write to extension (obfuscated)
 filesToObfuscate.forEach(filename => {
-  const filePath = path.join(extensionDir, filename);
+  const sourceFilePath = path.join(backupDir, filename);
+  const destFilePath = path.join(extensionDir, filename);
   
-  if (!fs.existsSync(filePath)) {
-    console.log(`⚠️  ${filename} not found, skipping...`);
+  if (!fs.existsSync(sourceFilePath)) {
+    console.log(`⚠️  ${filename} not found in backup, skipping...`);
     return;
   }
   
   console.log(`🔐 Obfuscating ${filename}...`);
   
-  const sourceCode = fs.readFileSync(filePath, 'utf8');
+  const sourceCode = fs.readFileSync(sourceFilePath, 'utf8');
   const obfuscatedCode = JavaScriptObfuscator.obfuscate(sourceCode, obfuscationOptions).getObfuscatedCode();
   
-  fs.writeFileSync(filePath, obfuscatedCode);
+  fs.writeFileSync(destFilePath, obfuscatedCode);
   
   const originalSize = (sourceCode.length / 1024).toFixed(2);
   const obfuscatedSize = (obfuscatedCode.length / 1024).toFixed(2);
