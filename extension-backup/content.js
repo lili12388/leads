@@ -11,7 +11,8 @@
   let scrollCount = 0;
   let autoScrollInterval = null;
   let isLicenseValid = false;     // License status
-  let hasClickedSearchArea = false; // Track if we've auto-clicked "Search this area"
+  let isWaitingForSearchRefresh = false; // Track if we're waiting for user to click "Search this area"
+  let hasReceivedSearchData = false; // Track if we've received fresh search data since clicking Start/Always On
   
   // ============================================
   // LICENSE CHECK
@@ -41,62 +42,100 @@
   });
   
   // ============================================
-  // CLICK "SEARCH THIS AREA" BUTTON
+  // SHOW "SEARCH THIS AREA" REMINDER
   // ============================================
   
-  function clickSearchThisAreaButton() {
-    // Common text variations in different languages
-    const searchTexts = [
-      'Search this area',           // English
-      'Rechercher cette zone',      // French
-      'Buscar en esta área',        // Spanish
-      'In dieser Region suchen',    // German
-      'Cerca in questa zona',       // Italian
-      'Pesquisar nesta área',       // Portuguese
-      'この地域を検索',              // Japanese
-      '이 지역 검색',               // Korean
-      '搜索此区域',                 // Chinese (Simplified)
-      'Zoek in dit gebied',         // Dutch
-      'Sök i detta område',         // Swedish
-      'Szukaj w tym obszarze',      // Polish
-      'Bu bölgede ara',             // Turkish
-      'Найти в этом районе',        // Russian
-      'Search this',                // Partial match
-      'Rechercher',                 // Partial French
-    ];
+  function showSearchAreaReminder() {
+    // Show a prominent reminder in the panel
+    const statusText = document.getElementById('gme-status-text');
+    const statusDot = document.querySelector('.gme-status-dot');
     
-    // Method 1: Try to find by button text content
-    const allButtons = document.querySelectorAll('button');
-    for (const btn of allButtons) {
-      const btnText = btn.textContent?.trim() || '';
-      for (const searchText of searchTexts) {
-        if (btnText.includes(searchText) || btnText.toLowerCase().includes(searchText.toLowerCase())) {
-          console.log('🔍 Found "Search this area" button, clicking it...');
-          btn.click();
-          return true;
+    if (statusText) {
+      statusText.innerHTML = '⚠️ Please click <strong>"Search this area"</strong> button to start';
+      statusText.style.color = '#d97706';
+    }
+    if (statusDot) {
+      statusDot.style.background = '#f59e0b';
+    }
+    
+    // Also show a toast notification
+    showToast('🔄 Click "Search this area" button to avoid missing leads!', 5000);
+  }
+  
+  function showToast(message, duration = 3000) {
+    // Remove existing toast if any
+    const existingToast = document.getElementById('gme-toast');
+    if (existingToast) existingToast.remove();
+    
+    const toast = document.createElement('div');
+    toast.id = 'gme-toast';
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 100000;
+      box-shadow: 0 8px 32px rgba(30, 64, 175, 0.4);
+      animation: gme-toast-in 0.3s ease-out;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+    toast.textContent = message;
+    
+    // Add animation style
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes gme-toast-in {
+        from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+      }
+      @keyframes gme-toast-out {
+        from { opacity: 1; transform: translateX(-50%) translateY(0); }
+        to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(toast);
+    
+    // Remove after duration
+    setTimeout(() => {
+      toast.style.animation = 'gme-toast-out 0.3s ease-out';
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  }
+  
+  function onSearchDataReceived() {
+    // Called when we receive fresh search data from XHR interceptor
+    if (isWaitingForSearchRefresh) {
+      isWaitingForSearchRefresh = false;
+      hasReceivedSearchData = true;
+      
+      // Remove the reminder toast
+      const toast = document.getElementById('gme-toast');
+      if (toast) toast.remove();
+      
+      // Show success message
+      showToast('✅ Search refreshed! Now extracting leads...', 2000);
+      
+      // Start the actual extraction/scrolling
+      if (isAlwaysCapture) {
+        updateStatus('extracting', '🔄 Always-on: Capturing leads...');
+        const feed = document.querySelector('[role="feed"]');
+        const autoScrollEnabled = document.getElementById('gme-auto-scroll');
+        if (feed && autoScrollEnabled && autoScrollEnabled.checked) {
+          isExtracting = true;
+          setTimeout(autoScroll, 500);
         }
+      } else if (isExtracting) {
+        continueExtraction();
       }
     }
-    
-    // Method 2: Try the specific Google Maps class for "Search this area" button
-    // This button often has a specific structure
-    const searchAreaBtn = document.querySelector('button.miFGmb');
-    if (searchAreaBtn) {
-      console.log('🔍 Found "Search this area" button by class, clicking it...');
-      searchAreaBtn.click();
-      return true;
-    }
-    
-    // Method 3: Look for button with refresh/redo icon near the search
-    const redoButtons = document.querySelectorAll('button[aria-label*="earch"], button[aria-label*="zone"], button[aria-label*="area"]');
-    if (redoButtons.length > 0) {
-      console.log('🔍 Found search area button by aria-label, clicking it...');
-      redoButtons[0].click();
-      return true;
-    }
-    
-    console.log('⚠️ Could not find "Search this area" button');
-    return false;
   }
   
   // ============================================
@@ -235,6 +274,7 @@
       // Turn off always capture - STOP EVERYTHING
       isAlwaysCapture = false;
       isExtracting = false;  // Stop any ongoing scrolling
+      isWaitingForSearchRefresh = false;
       btn.textContent = '🔄 Always On';
       btn.classList.remove('active');
       startBtn.disabled = false;
@@ -243,31 +283,22 @@
     } else {
       // Turn on always capture
       isAlwaysCapture = true;
-      isExtracting = false;  // Will be set true when scrolling starts
+      isExtracting = false;  // Will be set true when we receive search data
       btn.textContent = '⏹ Stop';
       btn.classList.add('active');
       startBtn.disabled = true;
-      updateStatus('extracting', '🔄 Always-on: Waiting for search...');
-      console.log("🔄 Always-on capture enabled - waiting for search data");
       
-      // Auto-click "Search this area" on first activation to ensure data is fetched
-      if (!hasClickedSearchArea) {
-        hasClickedSearchArea = true;
-        console.log("🔍 First activation - attempting to click 'Search this area' button...");
-        setTimeout(() => {
-          const clicked = clickSearchThisAreaButton();
-          if (clicked) {
-            updateStatus('extracting', '🔄 Refreshing search results...');
-          }
-        }, 300);
-      }
-      
-      // If there's already a feed visible, start scrolling immediately
+      // Check if there's already a feed visible (user already searched)
       const feed = document.querySelector('[role="feed"]');
-      const autoScrollEnabled = document.getElementById('gme-auto-scroll');
-      if (feed && autoScrollEnabled && autoScrollEnabled.checked) {
-        isExtracting = true;
-        setTimeout(autoScroll, 500);
+      if (feed && !hasReceivedSearchData) {
+        // Feed exists but we haven't captured it yet - ask user to refresh search
+        isWaitingForSearchRefresh = true;
+        showSearchAreaReminder();
+        console.log("🔍 Waiting for user to click 'Search this area' button...");
+      } else {
+        // No feed yet, just wait for search
+        updateStatus('extracting', '🔄 Always-on: Waiting for search...');
+        console.log("🔄 Always-on capture enabled - waiting for search data");
       }
     }
   }
@@ -290,6 +321,12 @@
   
   window.addEventListener("message", function(event) {
     if (event.data && event.data.type === "search" && event.data.data) {
+      // If we're waiting for user to click "Search this area", handle that first
+      if (isWaitingForSearchRefresh) {
+        onSearchDataReceived();
+        // Let processing continue below
+      }
+      
       // Always capture if Always-On mode is enabled, or if manually extracting
       if (!isAlwaysCapture && !isExtracting) {
         return;  // Not capturing
@@ -305,6 +342,9 @@
           console.log("📭 No feed data in response");
           return;
         }
+        
+        // Mark that we've received fresh search data
+        hasReceivedSearchData = true;
         
         var newCount = 0;
         
@@ -435,24 +475,21 @@
   
   function startExtraction() {
     if (isExtracting) return;
-    isExtracting = true;
     scrollCount = 0;
     
-    // Auto-click "Search this area" on first extraction to ensure data is fetched
-    if (!hasClickedSearchArea) {
-      hasClickedSearchArea = true;
-      console.log("🔍 First extraction - attempting to click 'Search this area' button...");
-      const clicked = clickSearchThisAreaButton();
-      if (clicked) {
-        updateStatus('extracting', '🔄 Refreshing search results...');
-        // Wait for the search to complete before starting scroll
-        setTimeout(() => {
-          continueExtraction();
-        }, 1500);
-        return;
-      }
+    // Check if there's already a feed visible (user already searched)
+    const feed = document.querySelector('[role="feed"]');
+    if (feed && !hasReceivedSearchData) {
+      // Feed exists but we haven't captured it yet - ask user to refresh search
+      isExtracting = true; // Mark as extracting so button shows "Stop"
+      isWaitingForSearchRefresh = true;
+      showSearchAreaReminder();
+      console.log("🔍 Waiting for user to click 'Search this area' button...");
+      return;
     }
     
+    // No existing feed or we already have fresh data - start normally
+    isExtracting = true;
     continueExtraction();
   }
   
@@ -557,7 +594,12 @@
   
   function stopExtraction() {
     isExtracting = false;
+    isWaitingForSearchRefresh = false;
     console.log("⏹️ Extraction stopped. Total: " + extractedLeads.size);
+    
+    // Remove any toast
+    const toast = document.getElementById('gme-toast');
+    if (toast) toast.remove();
     
     const btn = document.getElementById('gme-start-btn');
     if (btn) btn.textContent = '▶ Start';
