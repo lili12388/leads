@@ -7,9 +7,6 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showRevoked, setShowRevoked] = useState(false);
-  const [newLicenseKey, setNewLicenseKey] = useState<string | null>(null);
-  const [copiedKey, setCopiedKey] = useState(false);
-  const [ephemeralKeys, setEphemeralKeys] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ plan: 'lifetime', max_activations: 2, expires_days: 0, customer_email: '', customer_name: '', notes: '' });
 
   function buildCreatePayload() {
@@ -75,20 +72,10 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
       });
       const data = await res.json();
       if (data.success) {
-        // Show the generated license key once (not stored in DB in plaintext)
+        // License created successfully - refresh to show it in the table
         setShowCreate(false);
-        setNewLicenseKey(data.license_key);
-        // Keep the plaintext visible in the table briefly (session-only)
-        try {
-          setEphemeralKeys(prev => ({ ...prev, [data.license_id]: String(data.license_key) }));
-        } catch (e) {}
-        try {
-          await navigator.clipboard.writeText(String(data.license_key));
-          setCopiedKey(true);
-        } catch (e) {
-          // clipboard might not be available in some environments
-        }
         refresh();
+        alert('License created successfully! The key is now visible in the table.');
       } else {
         const details = data?.details?.fieldErrors ? JSON.stringify(data.details.fieldErrors) : '';
         alert('Create failed: ' + (data.message || data.error || JSON.stringify(data)) + (details ? '\n' + details : ''));
@@ -523,77 +510,6 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
               </button>
             </div>
           </form>
-        </div>
-      )}
-
-      {newLicenseKey && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15,23,42,0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 50,
-          }}
-        >
-          <div
-            style={{
-              background: '#ffffff',
-              padding: 20,
-              borderRadius: 12,
-              minWidth: 320,
-              maxWidth: 540,
-              boxShadow: '0 20px 50px rgba(15,23,42,0.35)',
-            }}
-          >
-            <h3 style={{ marginTop: 0, marginBottom: 6, fontSize: 18, fontWeight: 600 }}>License Created Successfully</h3>
-            <p style={{ marginTop: 0, marginBottom: 12, fontSize: 13, color: '#6b7280' }}>
-              The license key is shown below and will always be visible in the table.
-            </p>
-            <div style={{ fontFamily: 'monospace', background: '#f3f4f6', padding: 12, borderRadius: 8, fontSize: 14 }}>
-              {newLicenseKey}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
-              <button
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(String(newLicenseKey));
-                    setCopiedKey(true);
-                    alert('License key copied to clipboard');
-                  } catch (e) {
-                    alert('Copy failed');
-                  }
-                }}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: 999,
-                  border: 'none',
-                  background: '#2563eb',
-                  color: '#fff',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
-              >
-                {copiedKey ? 'Copied' : 'Copy key'}
-              </button>
-              <button
-                onClick={() => { setNewLicenseKey(null); setCopiedKey(false); }}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: 999,
-                  border: '1px solid #e5e7eb',
-                  background: '#ffffff',
-                  fontSize: 13,
-                  color: '#374151',
-                  cursor: 'pointer',
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>
