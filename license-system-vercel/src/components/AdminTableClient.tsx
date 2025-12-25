@@ -317,7 +317,7 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
                         )}
                       </div>
                     </td>
-                    <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: '#111827', fontSize: 11, color: '#6b7280' }}>
+                    <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: 11, color: '#6b7280' }}>
                       {lic.id}
                     </td>
                     <td style={{ padding: '10px 14px', textTransform: 'capitalize', color: '#111827' }}>{lic.plan}</td>
