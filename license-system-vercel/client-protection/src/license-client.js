@@ -489,7 +489,8 @@ class LicenseClient {
    * Initialize - check existing license
    */
   async init() {
-    const result = await this.validate(false);
+    // Use cache first on init so popup restores validated state immediately
+    const result = await this.validate(true);
     
     if (result.valid) {
       this._startValidationLoop();
