@@ -205,7 +205,7 @@
             <button class="gme-btn gme-btn-auto" id="gme-always-btn">🔄 Always On</button>
           </div>
           <button class="gme-btn gme-btn-success" id="gme-export-btn">📥 Export CSV</button>
-          <button class="gme-btn gme-btn-sheets" id="gme-sheets-btn">📊 Export to Google Sheets</button>
+          <!-- <button class="gme-btn gme-btn-sheets" id="gme-sheets-btn">📊 Export to Google Sheets</button> -->
           <button class="gme-btn gme-btn-secondary" id="gme-clear-btn">🗑 Clear</button>
           <div class="gme-options">
             <label class="gme-checkbox">
@@ -234,7 +234,7 @@
     panel.querySelector('#gme-start-btn').addEventListener('click', toggleManualExtraction);
     panel.querySelector('#gme-always-btn').addEventListener('click', toggleAlwaysCapture);
     panel.querySelector('#gme-export-btn').addEventListener('click', exportCSV);
-    panel.querySelector('#gme-sheets-btn').addEventListener('click', exportToGoogleSheets);
+    // panel.querySelector('#gme-sheets-btn').addEventListener('click', exportToGoogleSheets);
     panel.querySelector('#gme-clear-btn').addEventListener('click', clearData);
   }
   
