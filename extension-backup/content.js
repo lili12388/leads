@@ -39,56 +39,6 @@
     }
   });
   
-  // Activate license from floating panel
-  async function activateLicenseFromPanel() {
-    const input = document.getElementById('gme-license-input');
-    const errorEl = document.getElementById('gme-license-error');
-    const btn = document.getElementById('gme-activate-btn');
-    
-    const key = input.value.trim().toUpperCase();
-    
-    if (!key || key.length < 10) {
-      errorEl.textContent = 'Please enter a valid license key';
-      errorEl.style.display = 'block';
-      input.classList.add('error');
-      return;
-    }
-    
-    btn.disabled = true;
-    btn.textContent = '⏳ Activating...';
-    errorEl.style.display = 'none';
-    input.classList.remove('error');
-    
-    try {
-      // Send message to background/popup to activate
-      chrome.runtime.sendMessage({ 
-        action: 'activateLicense', 
-        key: key 
-      }, (response) => {
-        if (response && response.success) {
-          // License activated successfully
-          isLicenseValid = true;
-          const panel = document.getElementById('gme-floating-panel');
-          if (panel) panel.remove();
-          createFloatingPanel();
-          setupSearchListeners();
-        } else {
-          errorEl.textContent = response?.error || 'Activation failed. Please check your license key.';
-          errorEl.style.display = 'block';
-          input.classList.add('error');
-          btn.disabled = false;
-          btn.textContent = '🔓 Activate License';
-        }
-      });
-    } catch (e) {
-      errorEl.textContent = 'Connection error. Please try again.';
-      errorEl.style.display = 'block';
-      input.classList.add('error');
-      btn.disabled = false;
-      btn.textContent = '🔓 Activate License';
-    }
-  }
-  
   // ============================================
   // INJECT THE XHR INTERCEPTOR SCRIPT
   // ============================================
@@ -107,47 +57,37 @@
   // CREATE FLOATING PANEL
   // ============================================
   
-  function createFloatingPanel() {
+  async function createFloatingPanel() {
     if (document.getElementById('gme-floating-panel')) return;
+    
+    // Check license status first
+    const hasLicense = await checkLicenseStatus();
+    
+    // Don't show panel at all if no license
+    if (!hasLicense) {
+      return;
+    }
     
     const panel = document.createElement('div');
     panel.id = 'gme-floating-panel';
+    const panel = document.createElement('div');
+    panel.id = 'gme-floating-panel';
     
-    if (!isLicenseValid) {
-      // Show locked license activation UI
-      panel.innerHTML = `
-        <div class="gme-header">
-          <h3>📍 Lead Extractor</h3>
-          <button class="gme-minimize" title="Minimize">−</button>
+    // Only show normal extraction UI (license is valid)
+    panel.innerHTML = `
+      <div class="gme-header">
+        <h3>📍 Lead Extractor</h3>
+        <button class="gme-minimize" title="Minimize">−</button>
+      </div>
+      <div class="gme-stats">
+        <div class="gme-stat">
+          <div class="gme-stat-value" id="gme-total">0</div>
+          <div class="gme-stat-label">Total Leads</div>
         </div>
-        <div class="gme-license-lock">
-          <div class="gme-lock-icon">🔒</div>
-          <h3>Activate Your License</h3>
-          <p>Enter your license key to unlock all features and start extracting leads.</p>
-          <input type="text" id="gme-license-input" class="gme-license-input" placeholder="LIC-XXXX-XXXX-XXXX-XXXX" maxlength="23">
-          <div class="gme-license-error" id="gme-license-error"></div>
-          <button class="gme-btn gme-btn-primary" id="gme-activate-btn">🔓 Activate License</button>
-          <div class="gme-license-link">
-            If any error occurred, contact Laith Hamada
-          </div>
+        <div class="gme-stat">
+          <div class="gme-stat-value green" id="gme-no-website">0</div>
+          <div class="gme-stat-label">No Website</div>
         </div>
-      `;
-    } else {
-      // Show normal extraction UI
-      panel.innerHTML = `
-        <div class="gme-header">
-          <h3>📍 Lead Extractor</h3>
-          <button class="gme-minimize" title="Minimize">−</button>
-        </div>
-        <div class="gme-stats">
-          <div class="gme-stat">
-            <div class="gme-stat-value" id="gme-total">0</div>
-            <div class="gme-stat-label">Total Leads</div>
-          </div>
-          <div class="gme-stat">
-            <div class="gme-stat-value green" id="gme-no-website">0</div>
-            <div class="gme-stat-label">No Website</div>
-          </div>
           <div class="gme-stat">
             <div class="gme-stat-value" id="gme-with-phone">0</div>
             <div class="gme-stat-label">With Phone</div>
@@ -156,6 +96,7 @@
             <div class="gme-stat-value orange" id="gme-scrolls">0</div>
             <div class="gme-stat-label">Scrolls</div>
           </div>
+        </div>
         </div>
         <div class="gme-status" id="gme-status">
           <span class="gme-status-dot"></span>
@@ -180,7 +121,6 @@
           </div>
         </div>
       `;
-    }
     
     document.body.appendChild(panel);
     
@@ -192,36 +132,11 @@
       panel.classList.toggle('minimized');
     });
     
-    if (!isLicenseValid) {
-      // License activation listeners
-      const licenseInput = panel.querySelector('#gme-license-input');
-      const activateBtn = panel.querySelector('#gme-activate-btn');
-      
-      // Format license key input
-      licenseInput.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-        let formatted = '';
-        for (let i = 0; i < value.length && i < 19; i++) {
-          if (i === 3 || i === 7 || i === 11 || i === 15) {
-            formatted += '-';
-          }
-          formatted += value[i];
-        }
-        e.target.value = formatted;
-      });
-      
-      // Activate license
-      activateBtn.addEventListener('click', () => activateLicenseFromPanel());
-      licenseInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') activateLicenseFromPanel();
-      });
-    } else {
-      // Normal extraction listeners
-      panel.querySelector('#gme-start-btn').addEventListener('click', toggleManualExtraction);
-      panel.querySelector('#gme-always-btn').addEventListener('click', toggleAlwaysCapture);
-      panel.querySelector('#gme-export-btn').addEventListener('click', exportCSV);
-      panel.querySelector('#gme-clear-btn').addEventListener('click', clearData);
-    }
+    // Normal extraction listeners
+    panel.querySelector('#gme-start-btn').addEventListener('click', toggleManualExtraction);
+    panel.querySelector('#gme-always-btn').addEventListener('click', toggleAlwaysCapture);
+    panel.querySelector('#gme-export-btn').addEventListener('click', exportCSV);
+    panel.querySelector('#gme-clear-btn').addEventListener('click', clearData);
   }
   
   function makeDraggable(element) {

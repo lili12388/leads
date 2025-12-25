@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           showLicenseScreen('License validation failed. Please re-activate.');
         }
       }
-    }, 5 * 60 * 1000); // Every 5 minutes
+    }, 60 * 1000); // Every 1 minute
   }
   
   // Check license status
@@ -137,6 +137,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         licenseBadge.className = 'license-badge';
       }
+    }
+    
+    // Hide all action buttons and settings - user must use floating window
+    const controls = document.querySelector('.controls');
+    const settings = document.querySelector('.settings');
+    const statusCard = document.querySelector('.status-card');
+    
+    if (controls) controls.style.display = 'none';
+    if (settings) settings.style.display = 'none';
+    if (statusCard) statusCard.style.display = 'none';
+    
+    // Show message to use floating window
+    let messageDiv = document.getElementById('gme-popup-message');
+    if (!messageDiv) {
+      messageDiv = document.createElement('div');
+      messageDiv.id = 'gme-popup-message';
+      messageDiv.style.cssText = 'text-align: center; padding: 20px; background: #f0f4f8; border-radius: 12px; margin-top: 16px;';
+      messageDiv.innerHTML = `
+        <div style="font-size: 32px; margin-bottom: 8px;">✅</div>
+        <div style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 4px;">License Activated</div>
+        <div style="font-size: 12px; color: #666; line-height: 1.5;">
+          Go to Google Maps and use the floating window to extract leads.
+        </div>
+      `;
+      mainContent.appendChild(messageDiv);
     }
   }
   
