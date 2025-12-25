@@ -17,7 +17,9 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
       return {};
     }
   });
-  const [form, setForm] = useState({ plan: 'lifetime', max_activations: 2, expires_days: 0, customer_email: '', customer_name: '', notes: '' });
+  const [form, setForm] = useState({ plan: 'lifetime', max_activations: 1, expires_days: 0, customer_email: '', customer_name: '', notes: '' });
+  const [editingMaxActivations, setEditingMaxActivations] = useState<string | null>(null);
+  const [newMaxActivations, setNewMaxActivations] = useState<number>(1);
 
   function buildCreatePayload() {
     const maxActivations = Number(form.max_activations);
@@ -143,6 +145,21 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
     } catch (err: any) { alert('Request failed: ' + (err?.message || err)); }
   }
 
+  async function updateMaxActivations(id: string, maxActivations: number) {
+    try {
+      const res = await fetch('/api/v1/admin/licenses/' + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ max_activations: maxActivations })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditingMaxActivations(null);
+        refresh();
+      } else alert('Failed: ' + (data.error || data.message || JSON.stringify(data)));
+    } catch (err: any) { alert('Request failed: ' + (err?.message || err)); }
+  }
+
   const visibleLicenses = showRevoked ? licenses : licenses.filter((l: any) => String(l.status || '').toLowerCase() !== 'revoked');
 
   return (
@@ -253,7 +270,7 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>License ID</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Plan</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Status</th>
-                <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Active Activations</th>
+                <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Activations (Used/Max)</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Last Used</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600, textAlign: 'right' }}>Actions</th>
               </tr>
@@ -338,7 +355,36 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
                         {lic.status}
                       </span>
                     </td>
-                    <td style={{ padding: '10px 14px', color: '#111827' }}>{lic.active_activations ?? 0}</td>
+                    <td style={{ padding: '10px 14px', color: '#111827' }}>
+                      {editingMaxActivations === lic.id ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <input
+                            type="number"
+                            min={1}
+                            max={99}
+                            value={newMaxActivations}
+                            onChange={e => setNewMaxActivations(Math.min(99, Math.max(1, Number(e.target.value))))}
+                            style={{ width: 50, padding: '4px 6px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 12 }}
+                          />
+                          <button
+                            onClick={() => updateMaxActivations(lic.id, newMaxActivations)}
+                            style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: '#22c55e', color: '#fff', cursor: 'pointer', fontSize: 11 }}
+                          >Save</button>
+                          <button
+                            onClick={() => setEditingMaxActivations(null)}
+                            style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 11 }}
+                          >Cancel</button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>{lic.active_activations ?? 0} / {lic.max_activations ?? 1}</span>
+                          <button
+                            onClick={() => { setEditingMaxActivations(lic.id); setNewMaxActivations(lic.max_activations ?? 1); }}
+                            style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 10, color: '#6b7280' }}
+                          >Edit</button>
+                        </div>
+                      )}
+                    </td>
                     <td style={{ padding: '10px 14px', color: '#4b5563' }}>{fmtDate(lic.last_used)}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                       <button
