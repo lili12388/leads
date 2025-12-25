@@ -29,6 +29,8 @@ export default async function AdminPage({ searchParams }: { searchParams?: { tok
        ORDER BY l.created_at DESC`
     );
     licenses = res.rows || [];
+    // Ensure we pass plain JSON-serializable objects to the client component
+    licenses = licenses.map((l: any) => JSON.parse(JSON.stringify(l)));
   } catch (error) {
     console.error('Database query failed:', error);
     return (

@@ -43,7 +43,7 @@ export async function checkRateLimit(
     if (result.rows.length === 0) {
       // Create new entry
       await db.execute({
-        sql: `INSERT INTO rate_limits (id, key, count, window_start) VALUES (?, ?, 1, ?)`,
+        sql: `INSERT OR IGNORE INTO rate_limits (id, key, count, window_start) VALUES (?, ?, 1, ?)`,
         args: [generateId(), key, now.toISOString()],
       });
       return {
