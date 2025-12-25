@@ -22,19 +22,67 @@ export async function GET(request: NextRequest) {
       dbInitialized = true;
     }
 
-    // Get all licenses with activation counts and last used time
-    const licensesResult = await db.execute(`
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const status = searchParams.get('status');
+    const plan = searchParams.get('plan');
+    const search = searchParams.get('search');
+
+    const offset = (page - 1) * limit;
+
+    // Build WHERE clause
+    let whereClause = '';
+    const whereArgs: any[] = [];
+    
+    if (status) {
+      whereClause += ' AND l.status = ?';
+      whereArgs.push(status);
+    }
+    
+    if (plan) {
+      whereClause += ' AND l.plan = ?';
+      whereArgs.push(plan);
+    }
+    
+    if (search) {
+      whereClause += ' AND (l.customer_email LIKE ? OR l.customer_name LIKE ?)';
+      whereArgs.push(`%${search}%`, `%${search}%`);
+    }
+
+    // Get total count
+    const countResult = await db.execute(
+      `SELECT COUNT(*) as total FROM licenses l WHERE 1=1 ${whereClause}`,
+      whereArgs
+    );
+    const total = countResult.rows[0].total;
+
+    // Get licenses with pagination
+    const licensesResult = await db.execute(
+      `
       SELECT 
         l.*,
         (SELECT COUNT(*) FROM activations WHERE license_id = l.id AND is_active = 1) as active_activations,
         (SELECT MAX(last_validated_at) FROM activations WHERE license_id = l.id) as last_used
       FROM licenses l
+      WHERE 1=1 ${whereClause}
       ORDER BY l.created_at DESC
-    `);
+      LIMIT ? OFFSET ?
+      `,
+      [...whereArgs, limit, offset]
+    );
+
+    const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json({
       success: true,
-      licenses: licensesResult.rows
+      licenses: licensesResult.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        total_pages: totalPages
+      }
     });
 
   } catch (error) {

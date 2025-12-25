@@ -23,7 +23,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: { tok
   let licenses: any[] = [];
   try {
     const res = await db.execute(
-      `SELECT l.*, l.license_key_plaintext, (SELECT COUNT(*) FROM activations WHERE license_id = l.id AND is_active = 1) as active_activations,
+      `SELECT l.*, (SELECT COUNT(*) FROM activations WHERE license_id = l.id AND is_active = 1) as active_activations,
        (SELECT MAX(last_validated_at) FROM activations WHERE license_id = l.id) as last_used
        FROM licenses l
        ORDER BY l.created_at DESC`

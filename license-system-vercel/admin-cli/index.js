@@ -122,7 +122,7 @@ program
       if (options.plan) params.append('plan', options.plan);
       if (options.search) params.append('search', options.search);
       
-      const result = await apiRequest('GET', `/api/v1/admin/licenses/create?${params}`);
+      const result = await apiRequest('GET', `/api/v1/admin/licenses?${params}`);
       
       spinner.stop();
       
@@ -133,7 +133,7 @@ program
       
       const tableData = [
         [
-          chalk.bold('ID'),
+          chalk.bold('License Key'),
           chalk.bold('Plan'),
           chalk.bold('Status'),
           chalk.bold('Activations'),
@@ -141,10 +141,10 @@ program
           chalk.bold('Expires'),
         ],
         ...result.licenses.map(l => [
-          l.id.substring(0, 8) + '...',
+          l.license_key_plaintext || 'N/A',
           l.plan,
           l.status === 'active' ? chalk.green(l.status) : chalk.red(l.status),
-          `${l.current_activations}/${l.max_activations}`,
+          `${l.active_activations}/${l.max_activations}`,
           l.customer_email || '-',
           l.expires_at ? new Date(l.expires_at).toLocaleDateString() : 'Never',
         ]),
@@ -169,21 +169,24 @@ program
     const spinner = ora('Fetching license status...').start();
     
     try {
-      const result = await apiRequest('GET', `/api/v1/admin/licenses/${id}/status`);
+      const result = await apiRequest('GET', `/api/v1/admin/licenses/${id}`);
       
       spinner.stop();
       
+      const activeActivations = result.activations.filter(a => a.is_active).length;
+      
       console.log(chalk.bold('\n📋 License Details:'));
       console.log('─'.repeat(50));
-      console.log(`  ID:              ${result.id}`);
-      console.log(`  Plan:            ${result.plan}`);
-      console.log(`  Status:          ${result.status === 'active' ? chalk.green(result.status) : chalk.red(result.status)}`);
-      console.log(`  Activations:     ${result.current_activations}/${result.max_activations}`);
-      console.log(`  Expires:         ${result.expires_at ? new Date(result.expires_at).toLocaleString() : 'Never'}`);
-      console.log(`  Customer Email:  ${result.customer_email || '-'}`);
-      console.log(`  Customer Name:   ${result.customer_name || '-'}`);
-      console.log(`  Suspicious:      ${result.suspicious_score > 0 ? chalk.red(result.suspicious_score) : chalk.green('0')}`);
-      console.log(`  Created:         ${new Date(result.created_at).toLocaleString()}`);
+      console.log(`  License Key:     ${result.license.license_key_plaintext || 'N/A'}`);
+      console.log(`  ID:              ${result.license.id}`);
+      console.log(`  Plan:            ${result.license.plan}`);
+      console.log(`  Status:          ${result.license.status === 'active' ? chalk.green(result.license.status) : chalk.red(result.license.status)}`);
+      console.log(`  Activations:     ${activeActivations}/${result.license.max_activations}`);
+      console.log(`  Expires:         ${result.license.expires_at ? new Date(result.license.expires_at).toLocaleString() : 'Never'}`);
+      console.log(`  Customer Email:  ${result.license.customer_email || '-'}`);
+      console.log(`  Customer Name:   ${result.license.customer_name || '-'}`);
+      console.log(`  Suspicious:      ${result.license.suspicious_score > 0 ? chalk.red(result.license.suspicious_score) : chalk.green('0')}`);
+      console.log(`  Created:         ${new Date(result.license.created_at).toLocaleString()}`);
       
       if (result.activations.length > 0) {
         console.log(chalk.bold('\n🖥️  Active Devices:'));
