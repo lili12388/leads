@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       `SELECT COUNT(*) as total FROM licenses l WHERE 1=1 ${whereClause}`,
       whereArgs
     );
-    const total = countResult.rows[0].total;
+    const total = Number(countResult.rows[0].total);
 
     // Get licenses with pagination
     const licensesResult = await db.execute(
