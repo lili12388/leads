@@ -7,7 +7,8 @@
     "activeTab",
     "storage",
     "scripting",
-    "downloads"
+    "downloads",
+    "identity"
   ],
   "host_permissions": [
     "https://www.google.com/maps/*",
@@ -19,6 +20,16 @@
     "https://www.google.tn/maps/*",
     "https://*.vercel.app/*"
   ],
+  "oauth2": {
+    "client_id": "373635363134-bf3nbcom0hdskjriegmi9iv0g1edhsav.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive.file"
+    ]
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Maps Lead Extractor"

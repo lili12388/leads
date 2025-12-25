@@ -205,6 +205,7 @@
             <button class="gme-btn gme-btn-auto" id="gme-always-btn">🔄 Always On</button>
           </div>
           <button class="gme-btn gme-btn-success" id="gme-export-btn">📥 Export CSV</button>
+          <button class="gme-btn gme-btn-sheets" id="gme-sheets-btn">📊 Export to Google Sheets</button>
           <button class="gme-btn gme-btn-secondary" id="gme-clear-btn">🗑 Clear</button>
           <div class="gme-options">
             <label class="gme-checkbox">
@@ -233,6 +234,7 @@
     panel.querySelector('#gme-start-btn').addEventListener('click', toggleManualExtraction);
     panel.querySelector('#gme-always-btn').addEventListener('click', toggleAlwaysCapture);
     panel.querySelector('#gme-export-btn').addEventListener('click', exportCSV);
+    panel.querySelector('#gme-sheets-btn').addEventListener('click', exportToGoogleSheets);
     panel.querySelector('#gme-clear-btn').addEventListener('click', clearData);
   }
   
@@ -693,6 +695,68 @@
     URL.revokeObjectURL(url);
     
     console.log("📥 Exported " + leads.length + " leads to CSV");
+  }
+  
+  function exportToGoogleSheets() {
+    let leads = Array.from(extractedLeads.values());
+    
+    // Check if we should export only leads without website
+    const onlyNoWebsite = document.getElementById('gme-only-no-website');
+    if (onlyNoWebsite && onlyNoWebsite.checked) {
+      leads = leads.filter(l => !l.has_website);
+    }
+    
+    if (leads.length === 0) {
+      alert('No leads to export!' + (onlyNoWebsite && onlyNoWebsite.checked ? ' (filtered to no-website only)' : ''));
+      return;
+    }
+    
+    // Update button to show loading
+    const sheetsBtn = document.getElementById('gme-sheets-btn');
+    const originalText = sheetsBtn.textContent;
+    sheetsBtn.textContent = '⏳ Exporting...';
+    sheetsBtn.disabled = true;
+    
+    // Prepare data for Google Sheets
+    const sheetData = leads.map(lead => ({
+      name: lead.name || '',
+      phone: lead.phone || '',
+      email: '',  // Email placeholder
+      website: lead.website || '',
+      address: lead.address || '',
+      instagram: lead.instagram || '',
+      facebook: lead.facebook || '',
+      reviewCount: lead.review_count || '',
+      averageRating: lead.rating || '',
+      category: lead.category || ''
+    }));
+    
+    // Send to background script
+    chrome.runtime.sendMessage(
+      { action: 'exportToGoogleSheets', data: sheetData },
+      (response) => {
+        sheetsBtn.textContent = originalText;
+        sheetsBtn.disabled = false;
+        
+        if (chrome.runtime.lastError) {
+          console.error('Chrome runtime error:', chrome.runtime.lastError);
+          alert('Failed to export: ' + chrome.runtime.lastError.message);
+          return;
+        }
+        
+        if (response && response.success) {
+          console.log("📊 Exported " + leads.length + " leads to Google Sheets");
+          // Open the spreadsheet in a new tab
+          if (response.spreadsheetUrl) {
+            window.open(response.spreadsheetUrl, '_blank');
+          }
+        } else {
+          const errorMsg = response ? response.error : 'Unknown error';
+          console.error('Export failed:', errorMsg);
+          alert('Failed to export to Google Sheets: ' + errorMsg);
+        }
+      }
+    );
   }
   
   function clearData() {

@@ -197,6 +197,15 @@
   background: #2d9249;
 }
 
+#gme-floating-panel .gme-btn-sheets {
+  background: #0f9d58;
+  color: white;
+}
+
+#gme-floating-panel .gme-btn-sheets:hover {
+  background: #0b8043;
+}
+
 #gme-floating-panel .gme-btn-danger {
   background: #ea4335;
   color: white;
