@@ -2,6 +2,7 @@
 
 const GOOGLE_SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const CLIENT_ID = '373635363134-bf3nbcom0hdskjriegmi9iv0g1edhsav.apps.googleusercontent.com';
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -36,16 +37,64 @@ async function exportToGoogleSheets(leads) {
   }
 }
 
+// Get OAuth token - tries Chrome method first, falls back to web flow for Edge
 function getAuthToken() {
   return new Promise((resolve, reject) => {
+    // First try the Chrome-specific method
     chrome.identity.getAuthToken({ interactive: true }, (token) => {
       if (chrome.runtime.lastError) {
-        console.error('Auth error:', chrome.runtime.lastError);
-        reject(new Error(chrome.runtime.lastError.message));
+        console.log('getAuthToken failed, trying launchWebAuthFlow:', chrome.runtime.lastError.message);
+        // Fall back to launchWebAuthFlow for Edge
+        getAuthTokenViaWebFlow().then(resolve).catch(reject);
       } else {
         resolve(token);
       }
     });
+  });
+}
+
+// OAuth via launchWebAuthFlow (works in Edge and Chrome)
+function getAuthTokenViaWebFlow() {
+  return new Promise((resolve, reject) => {
+    const redirectUrl = chrome.identity.getRedirectURL();
+    const scopes = [GOOGLE_SHEETS_SCOPE, GOOGLE_DRIVE_SCOPE];
+    
+    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    authUrl.searchParams.set('client_id', CLIENT_ID);
+    authUrl.searchParams.set('redirect_uri', redirectUrl);
+    authUrl.searchParams.set('response_type', 'token');
+    authUrl.searchParams.set('scope', scopes.join(' '));
+    
+    chrome.identity.launchWebAuthFlow(
+      { url: authUrl.toString(), interactive: true },
+      (redirectResponse) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        
+        if (!redirectResponse) {
+          reject(new Error('No response from auth flow'));
+          return;
+        }
+        
+        // Extract token from redirect URL
+        try {
+          const url = new URL(redirectResponse);
+          const hash = url.hash.substring(1);
+          const params = new URLSearchParams(hash);
+          const accessToken = params.get('access_token');
+          
+          if (accessToken) {
+            resolve(accessToken);
+          } else {
+            reject(new Error('No access token in response'));
+          }
+        } catch (e) {
+          reject(new Error('Failed to parse auth response'));
+        }
+      }
+    );
   });
 }
 
