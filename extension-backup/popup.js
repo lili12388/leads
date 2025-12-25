@@ -52,14 +52,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   
-  // Periodic license validation (every 1 minute) - ONLY runs after popup is shown
+  // Periodic license validation - checks SERVER/DATABASE every 1 HOUR
   function startLicenseValidation() {
     if (validationInterval) clearInterval(validationInterval);
     
     validationInterval = setInterval(async () => {
       if (licenseClient) {
         try {
-          const result = await licenseClient.validate(false); // Force server check
+          const result = await licenseClient.validate(false); // FALSE = force SERVER check (not cache)
           if (!result.valid) {
             // Only lock out for explicit revocation
             const criticalErrors = ['LICENSE_REVOKED', 'ACTIVATION_INVALID', 'LICENSE_EXPIRED'];
@@ -70,14 +70,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Any other error - ignore, user stays logged in
           }
         } catch (e) {
-          // Network error - ignore completely
+          // Network error - ignore completely, user stays logged in
           console.log('Background validation network error, ignoring');
         }
       }
-    }, 60 * 1000); // Every 1 minute
+    }, 60 * 60 * 1000); // Every 1 HOUR (3600000 ms)
   }
   
-  // Check license status - ONLY checks local storage, no server call on open
+  // Check license status - ONLY checks local storage flag, no server call on open
   async function checkLicense() {
     if (!licenseClient) {
       initLicenseClient();
