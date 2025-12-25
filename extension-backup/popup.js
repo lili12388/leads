@@ -139,26 +139,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
     
-    // Hide all action buttons and settings - user must use floating window
+    // REMOVE all action buttons and settings completely - user must use floating window
     const controls = document.querySelector('.controls');
     const settings = document.querySelector('.settings');
     const statusCard = document.querySelector('.status-card');
     
-    if (controls) controls.style.display = 'none';
-    if (settings) settings.style.display = 'none';
-    if (statusCard) statusCard.style.display = 'none';
+    if (controls) controls.remove();
+    if (settings) settings.remove();
+    if (statusCard) statusCard.remove();
     
     // Show message to use floating window
     let messageDiv = document.getElementById('gme-popup-message');
     if (!messageDiv) {
       messageDiv = document.createElement('div');
       messageDiv.id = 'gme-popup-message';
-      messageDiv.style.cssText = 'text-align: center; padding: 20px; background: #f0f4f8; border-radius: 12px; margin-top: 16px;';
+      messageDiv.style.cssText = 'text-align: center; padding: 30px 20px; background: linear-gradient(135deg, #e8f5e9, #f0f4f8); border-radius: 12px; margin-top: 0;';
       messageDiv.innerHTML = `
-        <div style="font-size: 32px; margin-bottom: 8px;">✅</div>
-        <div style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 4px;">License Activated</div>
-        <div style="font-size: 12px; color: #666; line-height: 1.5;">
-          Go to Google Maps and use the floating window to extract leads.
+        <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
+        <div style="font-size: 16px; font-weight: 700; color: #2e7d32; margin-bottom: 8px;">License Activated!</div>
+        <div style="font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 12px;">
+          Your license is active and ready to use.
+        </div>
+        <div style="font-size: 12px; color: #666; background: white; padding: 12px; border-radius: 8px; border-left: 3px solid #4285f4;">
+          <strong>📍 Go to Google Maps</strong><br>
+          Use the floating window to extract leads
         </div>
       `;
       mainContent.appendChild(messageDiv);
