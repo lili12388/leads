@@ -80,30 +80,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     try {
-      const isValid = await licenseClient.init();
-      if (isValid) {
+      // First check if we have a token at all
+      const stored = await chrome.storage.local.get(['__maps_ext_token__']);
+      if (!stored.__maps_ext_token__) {
+        showLicenseScreen();
+        return false;
+      }
+      
+      // Always do a server validation when popup opens (useCache = false)
+      const result = await licenseClient.validate(false);
+      
+      if (result.valid) {
         const info = await licenseClient.getLicenseInfo();
-        // Save valid license state
         await chrome.storage.local.set({ licenseActivated: true });
         showMainContent(info);
-        // Start periodic validation to check for revocation
         startLicenseValidation();
         return true;
       } else {
-        // Only show lock screen if no token at all
-        const stored = await chrome.storage.local.get(['__maps_ext_token__']);
-        if (!stored.__maps_ext_token__) {
-          showLicenseScreen();
-          return false;
-        }
-        // Has token but init failed - might be network issue, show main content
+        // License is invalid/revoked
+        await chrome.storage.local.set({ licenseActivated: false });
+        const errorMsg = result.message || 'License validation failed. Please re-activate.';
+        showLicenseScreen(errorMsg);
+        return false;
+      }
+    } catch (e) {
+      console.error('License check error:', e);
+      // Network error - check if we have cached data
+      const stored = await chrome.storage.local.get(['licenseActivated']);
+      if (stored.licenseActivated) {
+        // Was previously valid, show main content (grace period)
         const info = await licenseClient.getLicenseInfo();
         showMainContent(info);
         return true;
       }
-    } catch (e) {
-      console.error('License check error:', e);
-      // Don't lock out on errors - might be network issue
       showLicenseScreen();
       return false;
     }
