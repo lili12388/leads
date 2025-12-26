@@ -20,6 +20,7 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
   const [form, setForm] = useState({ plan: 'lifetime', max_activations: 1, expires_days: 0, customer_email: '', customer_name: '', notes: '' });
   const [editingMaxActivations, setEditingMaxActivations] = useState<string | null>(null);
   const [newMaxActivations, setNewMaxActivations] = useState<number>(1);
+  const [copiedLicenseId, setCopiedLicenseId] = useState<string | null>(null);
 
   function buildCreatePayload() {
     const maxActivations = Number(form.max_activations);
@@ -325,13 +326,14 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
                               try {
                                 const toCopy = ephemeralKeys[lic.id] || lic.license_key_plaintext;
                                 await navigator.clipboard.writeText(String(toCopy));
-                                alert('License key copied!');
+                                setCopiedLicenseId(lic.id);
+                                setTimeout(() => setCopiedLicenseId(null), 2000);
                               } catch (e) {
-                                alert('Copy failed');
+                                // Copy failed silently
                               }
                             }}
-                            style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 11 }}
-                          >Copy</button>
+                            style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #e5e7eb', background: copiedLicenseId === lic.id ? '#22c55e' : '#fff', color: copiedLicenseId === lic.id ? '#fff' : '#000', cursor: 'pointer', fontSize: 11, transition: 'all 0.2s' }}
+                          >{copiedLicenseId === lic.id ? 'Copied!' : 'Copy'}</button>
                         )}
                       </div>
                     </td>
@@ -634,9 +636,9 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
                   try {
                     await navigator.clipboard.writeText(String(newLicenseKey));
                     setCopiedKey(true);
-                    alert('License key copied to clipboard');
+                    setTimeout(() => setCopiedKey(false), 2000);
                   } catch (e) {
-                    alert('Copy failed');
+                    // Copy failed silently
                   }
                 }}
                 style={{
