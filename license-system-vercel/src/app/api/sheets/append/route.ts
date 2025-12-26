@@ -163,18 +163,26 @@ export async function POST(request: NextRequest) {
     // Ensure header row exists
     await ensureHeaderRow(sheets, sheetId, tabName);
     
+    // Helper to format phone numbers (prefix with ' to prevent formula parsing)
+    const formatPhone = (phone: string) => {
+      if (!phone) return '';
+      // Prefix with single quote to force text interpretation in Google Sheets
+      return phone.startsWith('+') ? `'${phone}` : phone;
+    };
+    
     // Convert leads to rows (no dedup - extension already handles it)
+    // Only website shows "NOT FOUND", other empty fields are blank
     const rows = leads.map((lead: any) => [
-      lead.name || 'NOT FOUND',
-      lead.phone || 'NOT FOUND',
-      lead.email || 'NOT FOUND',
+      lead.name || '',
+      formatPhone(lead.phone || ''),
+      lead.email || '',
       lead.website || 'NOT FOUND',
-      lead.address || 'NOT FOUND',
-      lead.instagram || 'NOT FOUND',
-      lead.facebook || 'NOT FOUND',
-      lead.category || 'NOT FOUND',
-      lead.reviewCount?.toString() || 'NOT FOUND',
-      lead.averageRating?.toString() || 'NOT FOUND',
+      lead.address || '',
+      lead.instagram || '',
+      lead.facebook || '',
+      lead.category || '',
+      lead.reviewCount?.toString() || '',
+      lead.averageRating?.toString() || '',
     ]);
     
     // Append rows to sheet
