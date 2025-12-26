@@ -242,8 +242,8 @@
         await new Promise(r => setTimeout(r, 500));
       }
       
-      // Random delay between 150-350ms for satisfying visual flow
-      const delay = 150 + Math.random() * 200;
+      // Random delay between 80-150ms for fast, impressive visual flow
+      const delay = 80 + Math.random() * 70;
       await new Promise(r => setTimeout(r, delay));
     }
     
