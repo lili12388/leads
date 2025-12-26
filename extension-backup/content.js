@@ -15,6 +15,247 @@
   let hasReceivedSearchData = false; // Track if we've received fresh search data since clicking Start/Always On
   
   // ============================================
+  // GOOGLE SHEETS LIVE SYNC
+  // ============================================
+  
+  const SHEETS_API_URL = 'https://gle3-git-main-rimenehmaid-3753s-projects.vercel.app/api/sheets/append';
+  const SHEETS_TEST_URL = 'https://gle3-git-main-rimenehmaid-3753s-projects.vercel.app/api/sheets/test';
+  const SHEETS_API_KEY = 'demo-sheets-key-2025';
+  
+  let sheetsQueue = [];           // Queue of leads to send
+  let sheetsSyncEnabled = false;  // Is live sync enabled
+  let sheetsSyncInterval = null;  // Interval for batch sending
+  let sheetsConfig = {
+    sheetId: '',
+    tabName: 'Leads'
+  };
+  let sheetsStats = {
+    totalSent: 0,
+    duplicatesSkipped: 0,
+    lastSyncTime: null,
+    lastError: null,
+    isConnected: false
+  };
+  let sentLeadKeys = new Set();   // Track what we've already sent (for client-side dedup)
+  
+  // Load sheets config from storage
+  async function loadSheetsConfig() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['sheetsConfig', 'sheetsSyncEnabled'], (result) => {
+        if (result.sheetsConfig) {
+          sheetsConfig = result.sheetsConfig;
+        }
+        sheetsSyncEnabled = result.sheetsSyncEnabled === true;
+        resolve();
+      });
+    });
+  }
+  
+  // Save sheets config to storage
+  async function saveSheetsConfig() {
+    await chrome.storage.local.set({ 
+      sheetsConfig: sheetsConfig,
+      sheetsSyncEnabled: sheetsSyncEnabled
+    });
+  }
+  
+  // Parse Sheet ID from URL or raw ID
+  function parseSheetId(input) {
+    if (!input) return '';
+    // If it's a full URL, extract the ID
+    const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (match) return match[1];
+    // Otherwise assume it's already an ID
+    return input.trim();
+  }
+  
+  // Create dedup key for a lead
+  function createLeadDedupKey(lead) {
+    const website = (lead.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').split('/')[0];
+    if (website && website !== 'no website found') return `web:${website}`;
+    
+    const phone = (lead.phone || '').replace(/\D/g, '');
+    if (phone) return `phone:${phone}`;
+    
+    return `name:${(lead.name || '').toLowerCase()}|${(lead.address || '').toLowerCase()}`;
+  }
+  
+  // Add lead to sync queue
+  function queueLeadForSync(lead) {
+    if (!sheetsSyncEnabled || !sheetsConfig.sheetId) return;
+    
+    // Client-side dedup
+    const key = createLeadDedupKey(lead);
+    if (sentLeadKeys.has(key)) return;
+    
+    sheetsQueue.push({
+      name: lead.name || '',
+      phone: lead.phone || '',
+      email: '',
+      website: lead.website || '',
+      address: lead.address || '',
+      instagram: lead.instagram || '',
+      facebook: lead.facebook || '',
+      category: lead.category || '',
+      reviewCount: lead.review_count || '',
+      averageRating: lead.rating || ''
+    });
+    
+    sentLeadKeys.add(key);
+    updateSheetsStatusUI();
+  }
+  
+  // Send batch to Google Sheets
+  async function sendBatchToSheets() {
+    if (sheetsQueue.length === 0) return;
+    
+    const batch = sheetsQueue.splice(0, 10); // Send up to 10 at a time
+    
+    try {
+      const response = await fetch(SHEETS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': SHEETS_API_KEY
+        },
+        body: JSON.stringify({
+          sheetId: sheetsConfig.sheetId,
+          tabName: sheetsConfig.tabName || 'Leads',
+          leads: batch
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.ok) {
+        sheetsStats.totalSent += data.appended;
+        sheetsStats.duplicatesSkipped += data.skipped_duplicates;
+        sheetsStats.lastSyncTime = new Date();
+        sheetsStats.lastError = null;
+        sheetsStats.isConnected = true;
+      } else {
+        // Put back in queue on error
+        sheetsQueue.unshift(...batch);
+        sheetsStats.lastError = data.error || 'Unknown error';
+      }
+    } catch (error) {
+      // Put back in queue on network error
+      sheetsQueue.unshift(...batch);
+      sheetsStats.lastError = 'Network error: ' + error.message;
+    }
+    
+    updateSheetsStatusUI();
+  }
+  
+  // Start/stop sync interval
+  function startSheetsSync() {
+    if (sheetsSyncInterval) return;
+    sheetsSyncInterval = setInterval(sendBatchToSheets, 2000); // Every 2 seconds
+  }
+  
+  function stopSheetsSync() {
+    if (sheetsSyncInterval) {
+      clearInterval(sheetsSyncInterval);
+      sheetsSyncInterval = null;
+    }
+  }
+  
+  // Test connection to sheet
+  async function testSheetsConnection() {
+    const statusEl = document.getElementById('gme-sheets-status');
+    if (statusEl) statusEl.textContent = '⏳ Testing...';
+    
+    try {
+      const response = await fetch(SHEETS_TEST_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': SHEETS_API_KEY
+        },
+        body: JSON.stringify({
+          sheetId: sheetsConfig.sheetId,
+          tabName: sheetsConfig.tabName || 'Leads'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.ok) {
+        sheetsStats.isConnected = true;
+        sheetsStats.lastError = null;
+        if (statusEl) statusEl.innerHTML = '✅ Connected to: <strong>' + data.sheetTitle + '</strong>';
+        return true;
+      } else {
+        sheetsStats.isConnected = false;
+        sheetsStats.lastError = data.error;
+        if (statusEl) statusEl.textContent = '❌ ' + data.error;
+        return false;
+      }
+    } catch (error) {
+      sheetsStats.isConnected = false;
+      sheetsStats.lastError = error.message;
+      if (statusEl) statusEl.textContent = '❌ Network error';
+      return false;
+    }
+  }
+  
+  // Update sheets status UI
+  function updateSheetsStatusUI() {
+    const statusEl = document.getElementById('gme-sheets-status');
+    const queueEl = document.getElementById('gme-sheets-queue');
+    
+    if (statusEl && sheetsStats.isConnected) {
+      let text = '✅ ' + sheetsStats.totalSent + ' synced';
+      if (sheetsStats.duplicatesSkipped > 0) {
+        text += ' | ' + sheetsStats.duplicatesSkipped + ' dupes skipped';
+      }
+      if (sheetsStats.lastSyncTime) {
+        const ago = Math.round((Date.now() - sheetsStats.lastSyncTime.getTime()) / 1000);
+        if (ago < 60) text += ' | ' + ago + 's ago';
+      }
+      statusEl.textContent = text;
+    }
+    
+    if (queueEl) {
+      queueEl.textContent = sheetsQueue.length > 0 ? '(' + sheetsQueue.length + ' pending)' : '';
+    }
+  }
+  
+  // Toggle live sync
+  async function toggleSheetsSync() {
+    const toggle = document.getElementById('gme-sheets-toggle');
+    sheetsSyncEnabled = toggle ? toggle.checked : false;
+    
+    if (sheetsSyncEnabled) {
+      // Validate sheet ID first
+      const inputEl = document.getElementById('gme-sheets-id');
+      if (inputEl) {
+        sheetsConfig.sheetId = parseSheetId(inputEl.value);
+      }
+      
+      if (!sheetsConfig.sheetId) {
+        alert('Please enter a Google Sheet URL or ID');
+        if (toggle) toggle.checked = false;
+        sheetsSyncEnabled = false;
+        return;
+      }
+      
+      // Test connection
+      const connected = await testSheetsConnection();
+      if (connected) {
+        startSheetsSync();
+        await saveSheetsConfig();
+      } else {
+        if (toggle) toggle.checked = false;
+        sheetsSyncEnabled = false;
+      }
+    } else {
+      stopSheetsSync();
+      await saveSheetsConfig();
+    }
+  }
+  
+  // ============================================
   // LICENSE CHECK
   // ============================================
   
@@ -59,7 +300,7 @@
     }
     
     // Also show a toast notification
-    showToast('🔄 Click "Search this area" button to avoid missing leads!', 5000);
+    showToast('🔄 Click "Search this area" button to avoid missing leads! ↘↘↘', 5000);
   }
   
   function showToast(message, duration = 3000) {
@@ -207,6 +448,23 @@
           <button class="gme-btn gme-btn-success" id="gme-export-btn">📥 Export CSV</button>
           <!-- <button class="gme-btn gme-btn-sheets" id="gme-sheets-btn">📊 Export to Google Sheets</button> -->
           <button class="gme-btn gme-btn-secondary" id="gme-clear-btn">🗑 Clear</button>
+          
+          <div class="gme-sheets-section">
+            <div class="gme-sheets-header">📊 Live Google Sheets Sync</div>
+            <div class="gme-sheets-input-row">
+              <input type="text" id="gme-sheets-id" placeholder="Paste Google Sheet URL or ID" class="gme-input">
+            </div>
+            <div class="gme-sheets-controls">
+              <button class="gme-btn gme-btn-small" id="gme-sheets-test">🔌 Test</button>
+              <label class="gme-toggle">
+                <input type="checkbox" id="gme-sheets-toggle">
+                <span class="gme-toggle-label">Enable Live Sync</span>
+              </label>
+            </div>
+            <div class="gme-sheets-status" id="gme-sheets-status">Not connected</div>
+            <span class="gme-sheets-queue" id="gme-sheets-queue"></span>
+          </div>
+          
           <div class="gme-options">
             <label class="gme-checkbox">
               <input type="checkbox" id="gme-auto-scroll" checked>
@@ -236,6 +494,36 @@
     panel.querySelector('#gme-export-btn').addEventListener('click', exportCSV);
     // panel.querySelector('#gme-sheets-btn').addEventListener('click', exportToGoogleSheets);
     panel.querySelector('#gme-clear-btn').addEventListener('click', clearData);
+    
+    // Google Sheets sync listeners
+    panel.querySelector('#gme-sheets-test').addEventListener('click', async () => {
+      const inputEl = document.getElementById('gme-sheets-id');
+      if (inputEl) {
+        sheetsConfig.sheetId = parseSheetId(inputEl.value);
+      }
+      if (!sheetsConfig.sheetId) {
+        alert('Please enter a Google Sheet URL or ID');
+        return;
+      }
+      await testSheetsConnection();
+    });
+    
+    panel.querySelector('#gme-sheets-toggle').addEventListener('change', toggleSheetsSync);
+    
+    // Load saved sheets config
+    loadSheetsConfig().then(() => {
+      const inputEl = document.getElementById('gme-sheets-id');
+      const toggleEl = document.getElementById('gme-sheets-toggle');
+      if (inputEl && sheetsConfig.sheetId) {
+        inputEl.value = sheetsConfig.sheetId;
+      }
+      if (toggleEl && sheetsSyncEnabled) {
+        toggleEl.checked = true;
+        testSheetsConnection().then(connected => {
+          if (connected) startSheetsSync();
+        });
+      }
+    });
   }
   
   function makeDraggable(element) {
@@ -438,6 +726,9 @@
             if (!extractedLeads.has(key)) {
               extractedLeads.set(key, lead);
               newCount++;
+              
+              // Queue for Google Sheets sync
+              queueLeadForSync(lead);
               
               var phoneIcon = phone ? " 📞" : "";
               var webIcon = hasWebsite ? " 🌐" : "";

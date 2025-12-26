@@ -362,6 +362,96 @@
   text-decoration: underline;
 }
 
+/* Google Sheets Sync Section */
+#gme-floating-panel .gme-sheets-section {
+  margin-top: 12px;
+  padding: 10px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+  border-radius: 8px;
+  border: 1px solid #c8e6c9;
+}
+
+#gme-floating-panel .gme-sheets-header {
+  font-weight: 600;
+  font-size: 12px;
+  color: #2e7d32;
+  margin-bottom: 8px;
+}
+
+#gme-floating-panel .gme-sheets-input-row {
+  margin-bottom: 8px;
+}
+
+#gme-floating-panel .gme-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #c8e6c9;
+  border-radius: 6px;
+  font-size: 11px;
+  box-sizing: border-box;
+  background: white;
+}
+
+#gme-floating-panel .gme-input:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+#gme-floating-panel .gme-sheets-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+#gme-floating-panel .gme-btn-small {
+  padding: 5px 10px;
+  font-size: 11px;
+  border-radius: 4px;
+  border: 1px solid #4caf50;
+  background: white;
+  color: #4caf50;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+#gme-floating-panel .gme-btn-small:hover {
+  background: #4caf50;
+  color: white;
+}
+
+#gme-floating-panel .gme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+#gme-floating-panel .gme-toggle input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+#gme-floating-panel .gme-toggle-label {
+  font-size: 11px;
+  color: #333;
+  font-weight: 500;
+}
+
+#gme-floating-panel .gme-sheets-status {
+  font-size: 11px;
+  color: #666;
+  padding: 4px 0;
+}
+
+#gme-floating-panel .gme-sheets-queue {
+  font-size: 10px;
+  color: #999;
+  margin-left: 6px;
+}
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-8px); }
