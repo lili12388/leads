@@ -137,48 +137,6 @@ async function ensureHeaderRow(sheets: any, spreadsheetId: string, tabName: stri
   }
 }
 
-// Get existing data for deduplication
-async function getExistingData(sheets: any, spreadsheetId: string, tabName: string) {
-  try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: `${tabName}!A:J`,
-    });
-    
-    return response.data.values || [];
-  } catch (error) {
-    return [];
-  }
-}
-
-// Normalize domain for deduplication
-function normalizeDomain(url: string): string {
-  if (!url) return '';
-  try {
-    let domain = url.toLowerCase()
-      .replace(/^https?:\/\//, '')
-      .replace(/^www\./, '')
-      .replace(/\/$/, '')
-      .split('/')[0];
-    return domain;
-  } catch {
-    return url.toLowerCase();
-  }
-}
-
-// Create dedup key
-function createDedupKey(lead: any): string {
-  const website = normalizeDomain(lead.website);
-  const invalidWebsites = ['not found', 'no website found', ''];
-  if (website && !invalidWebsites.includes(website)) return `web:${website}`;
-  
-  const phone = (lead.phone || '').replace(/\D/g, '');
-  if (phone) return `phone:${phone}`;
-  
-  const nameAddr = `${(lead.name || '').toLowerCase()}|${(lead.address || '').toLowerCase()}`;
-  return `name:${nameAddr}`;
-}
-
 export async function POST(request: NextRequest) {
   try {
     // Check API key
@@ -205,47 +163,8 @@ export async function POST(request: NextRequest) {
     // Ensure header row exists
     await ensureHeaderRow(sheets, sheetId, tabName);
     
-    // Get existing data for deduplication
-    const existingData = await getExistingData(sheets, sheetId, tabName);
-    const existingKeys = new Set<string>();
-    
-    // Build set of existing keys (skip header row)
-    for (let i = 1; i < existingData.length; i++) {
-      const row = existingData[i];
-      if (row && row.length > 0) {
-        const key = createDedupKey({
-          name: row[0],
-          phone: row[1],
-          website: row[3],
-          address: row[4],
-        });
-        existingKeys.add(key);
-      }
-    }
-    
-    // Filter out duplicates
-    const newLeads: any[] = [];
-    let skippedDuplicates = 0;
-    
-    for (const lead of leads) {
-      const key = createDedupKey(lead);
-      if (existingKeys.has(key)) {
-        skippedDuplicates++;
-      } else {
-        existingKeys.add(key); // Prevent duplicates within same batch
-        newLeads.push(lead);
-      }
-    }
-    
-    if (newLeads.length === 0) {
-      return NextResponse.json(
-        { ok: true, appended: 0, skipped_duplicates: skippedDuplicates },
-        { headers: corsHeaders }
-      );
-    }
-    
-    // Convert leads to rows
-    const rows = newLeads.map(lead => [
+    // Convert leads to rows (no dedup - extension already handles it)
+    const rows = leads.map((lead: any) => [
       lead.name || 'NOT FOUND',
       lead.phone || 'NOT FOUND',
       lead.email || 'NOT FOUND',
@@ -270,7 +189,7 @@ export async function POST(request: NextRequest) {
     });
     
     return NextResponse.json(
-      { ok: true, appended: newLeads.length, skipped_duplicates: skippedDuplicates },
+      { ok: true, appended: leads.length },
       { headers: corsHeaders }
     );
     

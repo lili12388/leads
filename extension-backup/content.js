@@ -200,59 +200,11 @@
     }
   }
   
-  // Update sheets status UI
+  // Update sheets status UI (elements may not exist if UI is in popup)
   function updateSheetsStatusUI() {
-    const statusEl = document.getElementById('gme-sheets-status');
-    const queueEl = document.getElementById('gme-sheets-queue');
-    
-    if (statusEl && sheetsStats.isConnected) {
-      let text = '✅ ' + sheetsStats.totalSent + ' synced';
-      if (sheetsStats.duplicatesSkipped > 0) {
-        text += ' | ' + sheetsStats.duplicatesSkipped + ' dupes skipped';
-      }
-      if (sheetsStats.lastSyncTime) {
-        const ago = Math.round((Date.now() - sheetsStats.lastSyncTime.getTime()) / 1000);
-        if (ago < 60) text += ' | ' + ago + 's ago';
-      }
-      statusEl.textContent = text;
-    }
-    
-    if (queueEl) {
-      queueEl.textContent = sheetsQueue.length > 0 ? '(' + sheetsQueue.length + ' pending)' : '';
-    }
-  }
-  
-  // Toggle live sync
-  async function toggleSheetsSync() {
-    const toggle = document.getElementById('gme-sheets-toggle');
-    sheetsSyncEnabled = toggle ? toggle.checked : false;
-    
-    if (sheetsSyncEnabled) {
-      // Validate sheet ID first
-      const inputEl = document.getElementById('gme-sheets-id');
-      if (inputEl) {
-        sheetsConfig.sheetId = parseSheetId(inputEl.value);
-      }
-      
-      if (!sheetsConfig.sheetId) {
-        alert('Please enter a Google Sheet URL or ID');
-        if (toggle) toggle.checked = false;
-        sheetsSyncEnabled = false;
-        return;
-      }
-      
-      // Test connection
-      const connected = await testSheetsConnection();
-      if (connected) {
-        startSheetsSync();
-        await saveSheetsConfig();
-      } else {
-        if (toggle) toggle.checked = false;
-        sheetsSyncEnabled = false;
-      }
-    } else {
-      stopSheetsSync();
-      await saveSheetsConfig();
+    // Status is shown in popup, but we log for debugging
+    if (sheetsStats.isConnected && sheetsStats.totalSent > 0) {
+      console.log('📊 Sheets sync: ' + sheetsStats.totalSent + ' sent, ' + sheetsQueue.length + ' pending');
     }
   }
   
@@ -269,16 +221,39 @@
     });
   }
   
-  // Listen for license status changes from popup
+  // Listen for license and sheets config changes from popup
   chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local' && changes.licenseActivated) {
-      isLicenseValid = changes.licenseActivated.newValue === true;
-      // Remove and recreate panel with new state
-      const panel = document.getElementById('gme-floating-panel');
-      if (panel) panel.remove();
-      createFloatingPanel();
-      if (isLicenseValid) {
-        setupSearchListeners();
+    if (namespace === 'local') {
+      // License changed
+      if (changes.licenseActivated) {
+        isLicenseValid = changes.licenseActivated.newValue === true;
+        // Remove and recreate panel with new state
+        const panel = document.getElementById('gme-floating-panel');
+        if (panel) panel.remove();
+        createFloatingPanel();
+        if (isLicenseValid) {
+          setupSearchListeners();
+        }
+      }
+      
+      // Sheets config changed (from popup)
+      if (changes.sheetsSyncEnabled !== undefined) {
+        sheetsSyncEnabled = changes.sheetsSyncEnabled.newValue === true;
+        if (sheetsSyncEnabled) {
+          loadSheetsConfig().then(() => {
+            if (sheetsConfig.sheetId) {
+              testSheetsConnection().then(connected => {
+                if (connected) startSheetsSync();
+              });
+            }
+          });
+        } else {
+          stopSheetsSync();
+        }
+      }
+      
+      if (changes.sheetsConfig) {
+        sheetsConfig = changes.sheetsConfig.newValue || { sheetId: '', tabName: 'Leads' };
       }
     }
   });
@@ -450,22 +425,6 @@
           <!-- <button class="gme-btn gme-btn-sheets" id="gme-sheets-btn">📊 Export to Google Sheets</button> -->
           <button class="gme-btn gme-btn-secondary" id="gme-clear-btn">🗑 Clear</button>
           
-          <div class="gme-sheets-section">
-            <div class="gme-sheets-header">📊 Live Google Sheets Sync</div>
-            <div class="gme-sheets-input-row">
-              <input type="text" id="gme-sheets-id" placeholder="Paste Google Sheet URL or ID" class="gme-input">
-            </div>
-            <div class="gme-sheets-controls">
-              <button class="gme-btn gme-btn-small" id="gme-sheets-test">🔌 Test</button>
-              <label class="gme-toggle">
-                <input type="checkbox" id="gme-sheets-toggle">
-                <span class="gme-toggle-label">Enable Live Sync</span>
-              </label>
-            </div>
-            <div class="gme-sheets-status" id="gme-sheets-status">Not connected</div>
-            <span class="gme-sheets-queue" id="gme-sheets-queue"></span>
-          </div>
-          
           <div class="gme-options">
             <label class="gme-checkbox">
               <input type="checkbox" id="gme-auto-scroll" checked>
@@ -496,30 +455,9 @@
     // panel.querySelector('#gme-sheets-btn').addEventListener('click', exportToGoogleSheets);
     panel.querySelector('#gme-clear-btn').addEventListener('click', clearData);
     
-    // Google Sheets sync listeners
-    panel.querySelector('#gme-sheets-test').addEventListener('click', async () => {
-      const inputEl = document.getElementById('gme-sheets-id');
-      if (inputEl) {
-        sheetsConfig.sheetId = parseSheetId(inputEl.value);
-      }
-      if (!sheetsConfig.sheetId) {
-        alert('Please enter a Google Sheet URL or ID');
-        return;
-      }
-      await testSheetsConnection();
-    });
-    
-    panel.querySelector('#gme-sheets-toggle').addEventListener('change', toggleSheetsSync);
-    
-    // Load saved sheets config
+    // Load sheets config (sync is still controlled from popup, but content.js needs config for syncing)
     loadSheetsConfig().then(() => {
-      const inputEl = document.getElementById('gme-sheets-id');
-      const toggleEl = document.getElementById('gme-sheets-toggle');
-      if (inputEl && sheetsConfig.sheetId) {
-        inputEl.value = sheetsConfig.sheetId;
-      }
-      if (toggleEl && sheetsSyncEnabled) {
-        toggleEl.checked = true;
+      if (sheetsSyncEnabled && sheetsConfig.sheetId) {
         testSheetsConnection().then(connected => {
           if (connected) startSheetsSync();
         });

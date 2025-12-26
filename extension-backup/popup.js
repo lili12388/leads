@@ -138,6 +138,156 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   
+  // ============================================
+  // GOOGLE SHEETS SYNC (in popup)
+  // ============================================
+  
+  const SHEETS_API_URL = 'https://gle3-git-main-rimenehmaid-3753s-projects.vercel.app/api/sheets/append';
+  const SHEETS_TEST_URL = 'https://gle3-git-main-rimenehmaid-3753s-projects.vercel.app/api/sheets/test';
+  const SHEETS_API_KEY = 'demo-sheets-key-2025';
+  
+  let sheetsConfig = { sheetId: '', tabName: 'Leads' };
+  let sheetsSyncEnabled = false;
+  
+  // Parse Sheet ID from URL or raw ID
+  function parseSheetId(input) {
+    if (!input) return '';
+    const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (match) return match[1];
+    return input.trim();
+  }
+  
+  // Load sheets config from storage
+  async function loadSheetsConfig() {
+    const result = await chrome.storage.local.get(['sheetsConfig', 'sheetsSyncEnabled']);
+    if (result.sheetsConfig) {
+      sheetsConfig = result.sheetsConfig;
+    }
+    sheetsSyncEnabled = result.sheetsSyncEnabled === true;
+    
+    // Update UI
+    const inputEl = document.getElementById('sheets-url');
+    const toggleEl = document.getElementById('sheets-toggle');
+    if (inputEl && sheetsConfig.sheetId) {
+      inputEl.value = sheetsConfig.sheetId;
+    }
+    if (toggleEl) {
+      toggleEl.checked = sheetsSyncEnabled;
+    }
+    
+    // If enabled, test connection
+    if (sheetsSyncEnabled && sheetsConfig.sheetId) {
+      testSheetsConnection();
+    }
+  }
+  
+  // Save sheets config to storage
+  async function saveSheetsConfig() {
+    await chrome.storage.local.set({ 
+      sheetsConfig: sheetsConfig,
+      sheetsSyncEnabled: sheetsSyncEnabled
+    });
+  }
+  
+  // Test connection to sheet
+  async function testSheetsConnection() {
+    const statusEl = document.getElementById('sheets-status');
+    if (statusEl) statusEl.textContent = '⏳ Testing...';
+    
+    try {
+      const response = await fetch(SHEETS_TEST_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': SHEETS_API_KEY
+        },
+        body: JSON.stringify({
+          sheetId: sheetsConfig.sheetId,
+          tabName: sheetsConfig.tabName || 'Leads'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.ok) {
+        if (statusEl) statusEl.innerHTML = '✅ Connected to: <strong>' + data.sheetTitle + '</strong>';
+        return true;
+      } else {
+        if (statusEl) statusEl.textContent = '❌ ' + data.error;
+        return false;
+      }
+    } catch (error) {
+      if (statusEl) statusEl.textContent = '❌ Network error';
+      return false;
+    }
+  }
+  
+  // Toggle live sync
+  async function toggleSheetsSync() {
+    const toggle = document.getElementById('sheets-toggle');
+    const inputEl = document.getElementById('sheets-url');
+    
+    sheetsSyncEnabled = toggle ? toggle.checked : false;
+    
+    if (sheetsSyncEnabled) {
+      // Validate sheet ID first
+      if (inputEl) {
+        sheetsConfig.sheetId = parseSheetId(inputEl.value);
+      }
+      
+      if (!sheetsConfig.sheetId) {
+        alert('Please enter a Google Sheet URL or ID');
+        if (toggle) toggle.checked = false;
+        sheetsSyncEnabled = false;
+        return;
+      }
+      
+      // Test connection
+      const connected = await testSheetsConnection();
+      if (connected) {
+        await saveSheetsConfig();
+      } else {
+        if (toggle) toggle.checked = false;
+        sheetsSyncEnabled = false;
+      }
+    } else {
+      await saveSheetsConfig();
+      const statusEl = document.getElementById('sheets-status');
+      if (statusEl) statusEl.textContent = 'Sync disabled';
+    }
+  }
+  
+  // Initialize sheets UI
+  function initSheetsUI() {
+    const testBtn = document.getElementById('sheets-test-btn');
+    const toggleEl = document.getElementById('sheets-toggle');
+    const inputEl = document.getElementById('sheets-url');
+    
+    if (testBtn) {
+      testBtn.addEventListener('click', async () => {
+        if (inputEl) {
+          sheetsConfig.sheetId = parseSheetId(inputEl.value);
+        }
+        if (!sheetsConfig.sheetId) {
+          alert('Please enter a Google Sheet URL or ID');
+          return;
+        }
+        await testSheetsConnection();
+      });
+    }
+    
+    if (toggleEl) {
+      toggleEl.addEventListener('change', toggleSheetsSync);
+    }
+    
+    // Load saved config
+    loadSheetsConfig();
+  }
+  
+  // ============================================
+  // END GOOGLE SHEETS SYNC
+  // ============================================
+  
   // Show main content (licensed)
   function showMainContent(licenseInfo) {
     licenseScreen.classList.remove('active');
@@ -156,7 +306,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
     
-    // REMOVE all action buttons and settings completely - user must use floating window
+    // REMOVE action buttons and settings - user must use floating window for extraction
     const controls = document.querySelector('.controls');
     const settings = document.querySelector('.settings');
     const statusCard = document.querySelector('.status-card');
@@ -165,12 +315,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (settings) settings.remove();
     if (statusCard) statusCard.remove();
     
-    // Show message to use floating window
+    // Show message to use floating window (insert before sheets section)
     let messageDiv = document.getElementById('gme-popup-message');
+    const sheetsSection = document.getElementById('sheets-section');
+    
     if (!messageDiv) {
       messageDiv = document.createElement('div');
       messageDiv.id = 'gme-popup-message';
-      messageDiv.style.cssText = 'text-align: center; padding: 30px 20px; background: linear-gradient(135deg, #e8f5e9, #f0f4f8); border-radius: 12px; margin-top: 0;';
+      messageDiv.style.cssText = 'text-align: center; padding: 24px 16px; background: linear-gradient(135deg, #e8f5e9, #f0f4f8); border-radius: 12px; margin-bottom: 16px;';
       messageDiv.innerHTML = `
         <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
         <div style="font-size: 16px; font-weight: 700; color: #2e7d32; margin-bottom: 8px;">License Activated!</div>
@@ -182,8 +334,17 @@ document.addEventListener('DOMContentLoaded', async () => {
           Use the floating window to extract leads
         </div>
       `;
-      mainContent.appendChild(messageDiv);
+      
+      // Insert before sheets section if it exists
+      if (sheetsSection) {
+        mainContent.insertBefore(messageDiv, sheetsSection);
+      } else {
+        mainContent.appendChild(messageDiv);
+      }
     }
+    
+    // Initialize Google Sheets UI
+    initSheetsUI();
   }
   
   // Handle license activation

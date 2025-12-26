@@ -380,6 +380,92 @@
       color: #4285f4;
       text-decoration: none;
     }
+
+    /* Google Sheets Sync Section */
+    .sheets-section {
+      margin-top: 16px;
+      padding: 12px;
+      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+      border-radius: 10px;
+      border: 1px solid #c8e6c9;
+    }
+
+    .sheets-header {
+      font-weight: 600;
+      font-size: 12px;
+      color: #2e7d32;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sheets-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #c8e6c9;
+      border-radius: 6px;
+      font-size: 11px;
+      box-sizing: border-box;
+      background: white;
+      margin-bottom: 10px;
+    }
+
+    .sheets-input:focus {
+      outline: none;
+      border-color: #4caf50;
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    }
+
+    .sheets-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .sheets-btn-test {
+      padding: 6px 12px;
+      font-size: 11px;
+      border-radius: 5px;
+      border: 1px solid #4caf50;
+      background: white;
+      color: #4caf50;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .sheets-btn-test:hover {
+      background: #4caf50;
+      color: white;
+    }
+
+    .sheets-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .sheets-toggle input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .sheets-toggle-label {
+      font-size: 11px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .sheets-status {
+      font-size: 11px;
+      color: #666;
+      padding: 4px 0;
+      min-height: 16px;
+    }
   </style>
 </head>
 <body>
@@ -479,6 +565,20 @@
         <strong>🎯 Lead Qualifier:</strong> Detects businesses without websites - your prime prospects!<br>
         <strong>⚡ Turbo:</strong> Name, Phone, Address, Rating, Reviews from list view
       </div>
+    </div>
+
+    <!-- Google Sheets Sync Section -->
+    <div class="sheets-section" id="sheets-section">
+      <div class="sheets-header">📊 Live Google Sheets Sync</div>
+      <input type="text" id="sheets-url" class="sheets-input" placeholder="Paste Google Sheet URL or ID">
+      <div class="sheets-controls">
+        <button class="sheets-btn-test" id="sheets-test-btn">🔌 Test</button>
+        <label class="sheets-toggle">
+          <input type="checkbox" id="sheets-toggle">
+          <span class="sheets-toggle-label">Enable Live Sync</span>
+        </label>
+      </div>
+      <div class="sheets-status" id="sheets-status">Not connected</div>
     </div>
   </div>
   
