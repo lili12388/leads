@@ -24,6 +24,7 @@
   
   let sheetsQueue = [];           // Queue of leads to send
   let sheetsSyncEnabled = false;  // Is live sync enabled
+  let sheetsSyncNoWebsiteOnly = false; // Only sync leads without websites
   let sheetsSyncInterval = null;  // Interval for batch sending
   let sheetsConfig = {
     sheetId: '',
@@ -41,11 +42,12 @@
   // Load sheets config from storage
   async function loadSheetsConfig() {
     return new Promise((resolve) => {
-      chrome.storage.local.get(['sheetsConfig', 'sheetsSyncEnabled'], (result) => {
+      chrome.storage.local.get(['sheetsConfig', 'sheetsSyncEnabled', 'sheetsSyncNoWebsiteOnly'], (result) => {
         if (result.sheetsConfig) {
           sheetsConfig = result.sheetsConfig;
         }
         sheetsSyncEnabled = result.sheetsSyncEnabled === true;
+        sheetsSyncNoWebsiteOnly = result.sheetsSyncNoWebsiteOnly === true;
         resolve();
       });
     });
@@ -84,6 +86,14 @@
   // Add lead to sync queue
   function queueLeadForSync(lead) {
     if (!sheetsSyncEnabled || !sheetsConfig.sheetId) return;
+    
+    // Check if we should only sync leads without websites
+    if (sheetsSyncNoWebsiteOnly) {
+      const website = (lead.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').trim();
+      const invalidWebsites = ['not found', 'no website found', 'n/a', ''];
+      const hasValidWebsite = website && !invalidWebsites.includes(website);
+      if (hasValidWebsite) return; // Skip leads with websites
+    }
     
     // Client-side dedup
     const key = createLeadDedupKey(lead);
@@ -254,6 +264,10 @@
       
       if (changes.sheetsConfig) {
         sheetsConfig = changes.sheetsConfig.newValue || { sheetId: '', tabName: 'Leads' };
+      }
+      
+      if (changes.sheetsSyncNoWebsiteOnly !== undefined) {
+        sheetsSyncNoWebsiteOnly = changes.sheetsSyncNoWebsiteOnly.newValue === true;
       }
     }
   });

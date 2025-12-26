@@ -148,6 +148,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   let sheetsConfig = { sheetId: '', tabName: 'Leads' };
   let sheetsSyncEnabled = false;
+  let sheetsSyncNoWebsiteOnly = false;
   
   // Parse Sheet ID from URL or raw ID
   function parseSheetId(input) {
@@ -159,20 +160,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Load sheets config from storage
   async function loadSheetsConfig() {
-    const result = await chrome.storage.local.get(['sheetsConfig', 'sheetsSyncEnabled']);
+    const result = await chrome.storage.local.get(['sheetsConfig', 'sheetsSyncEnabled', 'sheetsSyncNoWebsiteOnly']);
     if (result.sheetsConfig) {
       sheetsConfig = result.sheetsConfig;
     }
     sheetsSyncEnabled = result.sheetsSyncEnabled === true;
+    sheetsSyncNoWebsiteOnly = result.sheetsSyncNoWebsiteOnly === true;
     
     // Update UI
     const inputEl = document.getElementById('sheets-url');
     const toggleEl = document.getElementById('sheets-toggle');
+    const noWebsiteEl = document.getElementById('sheets-no-website-only');
     if (inputEl && sheetsConfig.sheetId) {
       inputEl.value = sheetsConfig.sheetId;
     }
     if (toggleEl) {
       toggleEl.checked = sheetsSyncEnabled;
+    }
+    if (noWebsiteEl) {
+      noWebsiteEl.checked = sheetsSyncNoWebsiteOnly;
     }
     
     // If enabled, test connection
@@ -185,7 +191,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function saveSheetsConfig() {
     await chrome.storage.local.set({ 
       sheetsConfig: sheetsConfig,
-      sheetsSyncEnabled: sheetsSyncEnabled
+      sheetsSyncEnabled: sheetsSyncEnabled,
+      sheetsSyncNoWebsiteOnly: sheetsSyncNoWebsiteOnly
     });
   }
   
@@ -262,6 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const testBtn = document.getElementById('sheets-test-btn');
     const toggleEl = document.getElementById('sheets-toggle');
     const inputEl = document.getElementById('sheets-url');
+    const noWebsiteEl = document.getElementById('sheets-no-website-only');
     
     if (testBtn) {
       testBtn.addEventListener('click', async () => {
@@ -278,6 +286,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (toggleEl) {
       toggleEl.addEventListener('change', toggleSheetsSync);
+    }
+    
+    if (noWebsiteEl) {
+      noWebsiteEl.addEventListener('change', async () => {
+        sheetsSyncNoWebsiteOnly = noWebsiteEl.checked;
+        await saveSheetsConfig();
+      });
     }
     
     // Load saved config
