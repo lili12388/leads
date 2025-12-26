@@ -72,7 +72,8 @@
   // Create dedup key for a lead
   function createLeadDedupKey(lead) {
     const website = (lead.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').split('/')[0];
-    if (website && website !== 'no website found') return `web:${website}`;
+    const invalidWebsites = ['not found', 'no website found', ''];
+    if (website && !invalidWebsites.includes(website)) return `web:${website}`;
     
     const phone = (lead.phone || '').replace(/\D/g, '');
     if (phone) return `phone:${phone}`;

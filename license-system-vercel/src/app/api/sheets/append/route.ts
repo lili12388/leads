@@ -169,7 +169,8 @@ function normalizeDomain(url: string): string {
 // Create dedup key
 function createDedupKey(lead: any): string {
   const website = normalizeDomain(lead.website);
-  if (website && website !== 'not found') return `web:${website}`;
+  const invalidWebsites = ['not found', 'no website found', ''];
+  if (website && !invalidWebsites.includes(website)) return `web:${website}`;
   
   const phone = (lead.phone || '').replace(/\D/g, '');
   if (phone) return `phone:${phone}`;
