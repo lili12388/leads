@@ -25,7 +25,10 @@
   let sheetsQueue = [];           // Queue of leads to send
   let sheetsSyncEnabled = false;  // Is live sync enabled
   let sheetsSyncNoWebsiteOnly = false; // Only sync leads without websites
+  let sheetsDemoMode = false;     // Demo mode for live streaming effect
   let sheetsSyncInterval = null;  // Interval for batch sending
+  let demoModeActive = false;     // Is demo streaming currently running
+  let demoRateLimited = false;    // Has rate limit been hit
   let sheetsConfig = {
     sheetId: '',
     tabName: 'Leads'
@@ -42,12 +45,13 @@
   // Load sheets config from storage
   async function loadSheetsConfig() {
     return new Promise((resolve) => {
-      chrome.storage.local.get(['sheetsConfig', 'sheetsSyncEnabled', 'sheetsSyncNoWebsiteOnly'], (result) => {
+      chrome.storage.local.get(['sheetsConfig', 'sheetsSyncEnabled', 'sheetsSyncNoWebsiteOnly', 'sheetsDemoMode'], (result) => {
         if (result.sheetsConfig) {
           sheetsConfig = result.sheetsConfig;
         }
         sheetsSyncEnabled = result.sheetsSyncEnabled === true;
         sheetsSyncNoWebsiteOnly = result.sheetsSyncNoWebsiteOnly === true;
+        sheetsDemoMode = result.sheetsDemoMode === true;
         resolve();
       });
     });
@@ -116,9 +120,15 @@
     updateSheetsStatusUI();
   }
   
-  // Send batch to Google Sheets
+  // Send batch to Google Sheets (normal mode: batches of 10)
   async function sendBatchToSheets() {
     if (sheetsQueue.length === 0) return;
+    
+    // If demo mode is on and not rate limited, use streaming instead
+    if (sheetsDemoMode && !demoRateLimited) {
+      startDemoStreaming();
+      return;
+    }
     
     const batch = sheetsQueue.splice(0, 10); // Send up to 10 at a time
     
@@ -140,7 +150,7 @@
       
       if (data.ok) {
         sheetsStats.totalSent += data.appended;
-        sheetsStats.duplicatesSkipped += data.skipped_duplicates;
+        sheetsStats.duplicatesSkipped += data.skipped_duplicates || 0;
         sheetsStats.lastSyncTime = new Date();
         sheetsStats.lastError = null;
         sheetsStats.isConnected = true;
@@ -158,10 +168,95 @@
     updateSheetsStatusUI();
   }
   
+  // Demo mode: send 1-2 leads at a time with fast visual streaming
+  async function sendDemoLead() {
+    if (sheetsQueue.length === 0) return { success: true, empty: true };
+    
+    // Take 1-2 leads for visual effect
+    const batchSize = Math.min(sheetsQueue.length, Math.random() > 0.7 ? 2 : 1);
+    const batch = sheetsQueue.splice(0, batchSize);
+    
+    try {
+      const response = await fetch(SHEETS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': SHEETS_API_KEY
+        },
+        body: JSON.stringify({
+          sheetId: sheetsConfig.sheetId,
+          tabName: sheetsConfig.tabName || 'Leads',
+          leads: batch
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.ok) {
+        sheetsStats.totalSent += data.appended;
+        sheetsStats.lastSyncTime = new Date();
+        sheetsStats.lastError = null;
+        sheetsStats.isConnected = true;
+        updateSheetsStatusUI();
+        return { success: true };
+      } else {
+        // Check for rate limit
+        if (response.status === 429 || data.error?.includes('rate') || data.error?.includes('quota')) {
+          sheetsQueue.unshift(...batch);
+          return { success: false, rateLimited: true };
+        }
+        sheetsQueue.unshift(...batch);
+        sheetsStats.lastError = data.error || 'Unknown error';
+        updateSheetsStatusUI();
+        return { success: false };
+      }
+    } catch (error) {
+      sheetsQueue.unshift(...batch);
+      sheetsStats.lastError = 'Network error';
+      updateSheetsStatusUI();
+      return { success: false };
+    }
+  }
+  
+  // Demo streaming loop - runs async in background
+  async function startDemoStreaming() {
+    if (demoModeActive) return; // Already running
+    demoModeActive = true;
+    demoRateLimited = false;
+    
+    console.log('🎬 Demo mode: Starting live stream...');
+    
+    while (sheetsQueue.length > 0 && sheetsDemoMode && !demoRateLimited) {
+      const result = await sendDemoLead();
+      
+      if (result.rateLimited) {
+        demoRateLimited = true;
+        sheetsStats.lastError = '⚠️ Rate limit - switching to batch mode';
+        updateSheetsStatusUI();
+        console.log('🎬 Demo mode: Rate limited, falling back to batch mode');
+        break;
+      }
+      
+      if (!result.success && !result.empty) {
+        // Small backoff on errors
+        await new Promise(r => setTimeout(r, 500));
+      }
+      
+      // Random delay between 150-350ms for satisfying visual flow
+      const delay = 150 + Math.random() * 200;
+      await new Promise(r => setTimeout(r, delay));
+    }
+    
+    demoModeActive = false;
+  }
+  
   // Start/stop sync interval
   function startSheetsSync() {
     if (sheetsSyncInterval) return;
-    sheetsSyncInterval = setInterval(sendBatchToSheets, 2000); // Every 2 seconds
+    
+    // In demo mode, use faster interval to trigger streaming
+    const interval = sheetsDemoMode ? 500 : 2000;
+    sheetsSyncInterval = setInterval(sendBatchToSheets, interval);
   }
   
   function stopSheetsSync() {
@@ -169,6 +264,7 @@
       clearInterval(sheetsSyncInterval);
       sheetsSyncInterval = null;
     }
+    demoModeActive = false;
   }
   
   // Test connection to sheet
@@ -268,6 +364,16 @@
       
       if (changes.sheetsSyncNoWebsiteOnly !== undefined) {
         sheetsSyncNoWebsiteOnly = changes.sheetsSyncNoWebsiteOnly.newValue === true;
+      }
+      
+      if (changes.sheetsDemoMode !== undefined) {
+        sheetsDemoMode = changes.sheetsDemoMode.newValue === true;
+        demoRateLimited = false; // Reset rate limit flag when mode changes
+        // Restart sync with new interval if enabled
+        if (sheetsSyncEnabled && sheetsConfig.sheetId) {
+          stopSheetsSync();
+          startSheetsSync();
+        }
       }
     }
   });

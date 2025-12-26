@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let sheetsConfig = { sheetId: '', tabName: 'Leads' };
   let sheetsSyncEnabled = false;
   let sheetsSyncNoWebsiteOnly = false;
+  let sheetsDemoMode = false;
   
   // Parse Sheet ID from URL or raw ID
   function parseSheetId(input) {
@@ -160,17 +161,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Load sheets config from storage
   async function loadSheetsConfig() {
-    const result = await chrome.storage.local.get(['sheetsConfig', 'sheetsSyncEnabled', 'sheetsSyncNoWebsiteOnly']);
+    const result = await chrome.storage.local.get(['sheetsConfig', 'sheetsSyncEnabled', 'sheetsSyncNoWebsiteOnly', 'sheetsDemoMode']);
     if (result.sheetsConfig) {
       sheetsConfig = result.sheetsConfig;
     }
     sheetsSyncEnabled = result.sheetsSyncEnabled === true;
     sheetsSyncNoWebsiteOnly = result.sheetsSyncNoWebsiteOnly === true;
+    sheetsDemoMode = result.sheetsDemoMode === true;
     
     // Update UI
     const inputEl = document.getElementById('sheets-url');
     const toggleEl = document.getElementById('sheets-toggle');
     const noWebsiteEl = document.getElementById('sheets-no-website-only');
+    const demoModeEl = document.getElementById('sheets-demo-mode');
     if (inputEl && sheetsConfig.sheetId) {
       inputEl.value = sheetsConfig.sheetId;
     }
@@ -179,6 +182,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (noWebsiteEl) {
       noWebsiteEl.checked = sheetsSyncNoWebsiteOnly;
+    }
+    if (demoModeEl) {
+      demoModeEl.checked = sheetsDemoMode;
     }
     
     // If enabled, test connection
@@ -192,7 +198,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await chrome.storage.local.set({ 
       sheetsConfig: sheetsConfig,
       sheetsSyncEnabled: sheetsSyncEnabled,
-      sheetsSyncNoWebsiteOnly: sheetsSyncNoWebsiteOnly
+      sheetsSyncNoWebsiteOnly: sheetsSyncNoWebsiteOnly,
+      sheetsDemoMode: sheetsDemoMode
     });
   }
   
@@ -270,6 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const toggleEl = document.getElementById('sheets-toggle');
     const inputEl = document.getElementById('sheets-url');
     const noWebsiteEl = document.getElementById('sheets-no-website-only');
+    const demoModeEl = document.getElementById('sheets-demo-mode');
     
     if (testBtn) {
       testBtn.addEventListener('click', async () => {
@@ -291,6 +299,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (noWebsiteEl) {
       noWebsiteEl.addEventListener('change', async () => {
         sheetsSyncNoWebsiteOnly = noWebsiteEl.checked;
+        await saveSheetsConfig();
+      });
+    }
+    
+    if (demoModeEl) {
+      demoModeEl.addEventListener('change', async () => {
+        sheetsDemoMode = demoModeEl.checked;
         await saveSheetsConfig();
       });
     }
