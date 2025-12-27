@@ -548,12 +548,12 @@
           
           <div class="gme-options">
             <label class="gme-checkbox">
-              <input type="checkbox" id="gme-auto-scroll" checked>
-              <span>Auto-scroll for more results</span>
-            </label>
-            <label class="gme-checkbox">
               <input type="checkbox" id="gme-only-no-website">
               <span>Export only leads WITHOUT website</span>
+            </label>
+            <label class="gme-checkbox">
+              <input type="checkbox" id="gme-auto-scroll" checked>
+              <span>Auto-scroll for more results</span>
             </label>
           </div>
         </div>
