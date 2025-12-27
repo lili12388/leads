@@ -528,8 +528,8 @@
             <div class="gme-stat-label">With Phone</div>
           </div>
           <div class="gme-stat">
-            <div class="gme-stat-value orange" id="gme-with-email">0</div>
-            <div class="gme-stat-label">With Email</div>
+            <div class="gme-stat-value orange" id="gme-scrolls">0</div>
+            <div class="gme-stat-label">Scrolls</div>
           </div>
         </div>
         </div>
@@ -971,18 +971,17 @@
     var total = leads.length;
     var withPhone = leads.filter(l => l.phone).length;
     var noWebsite = leads.filter(l => !l.has_website).length;
-    var withEmail = leads.filter(l => l.email).length;
     
     const totalEl = document.getElementById('gme-total');
     const noWebsiteEl = document.getElementById('gme-no-website');
     const withPhoneEl = document.getElementById('gme-with-phone');
-    const withEmailEl = document.getElementById('gme-with-email');
+    const scrollsEl = document.getElementById('gme-scrolls');
     const scrollInfoEl = document.getElementById('gme-scroll-info');
     
     if (totalEl) totalEl.textContent = total;
     if (noWebsiteEl) noWebsiteEl.textContent = noWebsite;
     if (withPhoneEl) withPhoneEl.textContent = withPhone;
-    if (withEmailEl) withEmailEl.textContent = withEmail;
+    if (scrollsEl) scrollsEl.textContent = totalScrollCount;
     if (scrollInfoEl) scrollInfoEl.textContent = totalScrollCount > 0 ? ' • ' + totalScrollCount + ' scrolls' : '';
   }
   
