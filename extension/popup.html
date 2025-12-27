@@ -397,6 +397,7 @@
       margin-bottom: 10px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 6px;
     }
 
@@ -471,6 +472,180 @@
       margin-top: 8px;
       padding-top: 8px;
       border-top: 1px dashed #c8e6c9;
+    }
+
+    /* Help Button */
+    .sheets-help-btn {
+      background: none;
+      border: none;
+      color: #2196f3;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .sheets-help-btn:hover {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    /* Help Modal Overlay */
+    .sheets-help-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .sheets-help-overlay.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Help Modal */
+    .sheets-help-modal {
+      background: white;
+      border-radius: 12px;
+      width: 320px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease;
+    }
+
+    .sheets-help-header {
+      background: linear-gradient(135deg, #4caf50, #2e7d32);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .sheets-help-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sheets-help-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .sheets-help-close:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .sheets-help-content {
+      padding: 20px;
+    }
+
+    .sheets-help-step {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .sheets-help-step:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .sheets-help-num {
+      background: linear-gradient(135deg, #4caf50, #2e7d32);
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .sheets-help-text {
+      font-size: 12px;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    .sheets-help-text strong {
+      color: #2e7d32;
+    }
+
+    .sheets-help-email {
+      background: #f5f5f5;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 10px;
+      color: #333;
+      margin-top: 8px;
+      word-break: break-all;
+      border: 1px dashed #ccc;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sheets-help-email:hover {
+      background: #e8f5e9;
+      border-color: #4caf50;
+    }
+
+    .sheets-help-email::after {
+      content: ' 📋 Click to copy';
+      font-size: 9px;
+      color: #888;
+    }
+
+    .sheets-help-tip {
+      background: #fff3e0;
+      border-left: 3px solid #ff9800;
+      padding: 10px 12px;
+      border-radius: 0 6px 6px 0;
+      margin-top: 12px;
+      font-size: 11px;
+      color: #e65100;
     }
   </style>
 </head>
@@ -575,10 +750,13 @@
 
     <!-- Google Sheets Sync Section -->
     <div class="sheets-section" id="sheets-section">
-      <div class="sheets-header">📊 Live Google Sheets Sync</div>
+      <div class="sheets-header">
+        📊 Live Google Sheets Sync
+        <button class="sheets-help-btn" id="sheets-help-btn">❓ Setup Guide</button>
+      </div>
       <input type="text" id="sheets-url" class="sheets-input" placeholder="Paste Google Sheet URL or ID">
       <div class="sheets-controls">
-        <button class="sheets-btn-test" id="sheets-test-btn">🔌 Test</button>
+        <button class="sheets-btn-test" id="sheets-test-btn">Verify Connection 🔌</button>
         <label class="sheets-toggle">
           <input type="checkbox" id="sheets-toggle">
           <span class="sheets-toggle-label">Enable Live Sync</span>
@@ -597,6 +775,52 @@
         </label>
       </div>
       <div class="sheets-status" id="sheets-status">Not connected</div>
+    </div>
+  </div>
+
+  <!-- Sheets Help Modal -->
+  <div class="sheets-help-overlay" id="sheets-help-overlay">
+    <div class="sheets-help-modal">
+      <div class="sheets-help-header">
+        <div class="sheets-help-title">📊 Connect Your Google Sheet</div>
+        <button class="sheets-help-close" id="sheets-help-close">✕</button>
+      </div>
+      <div class="sheets-help-content">
+        <div class="sheets-help-step">
+          <div class="sheets-help-num">1</div>
+          <div class="sheets-help-text">
+            <strong>Create or open</strong> a Google Sheet where you want your leads saved.
+          </div>
+        </div>
+        <div class="sheets-help-step">
+          <div class="sheets-help-num">2</div>
+          <div class="sheets-help-text">
+            Click the <strong>"Share"</strong> button (top right corner of Google Sheets).
+          </div>
+        </div>
+        <div class="sheets-help-step">
+          <div class="sheets-help-num">3</div>
+          <div class="sheets-help-text">
+            Add this email as an <strong>Editor</strong>:
+            <div class="sheets-help-email" id="sheets-service-email">sheets-writer@ggl-maps-extractor.iam.gserviceaccount.com</div>
+          </div>
+        </div>
+        <div class="sheets-help-step">
+          <div class="sheets-help-num">4</div>
+          <div class="sheets-help-text">
+            <strong>Copy your Sheet URL</strong> and paste it in the input field above.
+          </div>
+        </div>
+        <div class="sheets-help-step">
+          <div class="sheets-help-num">5</div>
+          <div class="sheets-help-text">
+            Click <strong>"Verify Connection"</strong> and enable <strong>"Live Sync"</strong>. Done! 🎉
+          </div>
+        </div>
+        <div class="sheets-help-tip">
+          💡 <strong>Tip:</strong> Enable "Demo Mode" to see leads appear one-by-one in real-time!
+        </div>
+      </div>
     </div>
   </div>
   

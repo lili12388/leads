@@ -278,6 +278,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const inputEl = document.getElementById('sheets-url');
     const noWebsiteEl = document.getElementById('sheets-no-website-only');
     const demoModeEl = document.getElementById('sheets-demo-mode');
+    const helpBtn = document.getElementById('sheets-help-btn');
+    const helpOverlay = document.getElementById('sheets-help-overlay');
+    const helpClose = document.getElementById('sheets-help-close');
+    const serviceEmail = document.getElementById('sheets-service-email');
     
     if (testBtn) {
       testBtn.addEventListener('click', async () => {
@@ -307,6 +311,47 @@ document.addEventListener('DOMContentLoaded', async () => {
       demoModeEl.addEventListener('change', async () => {
         sheetsDemoMode = demoModeEl.checked;
         await saveSheetsConfig();
+      });
+    }
+    
+    // Help modal handlers
+    if (helpBtn && helpOverlay) {
+      helpBtn.addEventListener('click', () => {
+        helpOverlay.classList.add('active');
+      });
+    }
+    
+    if (helpClose && helpOverlay) {
+      helpClose.addEventListener('click', () => {
+        helpOverlay.classList.remove('active');
+      });
+    }
+    
+    if (helpOverlay) {
+      helpOverlay.addEventListener('click', (e) => {
+        if (e.target === helpOverlay) {
+          helpOverlay.classList.remove('active');
+        }
+      });
+    }
+    
+    // Copy service email on click
+    if (serviceEmail) {
+      serviceEmail.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText('sheets-writer@ggl-maps-extractor.iam.gserviceaccount.com');
+          const originalText = serviceEmail.textContent;
+          serviceEmail.textContent = '✅ Copied to clipboard!';
+          setTimeout(() => {
+            serviceEmail.textContent = originalText;
+          }, 2000);
+        } catch (err) {
+          // Fallback selection
+          const range = document.createRange();
+          range.selectNode(serviceEmail);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+        }
       });
     }
     

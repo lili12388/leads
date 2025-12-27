@@ -538,8 +538,7 @@
         </div>
         <div class="gme-buttons">
           <div class="gme-btn-row">
-            <button class="gme-btn gme-btn-primary" id="gme-start-btn">▶ Start</button>
-            <button class="gme-btn gme-btn-auto" id="gme-always-btn">🔄 Always On</button>
+            <button class="gme-btn gme-btn-primary gme-btn-full" id="gme-start-btn">▶ Start</button>
           </div>
           <button class="gme-btn gme-btn-success" id="gme-export-btn">📥 Export CSV</button>
           <!-- <button class="gme-btn gme-btn-sheets" id="gme-sheets-btn">📊 Export to Google Sheets</button> -->
@@ -568,9 +567,8 @@
       panel.classList.toggle('minimized');
     });
     
-    // Normal extraction listeners
-    panel.querySelector('#gme-start-btn').addEventListener('click', toggleManualExtraction);
-    panel.querySelector('#gme-always-btn').addEventListener('click', toggleAlwaysCapture);
+    // Extraction button (unified Start/Stop)
+    panel.querySelector('#gme-start-btn').addEventListener('click', toggleExtraction);
     panel.querySelector('#gme-export-btn').addEventListener('click', exportCSV);
     // panel.querySelector('#gme-sheets-btn').addEventListener('click', exportToGoogleSheets);
     panel.querySelector('#gme-clear-btn').addEventListener('click', clearData);
@@ -612,30 +610,27 @@
   }
   
   // ============================================
-  // ALWAYS-ON CAPTURE MODE
+  // PERSISTENT EXTRACTION MODE (Start button)
   // ============================================
   
-  function toggleAlwaysCapture() {
-    const btn = document.getElementById('gme-always-btn');
-    const startBtn = document.getElementById('gme-start-btn');
+  function toggleExtraction() {
+    const btn = document.getElementById('gme-start-btn');
     
     if (isAlwaysCapture) {
-      // Turn off always capture - STOP EVERYTHING
+      // Turn off - STOP EVERYTHING
       isAlwaysCapture = false;
-      isExtracting = false;  // Stop any ongoing scrolling
+      isExtracting = false;
       isWaitingForSearchRefresh = false;
-      btn.textContent = '🔄 Always On';
+      btn.textContent = '▶ Start';
       btn.classList.remove('active');
-      startBtn.disabled = false;
       updateStatus('ready', '✅ Stopped. ' + extractedLeads.size + ' leads captured');
-      console.log("🔄 Always-on capture disabled - stopped all scrolling");
+      console.log("⏹ Extraction stopped");
     } else {
-      // Turn on always capture
+      // Turn on persistent extraction
       isAlwaysCapture = true;
       isExtracting = false;  // Will be set true when we receive search data
       btn.textContent = '⏹ Stop';
       btn.classList.add('active');
-      startBtn.disabled = true;
       
       // Check if there's already a feed visible (user already searched)
       const feed = document.querySelector('[role="feed"]');
@@ -644,23 +639,16 @@
         isWaitingForSearchRefresh = true;
         showSearchAreaReminder();
         console.log("🔍 Waiting for user to click 'Search this area' button...");
+      } else if (feed && hasReceivedSearchData) {
+        // Feed exists and has data - start extracting immediately
+        isExtracting = true;
+        updateStatus('extracting', '🔄 Extracting... ' + extractedLeads.size + ' leads');
+        autoScroll();
       } else {
         // No feed yet, just wait for search
-        updateStatus('extracting', '🔄 Always-on: Waiting for search...');
-        console.log("🔄 Always-on capture enabled - waiting for search data");
+        updateStatus('extracting', '🔍 Waiting for search results...');
+        console.log("🔄 Extraction enabled - waiting for search data");
       }
-    }
-  }
-
-  function toggleManualExtraction() {
-    const btn = document.getElementById('gme-start-btn');
-    
-    if (isExtracting) {
-      stopExtraction();
-      btn.textContent = '▶ Start';
-    } else {
-      startExtraction();
-      btn.textContent = '⏹ Stop';
     }
   }
 
@@ -923,10 +911,11 @@
       
       if (scrollCount > 30) {
         console.log("📍 Feed not loading more, waiting for new search...");
-        isExtracting = false;  // Stop scrolling but don't fully stop if Always On
+        isExtracting = false;  // Stop scrolling but stay in capture mode
         scrollCount = 0;
         if (isAlwaysCapture) {
-          updateStatus('extracting', '🔄 Always-on: ' + extractedLeads.size + ' leads - search another area!');
+          updateStatus('extracting', '🔍 ' + extractedLeads.size + ' leads! Click "Search this area" for more →');
+          isWaitingForSearchRefresh = true;
         } else {
           stopExtraction();
         }
@@ -947,6 +936,7 @@
   function stopExtraction() {
     isExtracting = false;
     isWaitingForSearchRefresh = false;
+    isAlwaysCapture = false;  // Also stop persistent mode
     console.log("⏹️ Extraction stopped. Total: " + extractedLeads.size);
     
     // Remove any toast
@@ -954,11 +944,12 @@
     if (toast) toast.remove();
     
     const btn = document.getElementById('gme-start-btn');
-    if (btn) btn.textContent = '▶ Start';
-    
-    if (!isAlwaysCapture) {
-      updateStatus('ready', '✅ Done! ' + extractedLeads.size + ' leads extracted');
+    if (btn) {
+      btn.textContent = '▶ Start';
+      btn.classList.remove('active');
     }
+    
+    updateStatus('ready', '✅ Done! ' + extractedLeads.size + ' leads extracted');
     updateStats();
   }
   

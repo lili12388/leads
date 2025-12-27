@@ -175,17 +175,13 @@
   background: #1557b0;
 }
 
-#gme-floating-panel .gme-btn-auto {
-  background: #ff9800;
-  color: white;
+#gme-floating-panel .gme-btn-primary.active {
+  background: #ea4335;
 }
 
-#gme-floating-panel .gme-btn-auto:hover {
-  background: #f57c00;
-}
-
-#gme-floating-panel .gme-btn-auto.active {
-  background: #e65100;
+#gme-floating-panel .gme-btn-full {
+  flex: none;
+  width: 100%;
 }
 
 #gme-floating-panel .gme-btn-success {
