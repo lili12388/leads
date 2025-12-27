@@ -9,6 +9,7 @@
   let isAlwaysCapture = false;    // Always-on capture mode
   let isExtracting = false;
   let scrollCount = 0;
+  let totalScrollCount = 0;       // Persistent scroll counter (never resets during session)
   let autoScrollInterval = null;
   let isLicenseValid = false;     // License status
   let isWaitingForSearchRefresh = false; // Track if we're waiting for user to click "Search this area"
@@ -527,14 +528,15 @@
             <div class="gme-stat-label">With Phone</div>
           </div>
           <div class="gme-stat">
-            <div class="gme-stat-value orange" id="gme-scrolls">0</div>
-            <div class="gme-stat-label">Scrolls</div>
+            <div class="gme-stat-value orange" id="gme-with-email">0</div>
+            <div class="gme-stat-label">With Email</div>
           </div>
         </div>
         </div>
         <div class="gme-status" id="gme-status">
           <span class="gme-status-dot"></span>
           <span id="gme-status-text">Ready - Click Start to extract</span>
+          <span class="gme-scroll-count" id="gme-scroll-info"></span>
         </div>
         <div class="gme-buttons">
           <div class="gme-btn-row">
@@ -880,6 +882,7 @@
     // Smooth scroll to bottom
     feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
     scrollCount++;
+    totalScrollCount++;  // Persistent counter
     
     // Wait for content to load (1500ms)
     await sleep(1500);
@@ -967,16 +970,19 @@
     var total = leads.length;
     var withPhone = leads.filter(l => l.phone).length;
     var noWebsite = leads.filter(l => !l.has_website).length;
+    var withEmail = leads.filter(l => l.email).length;
     
     const totalEl = document.getElementById('gme-total');
     const noWebsiteEl = document.getElementById('gme-no-website');
     const withPhoneEl = document.getElementById('gme-with-phone');
-    const scrollsEl = document.getElementById('gme-scrolls');
+    const withEmailEl = document.getElementById('gme-with-email');
+    const scrollInfoEl = document.getElementById('gme-scroll-info');
     
     if (totalEl) totalEl.textContent = total;
     if (noWebsiteEl) noWebsiteEl.textContent = noWebsite;
     if (withPhoneEl) withPhoneEl.textContent = withPhone;
-    if (scrollsEl) scrollsEl.textContent = scrollCount;
+    if (withEmailEl) withEmailEl.textContent = withEmail;
+    if (scrollInfoEl) scrollInfoEl.textContent = totalScrollCount > 0 ? ' • ' + totalScrollCount + ' scrolls' : '';
   }
   
   function updateStatus(state, text) {

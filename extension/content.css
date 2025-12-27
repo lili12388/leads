@@ -138,6 +138,13 @@
   50% { opacity: 0.3; }
 }
 
+#gme-floating-panel .gme-scroll-count {
+  color: #888;
+  font-size: 10px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
 /* Buttons */
 #gme-floating-panel .gme-buttons {
   padding: 12px 14px;
