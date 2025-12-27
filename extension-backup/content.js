@@ -893,7 +893,8 @@
       isExtracting = false;
       scrollCount = 0;
       if (isAlwaysCapture) {
-        updateStatus('extracting', '🔄 Always-on: ' + extractedLeads.size + ' leads - search another area!');
+        updateStatus('extracting', '✅ Area done! ' + extractedLeads.size + ' leads → Move map & search again');
+        isWaitingForSearchRefresh = true;
       } else {
         stopExtraction();
       }
@@ -917,7 +918,7 @@
         isExtracting = false;  // Stop scrolling but stay in capture mode
         scrollCount = 0;
         if (isAlwaysCapture) {
-          updateStatus('extracting', '🔍 ' + extractedLeads.size + ' leads! Click "Search this area" for more →');
+          updateStatus('extracting', '✅ Area done! ' + extractedLeads.size + ' leads → Move map & search again');
           isWaitingForSearchRefresh = true;
         } else {
           stopExtraction();
