@@ -3,6 +3,19 @@ import { NextRequest, NextResponse } from 'next/server';
 // Email extraction regex - matches most valid email formats
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi;
 
+// Additional email patterns - mailto links
+const MAILTO_REGEX = /mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
+
+// Phone number patterns - multiple formats
+const PHONE_PATTERNS = [
+  /tel:([+\d\s\-().]+)/gi,  // tel: links
+  /href=["']tel:([^"']+)["']/gi,  // tel href
+  /(?:phone|tel|call|mobile|fax)[\s:]*([+]?[\d\s\-().]{10,})/gi,  // labeled phones
+  /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g,  // US format (123) 456-7890
+  /\+1[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g,  // +1 format
+  /\+\d{1,3}[\s.-]?\(?\d{1,4}\)?[\s.-]?\d{1,4}[\s.-]?\d{1,9}/g,  // International
+];
+
 // Social media patterns
 const SOCIAL_PATTERNS = {
   facebook: /(?:facebook\.com|fb\.com)\/(?:#!\/)?(?:pages\/)?([^\/\s"'<>?&]+)/gi,
@@ -12,9 +25,6 @@ const SOCIAL_PATTERNS = {
   youtube: /youtube\.com\/(?:c\/|channel\/|user\/|@)?([^\/\s"'<>?&]+)/gi,
   tiktok: /tiktok\.com\/@([^\/\s"'<>?&]+)/gi,
 };
-
-// Phone number extraction regex - matches various formats
-const PHONE_REGEX = /(?:(?:\+|00)[1-9]\d{0,3}[-.\s]?)?(?:\(?\d{1,4}\)?[-.\s]?)?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}/g;
 
 // Contact page patterns
 const CONTACT_PAGE_PATTERNS = [
@@ -69,30 +79,102 @@ function isValidEmail(email: string): boolean {
 }
 
 function extractEmails(html: string): string[] {
-  const matches = html.match(EMAIL_REGEX) || [];
-  const uniqueEmails = Array.from(new Set(matches.map(e => e.toLowerCase())));
+  const emails: string[] = [];
+  
+  // 1. Extract from JSON-LD schema (most reliable for business sites)
+  const schemaRegex = /"email"\s*:\s*"([^"]+@[^"]+)"/gi;
+  let schemaMatch;
+  while ((schemaMatch = schemaRegex.exec(html)) !== null) {
+    emails.push(schemaMatch[1].toLowerCase());
+  }
+  
+  // 2. Extract from mailto: links
+  const mailtoRegex = /mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
+  let mailtoMatch;
+  while ((mailtoMatch = mailtoRegex.exec(html)) !== null) {
+    emails.push(mailtoMatch[1].toLowerCase());
+  }
+  
+  // 3. Extract from href with mailto (alternative format)
+  const hrefMailtoRegex = /href=["']mailto:([^"'?]+)/gi;
+  let hrefMatch;
+  while ((hrefMatch = hrefMailtoRegex.exec(html)) !== null) {
+    const email = hrefMatch[1].trim();
+    if (email.includes('@')) {
+      emails.push(email.toLowerCase());
+    }
+  }
+  
+  // 4. Also extract from plain text using general regex
+  const textMatches = html.match(EMAIL_REGEX) || [];
+  textMatches.forEach(e => emails.push(e.toLowerCase()));
+  
+  const uniqueEmails = Array.from(new Set(emails));
   return uniqueEmails.filter(isValidEmail).slice(0, 5); // Max 5 emails per site
 }
 
 function isValidPhone(phone: string): boolean {
-  // Remove all non-digit characters for length check
-  const digits = phone.replace(/\D/g, '');
+  // Clean the phone number
+  const cleaned = phone.replace(/[^\d+]/g, '');
   
-  // Valid phone numbers typically have 7-15 digits
-  if (digits.length < 7 || digits.length > 15) return false;
+  // Valid phone numbers typically have 10-15 digits (with or without country code)
+  if (cleaned.length < 10 || cleaned.length > 16) return false;
   
-  // Avoid common false positives (years, prices, etc.)
-  if (/^(19|20)\d{2}$/.test(digits)) return false; // Years like 2024
-  if (/^\d{1,2}$/.test(digits)) return false; // Too short
+  // Avoid common false positives
+  if (/^(19|20)\d{6,}$/.test(cleaned) && cleaned.length === 8) return false; // Dates
   
   return true;
 }
 
 function extractPhones(html: string): string[] {
-  const matches = html.match(PHONE_REGEX) || [];
-  const cleaned = matches.map(p => p.trim()).filter(p => isValidPhone(p));
-  const uniquePhones = Array.from(new Set(cleaned));
-  return uniquePhones.slice(0, 3); // Max 3 phones per site
+  const phones: string[] = [];
+  
+  // 1. Extract from JSON-LD schema (most reliable)
+  const schemaPhoneRegex = /"telephone"\s*:\s*"([^"]+)"/gi;
+  let schemaMatch;
+  while ((schemaMatch = schemaPhoneRegex.exec(html)) !== null) {
+    const phone = schemaMatch[1].replace(/[^\d+\-() ]/g, '').trim();
+    if (phone && isValidPhone(phone)) {
+      phones.push(phone);
+    }
+  }
+  
+  // 2. Extract from tel: links (most reliable for clickable phones)
+  const telRegex = /href=["']tel:([^"']+)["']/gi;
+  let telMatch;
+  while ((telMatch = telRegex.exec(html)) !== null) {
+    const phone = telMatch[1].replace(/[^\d+\-() ]/g, '').trim();
+    if (phone && isValidPhone(phone)) {
+      phones.push(phone);
+    }
+  }
+  
+  // 3. Also look for phone patterns in text
+  for (const pattern of PHONE_PATTERNS) {
+    const matches = html.match(pattern) || [];
+    matches.forEach(m => {
+      // Clean up the match
+      let phone = m.replace(/^(tel:|phone:|call:|mobile:|fax:)/i, '').trim();
+      phone = phone.replace(/[^\d+\-() ]/g, '').trim();
+      if (phone && isValidPhone(phone)) {
+        phones.push(phone);
+      }
+    });
+    pattern.lastIndex = 0;
+  }
+  
+  // Dedupe and return
+  const uniquePhones = Array.from(new Set(phones.map(p => p.replace(/\D/g, ''))));
+  return uniquePhones.map(digits => {
+    // Format nicely
+    if (digits.length === 10) {
+      return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+    }
+    if (digits.length === 11 && digits.startsWith('1')) {
+      return `+1 (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7)}`;
+    }
+    return digits;
+  }).slice(0, 3);
 }
 
 function extractContactPages(html: string, baseUrl: string): string[] {
@@ -184,25 +266,88 @@ async function fetchWebsite(url: string): Promise<string | null> {
   }
 }
 
-// Single lead enrichment
+// Single lead enrichment - checks homepage and contact page
 async function enrichLead(websiteUrl: string): Promise<{
   emails: string[];
   phones: string[];
   social: Record<string, string>;
   contactPages: string[];
 }> {
+  // Ensure URL has protocol
+  if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
+    websiteUrl = 'https://' + websiteUrl;
+  }
+  
   const html = await fetchWebsite(websiteUrl);
   
   if (!html) {
     return { emails: [], phones: [], social: {}, contactPages: [] };
   }
   
-  const emails = extractEmails(html);
-  const phones = extractPhones(html);
+  let emails = extractEmails(html);
+  let phones = extractPhones(html);
   const social = extractSocialMedia(html);
-  const contactPages = extractContactPages(html, websiteUrl);
+  let contactPages = extractContactPages(html, websiteUrl);
   
-  return { emails, phones, social, contactPages };
+  // If we didn't find emails on homepage, try common contact pages
+  if (emails.length === 0 || phones.length === 0) {
+    const baseUrl = new URL(websiteUrl);
+    const contactUrls = [
+      baseUrl.origin + '/contact',
+      baseUrl.origin + '/contact-us',
+      baseUrl.origin + '/contactus',
+      baseUrl.origin + '/about',
+      baseUrl.origin + '/about-us',
+    ];
+    
+    // Try fetching contact pages (in parallel, with limit)
+    const contactResults = await Promise.all(
+      contactUrls.slice(0, 2).map(async (url) => {
+        try {
+          const contactHtml = await fetchWebsite(url);
+          if (contactHtml) {
+            return {
+              url,
+              emails: extractEmails(contactHtml),
+              phones: extractPhones(contactHtml)
+            };
+          }
+        } catch (e) {
+          // Ignore errors for contact pages
+        }
+        return null;
+      })
+    );
+    
+    // Merge results from contact pages
+    for (const result of contactResults) {
+      if (result) {
+        if (emails.length === 0 && result.emails.length > 0) {
+          emails = result.emails;
+          if (!contactPages.includes(result.url)) {
+            contactPages.push(result.url);
+          }
+        }
+        if (phones.length === 0 && result.phones.length > 0) {
+          phones = result.phones;
+        }
+        // Merge additional emails/phones
+        result.emails.forEach(e => {
+          if (!emails.includes(e)) emails.push(e);
+        });
+        result.phones.forEach(p => {
+          if (!phones.includes(p)) phones.push(p);
+        });
+      }
+    }
+  }
+  
+  return { 
+    emails: emails.slice(0, 5), 
+    phones: phones.slice(0, 3), 
+    social, 
+    contactPages: contactPages.slice(0, 2) 
+  };
 }
 
 // Batch enrichment endpoint
