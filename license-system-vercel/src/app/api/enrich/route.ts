@@ -13,6 +13,15 @@ const SOCIAL_PATTERNS = {
   tiktok: /tiktok\.com\/@([^\/\s"'<>?&]+)/gi,
 };
 
+// Phone number extraction regex - matches various formats
+const PHONE_REGEX = /(?:(?:\+|00)[1-9]\d{0,3}[-.\s]?)?(?:\(?\d{1,4}\)?[-.\s]?)?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}/g;
+
+// Contact page patterns
+const CONTACT_PAGE_PATTERNS = [
+  /href=["']([^"']*(?:contact|kontakt|contacto|contato|kontact)[^"']*)["']/gi,
+  /href=["']([^"']*(?:about-us|about|uber-uns|qui-sommes-nous)[^"']*)["']/gi,
+];
+
 // Filter out common false positive emails
 const INVALID_EMAIL_PATTERNS = [
   /example\.com$/i,
@@ -63,6 +72,58 @@ function extractEmails(html: string): string[] {
   const matches = html.match(EMAIL_REGEX) || [];
   const uniqueEmails = Array.from(new Set(matches.map(e => e.toLowerCase())));
   return uniqueEmails.filter(isValidEmail).slice(0, 5); // Max 5 emails per site
+}
+
+function isValidPhone(phone: string): boolean {
+  // Remove all non-digit characters for length check
+  const digits = phone.replace(/\D/g, '');
+  
+  // Valid phone numbers typically have 7-15 digits
+  if (digits.length < 7 || digits.length > 15) return false;
+  
+  // Avoid common false positives (years, prices, etc.)
+  if (/^(19|20)\d{2}$/.test(digits)) return false; // Years like 2024
+  if (/^\d{1,2}$/.test(digits)) return false; // Too short
+  
+  return true;
+}
+
+function extractPhones(html: string): string[] {
+  const matches = html.match(PHONE_REGEX) || [];
+  const cleaned = matches.map(p => p.trim()).filter(p => isValidPhone(p));
+  const uniquePhones = Array.from(new Set(cleaned));
+  return uniquePhones.slice(0, 3); // Max 3 phones per site
+}
+
+function extractContactPages(html: string, baseUrl: string): string[] {
+  const contactPages: string[] = [];
+  
+  for (const pattern of CONTACT_PAGE_PATTERNS) {
+    let match;
+    while ((match = pattern.exec(html)) !== null) {
+      let url = match[1];
+      // Skip if it's a social media or external link
+      if (url.includes('facebook') || url.includes('instagram') || url.includes('twitter')) continue;
+      if (url.includes('mailto:') || url.includes('tel:')) continue;
+      
+      // Make absolute URL
+      if (url.startsWith('/')) {
+        try {
+          const base = new URL(baseUrl);
+          url = base.origin + url;
+        } catch (e) {
+          continue;
+        }
+      } else if (!url.startsWith('http')) {
+        continue; // Skip relative URLs without leading slash
+      }
+      
+      contactPages.push(url);
+    }
+    pattern.lastIndex = 0;
+  }
+  
+  return Array.from(new Set(contactPages)).slice(0, 2); // Max 2 contact pages
 }
 
 function extractSocialMedia(html: string): Record<string, string> {
@@ -126,18 +187,22 @@ async function fetchWebsite(url: string): Promise<string | null> {
 // Single lead enrichment
 async function enrichLead(websiteUrl: string): Promise<{
   emails: string[];
+  phones: string[];
   social: Record<string, string>;
+  contactPages: string[];
 }> {
   const html = await fetchWebsite(websiteUrl);
   
   if (!html) {
-    return { emails: [], social: {} };
+    return { emails: [], phones: [], social: {}, contactPages: [] };
   }
   
   const emails = extractEmails(html);
+  const phones = extractPhones(html);
   const social = extractSocialMedia(html);
+  const contactPages = extractContactPages(html, websiteUrl);
   
-  return { emails, social };
+  return { emails, phones, social, contactPages };
 }
 
 // Batch enrichment endpoint
