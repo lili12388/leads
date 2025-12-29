@@ -30,7 +30,6 @@
   let enrichmentInProgress = 0;    // Number of concurrent enrichment requests
   let enrichmentTotal = 0;         // Total leads queued for enrichment
   let enrichmentCompleted = 0;     // Number of completed enrichments
-  let isStoppingWithEnrichment = false; // True when user clicks Stop but enrichment is still running
   const MAX_CONCURRENT_ENRICHMENTS = 3; // Max parallel requests
   
   let sheetsQueue = [];           // Queue of leads to send
@@ -633,23 +632,10 @@
       isAlwaysCapture = false;
       isExtracting = false;
       isWaitingForSearchRefresh = false;
-      
-      // Check if enrichment is still running
-      if (enrichmentInProgress > 0 || enrichmentQueue.length > 0) {
-        // Show "Please wait" state
-        isStoppingWithEnrichment = true;
-        btn.textContent = '⏳ Wait...';
-        btn.disabled = true;
-        updateStatus('waiting', '⏳ Finishing email enrichment...');
-        updateEnrichmentProgress();
-        console.log("⏳ Waiting for enrichment to complete before stopping...");
-      } else {
-        // No enrichment running, stop immediately
-        btn.textContent = '▶ Start';
-        btn.classList.remove('active');
-        updateStatus('ready', '✅ Stopped. ' + extractedLeads.size + ' leads captured');
-        console.log("⏹ Extraction stopped");
-      }
+      btn.textContent = '▶ Start';
+      btn.classList.remove('active');
+      updateStatus('ready', '✅ Stopped. ' + extractedLeads.size + ' leads captured');
+      console.log("⏹ Extraction stopped");
     } else {
       // Turn on persistent extraction
       isAlwaysCapture = true;
@@ -851,11 +837,7 @@
     
     lead.email = "Fetching...";
     enrichmentQueue.push({ lead, key });
-    // enrichmentTotal tracks total ever queued in this session
     enrichmentTotal++;
-    
-    // Update progress immediately to show new lead
-    updateEnrichmentProgress();
     
     // Start processing if not at max concurrency
     processEnrichmentQueue();
@@ -899,40 +881,18 @@
           lead.email = "";
         }
         
-        // Add extra phones (merge with existing, comma-separated)
-        if (data.phones && data.phones.length > 0) {
-          const existingPhone = lead.phone || '';
-          const newPhones = data.phones.filter(p => p !== existingPhone);
-          if (existingPhone && newPhones.length > 0) {
-            lead.phone = existingPhone + ', ' + newPhones.join(', ');
-          } else if (newPhones.length > 0 && !existingPhone) {
-            lead.phone = newPhones.join(', ');
-          }
-        }
-        
         // Add social media if we didn't have them
-        if (!lead.facebook && data.social?.facebook) {
-          lead.facebook = 'facebook.com/' + data.social.facebook;
+        if (!lead.facebook && data.socials?.facebook) {
+          lead.facebook = data.socials.facebook;
         }
-        if (!lead.instagram && data.social?.instagram) {
-          lead.instagram = 'instagram.com/' + data.social.instagram;
+        if (!lead.instagram && data.socials?.instagram) {
+          lead.instagram = data.socials.instagram;
         }
-        if (data.social?.linkedin) {
-          lead.linkedin = 'linkedin.com/in/' + data.social.linkedin;
+        if (data.socials?.linkedin) {
+          lead.linkedin = data.socials.linkedin;
         }
-        if (data.social?.twitter) {
-          lead.twitter = 'x.com/' + data.social.twitter;
-        }
-        if (data.social?.youtube) {
-          lead.youtube = 'youtube.com/' + data.social.youtube;
-        }
-        if (data.social?.tiktok) {
-          lead.tiktok = 'tiktok.com/@' + data.social.tiktok;
-        }
-        
-        // Add contact page URL
-        if (data.contactPages && data.contactPages.length > 0) {
-          lead.contact_page = data.contactPages[0];
+        if (data.socials?.twitter) {
+          lead.twitter = data.socials.twitter;
         }
         
         // Update the lead in the map
@@ -953,74 +913,25 @@
   // Update enrichment progress in UI
   function updateEnrichmentProgress() {
     const enrichStatus = document.getElementById('gme-enrich-status');
-    const exportBtn = document.getElementById('gme-export-btn');
-    
-    // Count total leads with websites (this is the denominator)
-    const leadsWithWebsites = Array.from(extractedLeads.values()).filter(l => l.has_website).length;
-    
-    // Disable export button while enriching
-    if (exportBtn) {
-      if (enrichmentInProgress > 0 || enrichmentQueue.length > 0) {
-        exportBtn.disabled = true;
-        exportBtn.style.opacity = '0.5';
-        exportBtn.style.cursor = 'not-allowed';
-      } else {
-        exportBtn.disabled = false;
-        exportBtn.style.opacity = '1';
-        exportBtn.style.cursor = 'pointer';
-      }
-    }
-    
     if (enrichStatus) {
       if (enrichmentInProgress > 0 || enrichmentQueue.length > 0) {
         const remaining = enrichmentQueue.length + enrichmentInProgress;
-        if (isStoppingWithEnrichment) {
-          enrichStatus.innerHTML = '⏳ <span class="gme-spinner"></span> Please wait... finishing ' + remaining + ' enrichment(s)';
-        } else {
-          enrichStatus.textContent = '📧 Fetching emails: ' + enrichmentCompleted + '/' + leadsWithWebsites;
-        }
+        enrichStatus.textContent = '📧 Fetching emails: ' + enrichmentCompleted + '/' + enrichmentTotal;
         enrichStatus.style.display = 'block';
-      } else if (enrichmentCompleted > 0) {
-        // All enrichment done
-        if (isStoppingWithEnrichment) {
-          isStoppingWithEnrichment = false;
-          enrichStatus.textContent = '✅ Enrichment complete - stopped';
-          // Complete the stop action
-          finishStopping();
-        } else {
-          enrichStatus.textContent = '✅ Email fetch complete (' + enrichmentCompleted + ' sites checked)';
-        }
+      } else if (enrichmentTotal > 0) {
+        enrichStatus.textContent = '✅ Email fetch complete';
         enrichStatus.style.display = 'block';
         // Hide after 3 seconds
         setTimeout(() => {
           if (enrichmentQueue.length === 0 && enrichmentInProgress === 0) {
             enrichStatus.style.display = 'none';
+            // Reset counters for next batch
+            enrichmentTotal = 0;
+            enrichmentCompleted = 0;
           }
         }, 3000);
       }
     }
-  }
-  
-  // Called when enrichment finishes after user clicked Stop
-  function finishStopping() {
-    const btn = document.getElementById('gme-start-btn');
-    const exportBtn = document.getElementById('gme-export-btn');
-    
-    if (btn) {
-      btn.textContent = '▶ Start';
-      btn.classList.remove('active');
-      btn.disabled = false;
-    }
-    
-    // Re-enable export button
-    if (exportBtn) {
-      exportBtn.disabled = false;
-      exportBtn.style.opacity = '1';
-      exportBtn.style.cursor = 'pointer';
-    }
-    
-    updateStatus('ready', '✅ Stopped. ' + extractedLeads.size + ' leads captured');
-    console.log("⏹ Extraction fully stopped");
   }
   
   // ============================================
@@ -1212,12 +1123,6 @@
   // ============================================
   
   function exportCSV() {
-    // Check if enrichment is still running
-    if (enrichmentInProgress > 0 || enrichmentQueue.length > 0) {
-      alert('Please wait for email fetching to complete before exporting.');
-      return;
-    }
-    
     let leads = Array.from(extractedLeads.values());
     
     // Check if we should export only leads without website
@@ -1231,7 +1136,7 @@
       return;
     }
     
-    const headers = ['Name', 'Phone', 'Email', 'Website', 'Address', 'Instagram', 'Facebook', 'Twitter', 'LinkedIn', 'YouTube', 'TikTok', 'ContactPage', 'ReviewCount', 'AverageRating', 'Category'];
+    const headers = ['Name', 'Phone', 'Email', 'Website', 'Address', 'Instagram', 'Facebook', 'ReviewCount', 'AverageRating', 'Category'];
     
     const csvContent = [
       headers.join(','),
@@ -1248,11 +1153,6 @@
           `"${(lead.address || '').replace(/"/g, '""')}"`,
           `"${(lead.instagram || '').replace(/"/g, '""')}"`,
           `"${(lead.facebook || '').replace(/"/g, '""')}"`,
-          `"${(lead.twitter || '').replace(/"/g, '""')}"`,
-          `"${(lead.linkedin || '').replace(/"/g, '""')}"`,
-          `"${(lead.youtube || '').replace(/"/g, '""')}"`,
-          `"${(lead.tiktok || '').replace(/"/g, '""')}"`,
-          `"${(lead.contact_page || '').replace(/"/g, '""')}"`,
           `"${lead.review_count || ''}"`,
           `"${lead.rating || ''}"`,
           `"${(lead.category || '').replace(/"/g, '""')}"`

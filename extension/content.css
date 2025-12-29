@@ -145,6 +145,39 @@
   white-space: nowrap;
 }
 
+/* Email Enrichment Status */
+#gme-floating-panel .gme-enrich-status {
+  padding: 8px 16px;
+  background: linear-gradient(90deg, #e8f5e9 0%, #fff3e0 100%);
+  color: #2e7d32;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  animation: enrichPulse 2s infinite;
+}
+
+#gme-floating-panel .gme-enrich-status .gme-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #2e7d32;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes enrichPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 /* Buttons */
 #gme-floating-panel .gme-buttons {
   padding: 12px 14px;

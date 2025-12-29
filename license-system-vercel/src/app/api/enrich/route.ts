@@ -409,9 +409,78 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const url = request.nextUrl.searchParams.get('url');
+    const debug = request.nextUrl.searchParams.get('debug') === 'true';
     
     if (!url) {
       return NextResponse.json({ error: 'URL parameter required' }, { status: 400 });
+    }
+    
+    // If debug mode, return detailed info about what we're fetching
+    if (debug) {
+      let websiteUrl = url;
+      if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
+        websiteUrl = 'https://' + websiteUrl;
+      }
+      
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        
+        const response = await fetch(websiteUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+          },
+          signal: controller.signal,
+          redirect: 'follow',
+        });
+        
+        clearTimeout(timeout);
+        
+        const contentType = response.headers.get('content-type') || '';
+        const html = await response.text();
+        
+        // Test each regex
+        const schemaEmailRegex = /"email"\s*:\s*"([^"]+@[^"]+)"/gi;
+        const mailtoRegex = /mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
+        
+        const schemaEmails: string[] = [];
+        let match;
+        while ((match = schemaEmailRegex.exec(html)) !== null) {
+          schemaEmails.push(match[1]);
+        }
+        
+        const mailtoEmails: string[] = [];
+        while ((match = mailtoRegex.exec(html)) !== null) {
+          mailtoEmails.push(match[1]);
+        }
+        
+        // Check if email string exists at all
+        const hasEmailWord = html.includes('"email"');
+        const hasHotmail = html.toLowerCase().includes('hotmail');
+        const hasMidtown = html.toLowerCase().includes('midtowncenter');
+        
+        return NextResponse.json({
+          success: true,
+          url: websiteUrl,
+          htmlLength: html.length,
+          statusCode: response.status,
+          contentType,
+          hasEmailWord,
+          hasHotmail,
+          hasMidtown,
+          schemaEmails,
+          mailtoEmails,
+          htmlSample: html.substring(0, 2000), // First 2KB
+        });
+      } catch (fetchError: any) {
+        return NextResponse.json({
+          success: false,
+          url: websiteUrl,
+          error: fetchError.message || 'Fetch failed',
+        });
+      }
     }
     
     const result = await enrichLead(url);
