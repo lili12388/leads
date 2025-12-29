@@ -1,3 +1,8 @@
+# Competitor extensions (for analysis only, do not commit)
+G-Maps-Leads-Finder/
+G-Maps-Scraper-Leads-Data-Extractor/
+Maps-Scraper-Maps-Lead-Finder-Extracteur-de-Leads-sur-les-Cartes-Chrome-Web-Store/
+
 # Dependencies
 node_modules/
 .pnp/
@@ -8,6 +13,7 @@ node_modules/
 out/
 dist/
 build/
+
 
 # Environment files
 .env
