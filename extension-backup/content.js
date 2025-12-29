@@ -42,7 +42,7 @@
   let demoRateLimited = false;    // Has rate limit been hit
   let sheetsConfig = {
     sheetId: '',
-    tabName: 'Leads'
+    tabName: 'Sheet1'
   };
   let sheetsStats = {
     totalSent: 0,
@@ -100,31 +100,20 @@
   
   // Add lead to sync queue
   function queueLeadForSync(lead) {
-    console.log('📊 queueLeadForSync called - sheetsSyncEnabled:', sheetsSyncEnabled, 'sheetId:', sheetsConfig.sheetId);
-    if (!sheetsSyncEnabled || !sheetsConfig.sheetId) {
-      console.log('📊 Sheets sync not enabled or no sheet ID, skipping');
-      return;
-    }
+    if (!sheetsSyncEnabled || !sheetsConfig.sheetId) return;
     
     // Check if we should only sync leads without websites
     if (sheetsSyncNoWebsiteOnly) {
       const website = (lead.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').trim();
       const invalidWebsites = ['not found', 'no website found', 'n/a', ''];
       const hasValidWebsite = website && !invalidWebsites.includes(website);
-      if (hasValidWebsite) {
-        console.log('📊 Lead has website, skipping (no-website-only mode)');
-        return; // Skip leads with websites
-      }
+      if (hasValidWebsite) return; // Skip leads with websites
     }
     
     // Client-side dedup
     const key = createLeadDedupKey(lead);
-    if (sentLeadKeys.has(key)) {
-      console.log('📊 Lead already sent, skipping (dedup)');
-      return;
-    }
+    if (sentLeadKeys.has(key)) return;
     
-    console.log('📊 Adding lead to sheets queue:', lead.name);
     sheetsQueue.push({
       name: lead.name || '',
       phone: lead.phone || '',
@@ -139,13 +128,11 @@
     });
     
     sentLeadKeys.add(key);
-    console.log('📊 Queue size now:', sheetsQueue.length);
     updateSheetsStatusUI();
   }
   
   // Send batch to Google Sheets (normal mode: batches of 10)
   async function sendBatchToSheets() {
-    console.log('📊 sendBatchToSheets called - queue size:', sheetsQueue.length);
     if (sheetsQueue.length === 0) return;
     
     // If demo mode is on and not rate limited, use streaming instead
@@ -155,7 +142,6 @@
     }
     
     const batch = sheetsQueue.splice(0, 10); // Send up to 10 at a time
-    console.log('📊 Sending batch of', batch.length, 'to sheets');
     
     try {
       const response = await fetch(SHEETS_API_URL, {
@@ -166,13 +152,12 @@
         },
         body: JSON.stringify({
           sheetId: sheetsConfig.sheetId,
-          tabName: sheetsConfig.tabName || 'Leads',
+          tabName: sheetsConfig.tabName || 'Sheet1',
           leads: batch
         })
       });
       
       const data = await response.json();
-      console.log('📊 Sheets API response:', data);
       
       if (data.ok) {
         sheetsStats.totalSent += data.appended;
@@ -211,7 +196,7 @@
         },
         body: JSON.stringify({
           sheetId: sheetsConfig.sheetId,
-          tabName: sheetsConfig.tabName || 'Leads',
+          tabName: sheetsConfig.tabName || 'Sheet1',
           leads: batch
         })
       });
@@ -278,12 +263,10 @@
   
   // Start/stop sync interval
   function startSheetsSync() {
-    console.log('📊 startSheetsSync called - existing interval:', !!sheetsSyncInterval);
     if (sheetsSyncInterval) return;
     
     // In demo mode, use faster interval to trigger streaming
     const interval = sheetsDemoMode ? 500 : 2000;
-    console.log('📊 Starting sheets sync interval:', interval, 'ms');
     sheetsSyncInterval = setInterval(sendBatchToSheets, interval);
   }
   
@@ -309,7 +292,7 @@
         },
         body: JSON.stringify({
           sheetId: sheetsConfig.sheetId,
-          tabName: sheetsConfig.tabName || 'Leads'
+          tabName: sheetsConfig.tabName || 'Sheet1'
         })
       });
       
@@ -387,7 +370,7 @@
       }
       
       if (changes.sheetsConfig) {
-        sheetsConfig = changes.sheetsConfig.newValue || { sheetId: '', tabName: 'Leads' };
+        sheetsConfig = changes.sheetsConfig.newValue || { sheetId: '', tabName: 'Sheet1' };
       }
       
       if (changes.sheetsSyncNoWebsiteOnly !== undefined) {
@@ -604,11 +587,8 @@
     
     // Load sheets config (sync is still controlled from popup, but content.js needs config for syncing)
     loadSheetsConfig().then(() => {
-      console.log('📊 Loaded sheets config - enabled:', sheetsSyncEnabled, 'sheetId:', sheetsConfig.sheetId);
       if (sheetsSyncEnabled && sheetsConfig.sheetId) {
-        console.log('📊 Testing sheets connection...');
         testSheetsConnection().then(connected => {
-          console.log('📊 Connection test result:', connected);
           if (connected) startSheetsSync();
         });
       }
@@ -821,10 +801,8 @@
               newCount++;
               
               // Queue for email enrichment (real-time)
+              // Sheets sync happens AFTER enrichment completes (see enrichLeadWithEmail)
               queueEmailEnrichment(lead, key);
-              
-              // Queue for Google Sheets sync
-              queueLeadForSync(lead);
               
               var phoneIcon = phone ? " 📞" : "";
               var webIcon = hasWebsite ? " 🌐" : "";
@@ -866,6 +844,8 @@
   function queueEmailEnrichment(lead, key) {
     if (!lead.has_website || !lead.website || lead.website === "NO WEBSITE FOUND") {
       lead.email = ""; // No website = no email to fetch
+      // Queue immediately to Sheets (no enrichment needed)
+      queueLeadForSync(lead);
       return;
     }
     
@@ -914,7 +894,6 @@
         // Update lead with enrichment data
         if (data.emails && data.emails.length > 0) {
           lead.email = data.emails.join(', ');
-          console.log("📧 Found email for " + lead.name + ": " + lead.email);
         } else {
           lead.email = "";
         }
@@ -941,6 +920,9 @@
         
         // Update the lead in the map
         extractedLeads.set(key, lead);
+        
+        // Queue for Google Sheets sync (now with email)
+        queueLeadForSync(lead);
         
         // Update stats to show new email count
         updateStats();

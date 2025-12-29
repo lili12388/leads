@@ -51,9 +51,24 @@ const INVALID_EMAIL_PATTERNS = [
   /wixpress\.com$/i,
   /wordpress\.com$/i,
   /w3\.org$/i,
+  /youremailservice\.com$/i,  // Placeholder email
+  /yourcompany\.com$/i,       // Placeholder email
+  /yourdomain\.com$/i,        // Placeholder email
+  /yourwebsite\.com$/i,       // Placeholder email
+  /yoursite\.com$/i,          // Placeholder email
+  /sample\.com$/i,            // Placeholder email
+  /placeholder\.com$/i,       // Placeholder email
 ];
 
 function isValidEmail(email: string): boolean {
+  // Decode URL encoding first (e.g., %20 -> space, then trim)
+  try {
+    email = decodeURIComponent(email).trim();
+  } catch (e) {
+    // If decoding fails, just trim
+    email = email.trim();
+  }
+  
   // Check length
   if (email.length < 5 || email.length > 254) return false;
   
@@ -70,9 +85,12 @@ function isValidEmail(email: string): boolean {
   const tld = domain.split('.').pop();
   if (!tld || tld.length < 2) return false;
   
+  // Check domain has at least 4 characters (e.g., "a.co" is minimum)
+  if (domain.length < 4) return false;
+  
   // Check local part isn't too generic
   const localPart = parts[0].toLowerCase();
-  const genericLocalParts = ['noreply', 'no-reply', 'donotreply', 'mailer-daemon', 'postmaster'];
+  const genericLocalParts = ['noreply', 'no-reply', 'donotreply', 'mailer-daemon', 'postmaster', 'you', 'your', 'email', 'user', 'test'];
   if (genericLocalParts.includes(localPart)) return false;
   
   return true;
@@ -160,7 +178,16 @@ function extractEmails(html: string): string[] {
   const textMatches = decodedHtml.match(EMAIL_REGEX) || [];
   textMatches.forEach(e => emails.push(e.toLowerCase()));
   
-  const uniqueEmails = Array.from(new Set(emails));
+  // Clean and dedupe emails, decode URL encoding
+  const cleanedEmails = emails.map(e => {
+    try {
+      return decodeURIComponent(e).trim().toLowerCase();
+    } catch {
+      return e.trim().toLowerCase();
+    }
+  });
+  
+  const uniqueEmails = Array.from(new Set(cleanedEmails));
   return uniqueEmails.filter(isValidEmail).slice(0, 5); // Max 5 emails per site
 }
 
