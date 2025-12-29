@@ -78,35 +78,86 @@ function isValidEmail(email: string): boolean {
   return true;
 }
 
+// Decode HTML entities in email addresses
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&#64;/g, '@')
+    .replace(/&#x40;/g, '@')
+    .replace(/\[at\]/gi, '@')
+    .replace(/\(at\)/gi, '@')
+    .replace(/ at /gi, '@')
+    .replace(/&#46;/g, '.')
+    .replace(/&#x2e;/g, '.')
+    .replace(/\[dot\]/gi, '.')
+    .replace(/\(dot\)/gi, '.')
+    .replace(/ dot /gi, '.');
+}
+
 function extractEmails(html: string): string[] {
   const emails: string[] = [];
   
+  // Decode common obfuscation patterns first
+  const decodedHtml = decodeHtmlEntities(html);
+  
   // 1. Extract from JSON-LD schema (most reliable for business sites)
-  const schemaRegex = /"email"\s*:\s*"([^"]+@[^"]+)"/gi;
+  // Match: "email": "value" or "email" : "value" with flexible spacing
+  const schemaRegex = /"email"\s*:\s*"([^"]+)"/gi;
   let schemaMatch;
   while ((schemaMatch = schemaRegex.exec(html)) !== null) {
-    emails.push(schemaMatch[1].toLowerCase());
-  }
-  
-  // 2. Extract from mailto: links
-  const mailtoRegex = /mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
-  let mailtoMatch;
-  while ((mailtoMatch = mailtoRegex.exec(html)) !== null) {
-    emails.push(mailtoMatch[1].toLowerCase());
-  }
-  
-  // 3. Extract from href with mailto (alternative format)
-  const hrefMailtoRegex = /href=["']mailto:([^"'?]+)/gi;
-  let hrefMatch;
-  while ((hrefMatch = hrefMailtoRegex.exec(html)) !== null) {
-    const email = hrefMatch[1].trim();
+    const email = schemaMatch[1].trim();
     if (email.includes('@')) {
       emails.push(email.toLowerCase());
     }
   }
   
-  // 4. Also extract from plain text using general regex
-  const textMatches = html.match(EMAIL_REGEX) || [];
+  // Also check for email in other JSON-LD formats
+  const schemaRegex2 = /'email'\s*:\s*'([^']+)'/gi;
+  while ((schemaMatch = schemaRegex2.exec(html)) !== null) {
+    const email = schemaMatch[1].trim();
+    if (email.includes('@')) {
+      emails.push(email.toLowerCase());
+    }
+  }
+  
+  // 2. Extract from mailto: links (various formats)
+  const mailtoPatterns = [
+    /mailto:([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/gi,
+    /href=["']mailto:([^"'?#\s]+)/gi,
+    /href\s*=\s*["']mailto:([^"'?#\s]+)/gi,
+  ];
+  
+  for (const pattern of mailtoPatterns) {
+    let match;
+    while ((match = pattern.exec(html)) !== null) {
+      const email = match[1].trim();
+      if (email.includes('@')) {
+        emails.push(email.toLowerCase());
+      }
+    }
+    pattern.lastIndex = 0;
+  }
+  
+  // 3. Extract emails from common HTML patterns
+  // Look for email in data attributes, title, aria-label etc
+  const attrPatterns = [
+    /data-email=["']([^"']+@[^"']+)["']/gi,
+    /title=["']([^"']+@[^"']+)["']/gi,
+    /aria-label=["'][^"']*([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})[^"']*["']/gi,
+  ];
+  
+  for (const pattern of attrPatterns) {
+    let match;
+    while ((match = pattern.exec(html)) !== null) {
+      const email = match[1].trim();
+      if (email.includes('@')) {
+        emails.push(email.toLowerCase());
+      }
+    }
+    pattern.lastIndex = 0;
+  }
+  
+  // 4. Extract from plain text using general regex (on decoded HTML)
+  const textMatches = decodedHtml.match(EMAIL_REGEX) || [];
   textMatches.forEach(e => emails.push(e.toLowerCase()));
   
   const uniqueEmails = Array.from(new Set(emails));
@@ -228,21 +279,38 @@ function extractSocialMedia(html: string): Record<string, string> {
   return social;
 }
 
-async function fetchWebsite(url: string): Promise<string | null> {
+// Multiple User-Agents to rotate through if one fails
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+];
+
+async function fetchWithRetry(url: string, retryCount = 0): Promise<string | null> {
+  const userAgent = USER_AGENTS[retryCount % USER_AGENTS.length];
+  
   try {
-    // Ensure URL has protocol
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://' + url;
-    }
-    
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
+        'User-Agent': userAgent,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
       },
       signal: controller.signal,
       redirect: 'follow',
@@ -250,20 +318,47 @@ async function fetchWebsite(url: string): Promise<string | null> {
     
     clearTimeout(timeout);
     
+    // If blocked, retry with different User-Agent
+    if ((response.status === 403 || response.status === 429) && retryCount < 3) {
+      await new Promise(r => setTimeout(r, 500)); // Small delay before retry
+      return fetchWithRetry(url, retryCount + 1);
+    }
+    
     if (!response.ok) return null;
     
-    // Only process HTML content
     const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('text/html')) return null;
+    if (!contentType.includes('text/html') && !contentType.includes('text/plain')) {
+      return null;
+    }
     
     const html = await response.text();
+    return html.slice(0, 500000); // Limit to 500KB
     
-    // Limit to first 500KB to avoid memory issues
-    return html.slice(0, 500000);
-  } catch (error) {
-    console.error(`Failed to fetch ${url}:`, error);
+  } catch (error: any) {
+    // On timeout or network error, retry with different User-Agent
+    if (retryCount < 2) {
+      return fetchWithRetry(url, retryCount + 1);
+    }
     return null;
   }
+}
+
+async function fetchWebsite(url: string): Promise<string | null> {
+  // Ensure URL has protocol
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+  
+  // Try https first
+  let html = await fetchWithRetry(url);
+  
+  // If https fails and URL was auto-prefixed, try http
+  if (!html && url.startsWith('https://')) {
+    const httpUrl = url.replace('https://', 'http://');
+    html = await fetchWithRetry(httpUrl);
+  }
+  
+  return html;
 }
 
 // Single lead enrichment - checks homepage and contact page
@@ -289,56 +384,61 @@ async function enrichLead(websiteUrl: string): Promise<{
   const social = extractSocialMedia(html);
   let contactPages = extractContactPages(html, websiteUrl);
   
-  // If we didn't find emails on homepage, try common contact pages
-  if (emails.length === 0 || phones.length === 0) {
-    const baseUrl = new URL(websiteUrl);
-    const contactUrls = [
-      baseUrl.origin + '/contact',
-      baseUrl.origin + '/contact-us',
-      baseUrl.origin + '/contactus',
-      baseUrl.origin + '/about',
-      baseUrl.origin + '/about-us',
-    ];
-    
-    // Try fetching contact pages (in parallel, with limit)
-    const contactResults = await Promise.all(
-      contactUrls.slice(0, 2).map(async (url) => {
-        try {
-          const contactHtml = await fetchWebsite(url);
-          if (contactHtml) {
-            return {
-              url,
-              emails: extractEmails(contactHtml),
-              phones: extractPhones(contactHtml)
-            };
-          }
-        } catch (e) {
-          // Ignore errors for contact pages
+  // Always try to fetch more pages to find more emails
+  const baseUrl = new URL(websiteUrl);
+  const contactUrls = [
+    baseUrl.origin + '/contact',
+    baseUrl.origin + '/contact-us',
+    baseUrl.origin + '/about',
+    baseUrl.origin + '/about-us',
+    baseUrl.origin + '/contactus',
+    baseUrl.origin + '/reach-us',
+    baseUrl.origin + '/get-in-touch',
+  ];
+  
+  // Also add any contact pages found in the HTML
+  for (const page of contactPages) {
+    if (!contactUrls.includes(page)) {
+      contactUrls.unshift(page); // Add found pages at the start (higher priority)
+    }
+  }
+  
+  // Try fetching up to 3 contact pages
+  const pagesToTry = contactUrls.slice(0, 3);
+  
+  const contactResults = await Promise.all(
+    pagesToTry.map(async (url) => {
+      try {
+        const contactHtml = await fetchWebsite(url);
+        if (contactHtml) {
+          return {
+            url,
+            emails: extractEmails(contactHtml),
+            phones: extractPhones(contactHtml)
+          };
         }
-        return null;
-      })
-    );
-    
-    // Merge results from contact pages
-    for (const result of contactResults) {
-      if (result) {
-        if (emails.length === 0 && result.emails.length > 0) {
-          emails = result.emails;
-          if (!contactPages.includes(result.url)) {
-            contactPages.push(result.url);
-          }
-        }
-        if (phones.length === 0 && result.phones.length > 0) {
-          phones = result.phones;
-        }
-        // Merge additional emails/phones
-        result.emails.forEach(e => {
-          if (!emails.includes(e)) emails.push(e);
-        });
-        result.phones.forEach(p => {
-          if (!phones.includes(p)) phones.push(p);
-        });
+      } catch (e) {
+        // Ignore errors for contact pages
       }
+      return null;
+    })
+  );
+  
+  // Merge results from contact pages
+  for (const result of contactResults) {
+    if (result) {
+      // Add contact page URL if it worked
+      if (!contactPages.includes(result.url) && (result.emails.length > 0 || result.phones.length > 0)) {
+        contactPages.push(result.url);
+      }
+      // Merge emails
+      result.emails.forEach(e => {
+        if (!emails.includes(e)) emails.push(e);
+      });
+      // Merge phones
+      result.phones.forEach(p => {
+        if (!phones.includes(p)) phones.push(p);
+      });
     }
   }
   
