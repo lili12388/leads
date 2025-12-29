@@ -407,10 +407,9 @@ async function fetchWebsite(url: string): Promise<string | null> {
   return html;
 }
 
-// Single lead enrichment - checks homepage and contact page
+// Single lead enrichment - checks homepage and contact page (emails only, no phone scraping)
 async function enrichLead(websiteUrl: string): Promise<{
   emails: string[];
-  phones: string[];
   social: Record<string, string>;
 }> {
   // Ensure URL has protocol
@@ -421,16 +420,15 @@ async function enrichLead(websiteUrl: string): Promise<{
   const html = await fetchWebsite(websiteUrl);
   
   if (!html) {
-    return { emails: [], phones: [], social: {} };
+    return { emails: [], social: {} };
   }
   
   let emails = extractEmails(html);
-  let phones = extractPhones(html);
   const social = extractSocialMedia(html);
   
   // If we found an email, we're done - no need to fetch more pages
   if (emails.length > 0) {
-    return { emails: emails.slice(0, 1), phones: phones.slice(0, 1), social };
+    return { emails: emails.slice(0, 1), social };
   }
   
   // No email found on homepage - try ONE contact page
@@ -448,9 +446,6 @@ async function enrichLead(websiteUrl: string): Promise<{
         const contactEmails = extractEmails(contactHtml);
         if (contactEmails.length > 0) {
           emails = contactEmails;
-          // Also grab phones from contact page
-          const contactPhones = extractPhones(contactHtml);
-          if (contactPhones.length > 0) phones = contactPhones;
           break;
         }
       }
@@ -461,7 +456,6 @@ async function enrichLead(websiteUrl: string): Promise<{
   
   return { 
     emails: emails.slice(0, 1), 
-    phones: phones.slice(0, 1), 
     social
   };
 }

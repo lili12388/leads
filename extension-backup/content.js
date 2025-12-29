@@ -100,20 +100,31 @@
   
   // Add lead to sync queue
   function queueLeadForSync(lead) {
-    if (!sheetsSyncEnabled || !sheetsConfig.sheetId) return;
+    console.log('📊 queueLeadForSync called - sheetsSyncEnabled:', sheetsSyncEnabled, 'sheetId:', sheetsConfig.sheetId);
+    if (!sheetsSyncEnabled || !sheetsConfig.sheetId) {
+      console.log('📊 Sheets sync not enabled or no sheet ID, skipping');
+      return;
+    }
     
     // Check if we should only sync leads without websites
     if (sheetsSyncNoWebsiteOnly) {
       const website = (lead.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').trim();
       const invalidWebsites = ['not found', 'no website found', 'n/a', ''];
       const hasValidWebsite = website && !invalidWebsites.includes(website);
-      if (hasValidWebsite) return; // Skip leads with websites
+      if (hasValidWebsite) {
+        console.log('📊 Lead has website, skipping (no-website-only mode)');
+        return; // Skip leads with websites
+      }
     }
     
     // Client-side dedup
     const key = createLeadDedupKey(lead);
-    if (sentLeadKeys.has(key)) return;
+    if (sentLeadKeys.has(key)) {
+      console.log('📊 Lead already sent, skipping (dedup)');
+      return;
+    }
     
+    console.log('📊 Adding lead to sheets queue:', lead.name);
     sheetsQueue.push({
       name: lead.name || '',
       phone: lead.phone || '',
@@ -128,11 +139,13 @@
     });
     
     sentLeadKeys.add(key);
+    console.log('📊 Queue size now:', sheetsQueue.length);
     updateSheetsStatusUI();
   }
   
   // Send batch to Google Sheets (normal mode: batches of 10)
   async function sendBatchToSheets() {
+    console.log('📊 sendBatchToSheets called - queue size:', sheetsQueue.length);
     if (sheetsQueue.length === 0) return;
     
     // If demo mode is on and not rate limited, use streaming instead
@@ -142,6 +155,7 @@
     }
     
     const batch = sheetsQueue.splice(0, 10); // Send up to 10 at a time
+    console.log('📊 Sending batch of', batch.length, 'to sheets');
     
     try {
       const response = await fetch(SHEETS_API_URL, {
@@ -158,6 +172,7 @@
       });
       
       const data = await response.json();
+      console.log('📊 Sheets API response:', data);
       
       if (data.ok) {
         sheetsStats.totalSent += data.appended;
@@ -263,10 +278,12 @@
   
   // Start/stop sync interval
   function startSheetsSync() {
+    console.log('📊 startSheetsSync called - existing interval:', !!sheetsSyncInterval);
     if (sheetsSyncInterval) return;
     
     // In demo mode, use faster interval to trigger streaming
     const interval = sheetsDemoMode ? 500 : 2000;
+    console.log('📊 Starting sheets sync interval:', interval, 'ms');
     sheetsSyncInterval = setInterval(sendBatchToSheets, interval);
   }
   
@@ -538,8 +555,8 @@
             <div class="gme-stat-label">With Phone</div>
           </div>
           <div class="gme-stat">
-            <div class="gme-stat-value orange" id="gme-scrolls">0</div>
-            <div class="gme-stat-label">Scrolls</div>
+            <div class="gme-stat-value green" id="gme-with-email">0</div>
+            <div class="gme-stat-label">With Email</div>
           </div>
         </div>
         </div>
@@ -587,8 +604,11 @@
     
     // Load sheets config (sync is still controlled from popup, but content.js needs config for syncing)
     loadSheetsConfig().then(() => {
+      console.log('📊 Loaded sheets config - enabled:', sheetsSyncEnabled, 'sheetId:', sheetsConfig.sheetId);
       if (sheetsSyncEnabled && sheetsConfig.sheetId) {
+        console.log('📊 Testing sheets connection...');
         testSheetsConnection().then(connected => {
+          console.log('📊 Connection test result:', connected);
           if (connected) startSheetsSync();
         });
       }
@@ -899,17 +919,6 @@
           lead.email = "";
         }
         
-        // Add extra phones (merge with existing, comma-separated)
-        if (data.phones && data.phones.length > 0) {
-          const existingPhone = lead.phone || '';
-          const newPhones = data.phones.filter(p => p !== existingPhone);
-          if (existingPhone && newPhones.length > 0) {
-            lead.phone = existingPhone + ', ' + newPhones.join(', ');
-          } else if (newPhones.length > 0 && !existingPhone) {
-            lead.phone = newPhones.join(', ');
-          }
-        }
-        
         // Add social media if we didn't have them
         if (!lead.facebook && data.social?.facebook) {
           lead.facebook = 'facebook.com/' + data.social.facebook;
@@ -930,13 +939,11 @@
           lead.tiktok = 'tiktok.com/@' + data.social.tiktok;
         }
         
-        // Add contact page URL
-        if (data.contactPages && data.contactPages.length > 0) {
-          lead.contact_page = data.contactPages[0];
-        }
-        
         // Update the lead in the map
         extractedLeads.set(key, lead);
+        
+        // Update stats to show new email count
+        updateStats();
         
       } else {
         lead.email = "";
@@ -973,30 +980,26 @@
     
     if (enrichStatus) {
       if (enrichmentInProgress > 0 || enrichmentQueue.length > 0) {
-        const remaining = enrichmentQueue.length + enrichmentInProgress;
         if (isStoppingWithEnrichment) {
+          const remaining = enrichmentQueue.length + enrichmentInProgress;
           enrichStatus.innerHTML = '⏳ <span class="gme-spinner"></span> Please wait... finishing ' + remaining + ' enrichment(s)';
         } else {
-          enrichStatus.textContent = '📧 Fetching emails: ' + enrichmentCompleted + '/' + leadsWithWebsites;
+          // Just show scroll count - don't show what we're checking
+          enrichStatus.textContent = '📜 Scrolls: ' + totalScrollCount;
         }
         enrichStatus.style.display = 'block';
-      } else if (enrichmentCompleted > 0) {
-        // All enrichment done
+      } else if (enrichmentCompleted > 0 || totalScrollCount > 0) {
+        // Show scroll count persistently (don't hide it)
         if (isStoppingWithEnrichment) {
           isStoppingWithEnrichment = false;
-          enrichStatus.textContent = '✅ Enrichment complete - stopped';
+          enrichStatus.textContent = '✅ Done - Scrolls: ' + totalScrollCount;
           // Complete the stop action
           finishStopping();
         } else {
-          enrichStatus.textContent = '✅ Email fetch complete (' + enrichmentCompleted + ' sites checked)';
+          enrichStatus.textContent = '📜 Scrolls: ' + totalScrollCount;
         }
         enrichStatus.style.display = 'block';
-        // Hide after 3 seconds
-        setTimeout(() => {
-          if (enrichmentQueue.length === 0 && enrichmentInProgress === 0) {
-            enrichStatus.style.display = 'none';
-          }
-        }, 3000);
+        // Keep visible - don't hide scroll counter
       }
     }
   }
@@ -1182,17 +1185,19 @@
     
     var total = leads.length;
     var withPhone = leads.filter(l => l.phone).length;
+    // Only count emails that are actually fetched (not "Fetching..." and not empty)
+    var withEmail = leads.filter(l => l.email && l.email !== 'Fetching...').length;
     var noWebsite = leads.filter(l => !l.has_website).length;
     
     const totalEl = document.getElementById('gme-total');
     const noWebsiteEl = document.getElementById('gme-no-website');
     const withPhoneEl = document.getElementById('gme-with-phone');
-    const scrollsEl = document.getElementById('gme-scrolls');
+    const withEmailEl = document.getElementById('gme-with-email');
     
     if (totalEl) totalEl.textContent = total;
     if (noWebsiteEl) noWebsiteEl.textContent = noWebsite;
     if (withPhoneEl) withPhoneEl.textContent = withPhone;
-    if (scrollsEl) scrollsEl.textContent = totalScrollCount;
+    if (withEmailEl) withEmailEl.textContent = withEmail;
   }
   
   function updateStatus(state, text) {
@@ -1231,7 +1236,7 @@
       return;
     }
     
-    const headers = ['Name', 'Phone', 'Email', 'Website', 'Address', 'Instagram', 'Facebook', 'Twitter', 'LinkedIn', 'YouTube', 'TikTok', 'ContactPage', 'ReviewCount', 'AverageRating', 'Category'];
+    const headers = ['Name', 'Phone', 'Email', 'Website', 'Address', 'Instagram', 'Facebook', 'Twitter', 'LinkedIn', 'YouTube', 'TikTok', 'ReviewCount', 'AverageRating', 'Category'];
     
     const csvContent = [
       headers.join(','),
@@ -1252,7 +1257,6 @@
           `"${(lead.linkedin || '').replace(/"/g, '""')}"`,
           `"${(lead.youtube || '').replace(/"/g, '""')}"`,
           `"${(lead.tiktok || '').replace(/"/g, '""')}"`,
-          `"${(lead.contact_page || '').replace(/"/g, '""')}"`,
           `"${lead.review_count || ''}"`,
           `"${lead.rating || ''}"`,
           `"${(lead.category || '').replace(/"/g, '""')}"`
