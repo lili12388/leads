@@ -174,6 +174,52 @@ function isValidPhone(phone: string): boolean {
   // Avoid common false positives
   if (/^(19|20)\d{6,}$/.test(cleaned) && cleaned.length === 8) return false; // Dates
   
+  // Filter out fake/placeholder numbers with repeating patterns
+  // Remove country code (1) if present for US numbers
+  const digitsToCheck = cleaned.length === 11 && cleaned.startsWith('1') 
+    ? cleaned.slice(1) 
+    : cleaned.slice(-10); // Take last 10 digits
+  
+  if (digitsToCheck.length === 10) {
+    const areaCode = digitsToCheck.slice(0, 3);
+    const prefix = digitsToCheck.slice(3, 6);
+    const line = digitsToCheck.slice(6, 10);
+    
+    // Filter out repeating digit patterns like 333-3333, 666-6666, 999-9999
+    const isRepeatingPrefix = /^(\d)\1{2}$/.test(prefix);
+    const isRepeatingLine = /^(\d)\1{3}$/.test(line);
+    if (isRepeatingPrefix && isRepeatingLine) {
+      return false;
+    }
+    
+    // Filter out obvious fake patterns
+    const fakePatterns = [
+      '0000000000', '1111111111', '2222222222', '3333333333',
+      '4444444444', '5555555555', '6666666666', '7777777777',
+      '8888888888', '9999999999', '1234567890', '0987654321',
+      '1234567891', '0000000001', '1230001234'
+    ];
+    if (fakePatterns.includes(digitsToCheck)) {
+      return false;
+    }
+    
+    // Filter out numbers where all digits are the same
+    if (/^(\d)\1{9}$/.test(digitsToCheck)) {
+      return false;
+    }
+    
+    // Filter 555-xxxx numbers (reserved for fiction)
+    if (prefix === '555') {
+      return false;
+    }
+    
+    // Filter invalid area codes (000, 911, etc.)
+    const invalidAreaCodes = ['000', '111', '911', '999'];
+    if (invalidAreaCodes.includes(areaCode)) {
+      return false;
+    }
+  }
+  
   return true;
 }
 
@@ -293,7 +339,7 @@ async function fetchWithRetry(url: string, retryCount = 0): Promise<string | nul
   
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout (faster)
     
     const response = await fetch(url, {
       headers: {
@@ -319,8 +365,8 @@ async function fetchWithRetry(url: string, retryCount = 0): Promise<string | nul
     clearTimeout(timeout);
     
     // If blocked, retry with different User-Agent
-    if ((response.status === 403 || response.status === 429) && retryCount < 3) {
-      await new Promise(r => setTimeout(r, 500)); // Small delay before retry
+    if ((response.status === 403 || response.status === 429) && retryCount < 2) {
+      await new Promise(r => setTimeout(r, 200)); // Quick retry
       return fetchWithRetry(url, retryCount + 1);
     }
     
@@ -366,7 +412,6 @@ async function enrichLead(websiteUrl: string): Promise<{
   emails: string[];
   phones: string[];
   social: Record<string, string>;
-  contactPages: string[];
 }> {
   // Ensure URL has protocol
   if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
@@ -376,77 +421,48 @@ async function enrichLead(websiteUrl: string): Promise<{
   const html = await fetchWebsite(websiteUrl);
   
   if (!html) {
-    return { emails: [], phones: [], social: {}, contactPages: [] };
+    return { emails: [], phones: [], social: {} };
   }
   
   let emails = extractEmails(html);
   let phones = extractPhones(html);
   const social = extractSocialMedia(html);
-  let contactPages = extractContactPages(html, websiteUrl);
   
-  // Always try to fetch more pages to find more emails
-  const baseUrl = new URL(websiteUrl);
-  const contactUrls = [
-    baseUrl.origin + '/contact',
-    baseUrl.origin + '/contact-us',
-    baseUrl.origin + '/about',
-    baseUrl.origin + '/about-us',
-    baseUrl.origin + '/contactus',
-    baseUrl.origin + '/reach-us',
-    baseUrl.origin + '/get-in-touch',
-  ];
-  
-  // Also add any contact pages found in the HTML
-  for (const page of contactPages) {
-    if (!contactUrls.includes(page)) {
-      contactUrls.unshift(page); // Add found pages at the start (higher priority)
-    }
+  // If we found an email, we're done - no need to fetch more pages
+  if (emails.length > 0) {
+    return { emails: emails.slice(0, 1), phones: phones.slice(0, 1), social };
   }
   
-  // Try fetching up to 3 contact pages
-  const pagesToTry = contactUrls.slice(0, 3);
+  // No email found on homepage - try ONE contact page
+  const baseUrl = new URL(websiteUrl);
+  const contactPages = extractContactPages(html, websiteUrl);
   
-  const contactResults = await Promise.all(
-    pagesToTry.map(async (url) => {
-      try {
-        const contactHtml = await fetchWebsite(url);
-        if (contactHtml) {
-          return {
-            url,
-            emails: extractEmails(contactHtml),
-            phones: extractPhones(contactHtml)
-          };
+  // Priority: found contact links first, then common paths
+  const contactUrls = [...contactPages, baseUrl.origin + '/contact', baseUrl.origin + '/contact-us'];
+  
+  // Try just the first contact page
+  for (const url of contactUrls.slice(0, 1)) {
+    try {
+      const contactHtml = await fetchWebsite(url);
+      if (contactHtml) {
+        const contactEmails = extractEmails(contactHtml);
+        if (contactEmails.length > 0) {
+          emails = contactEmails;
+          // Also grab phones from contact page
+          const contactPhones = extractPhones(contactHtml);
+          if (contactPhones.length > 0) phones = contactPhones;
+          break;
         }
-      } catch (e) {
-        // Ignore errors for contact pages
       }
-      return null;
-    })
-  );
-  
-  // Merge results from contact pages
-  for (const result of contactResults) {
-    if (result) {
-      // Add contact page URL if it worked
-      if (!contactPages.includes(result.url) && (result.emails.length > 0 || result.phones.length > 0)) {
-        contactPages.push(result.url);
-      }
-      // Merge emails
-      result.emails.forEach(e => {
-        if (!emails.includes(e)) emails.push(e);
-      });
-      // Merge phones
-      result.phones.forEach(p => {
-        if (!phones.includes(p)) phones.push(p);
-      });
+    } catch (e) {
+      // Ignore errors
     }
   }
   
   return { 
-    emails: emails.slice(0, 5), 
-    phones: phones.slice(0, 3), 
-    social, 
-    contactPages: contactPages.slice(0, 2) 
+    emails: emails.slice(0, 1), 
+    phones: phones.slice(0, 1), 
+    social
   };
 }
 
