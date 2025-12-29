@@ -61,7 +61,7 @@ function isValidEmail(email: string): boolean {
 
 function extractEmails(html: string): string[] {
   const matches = html.match(EMAIL_REGEX) || [];
-  const uniqueEmails = [...new Set(matches.map(e => e.toLowerCase()))];
+  const uniqueEmails = Array.from(new Set(matches.map(e => e.toLowerCase())));
   return uniqueEmails.filter(isValidEmail).slice(0, 5); // Max 5 emails per site
 }
 
