@@ -78,7 +78,8 @@ export async function POST(request: NextRequest) {
         .slice(0, 20)
         .map(c => ({
           timestamp: c.timestamp,
-          device: c.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'
+          userAgent: c.userAgent || 'Unknown',
+          device: c.userAgent?.includes('Mobile') ? 'Mobile' : 'Desktop'
         }))
     })
   } catch (error) {

@@ -412,7 +412,7 @@ export default function AffiliateDashboard() {
                 {data.recentClicks.map((click, i) => (
                   <div key={i} className="flex items-center justify-between bg-gray-700/30 rounded-xl p-4">
                     <div className="text-sm">
-                      <div className="text-gray-400">{click.userAgent.substring(0, 80)}...</div>
+                      <div className="text-gray-400">{(click.userAgent || 'Unknown device').substring(0, 80)}{click.userAgent && click.userAgent.length > 80 ? '...' : ''}</div>
                     </div>
                     <div className="text-gray-400 text-sm shrink-0 ml-4">
                       {new Date(click.timestamp).toLocaleString()}
