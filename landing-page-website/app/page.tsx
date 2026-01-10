@@ -90,7 +90,8 @@ export default function Home() {
     const refCode = urlParams.get('ref')
     
     if (refCode) {
-      // Store referral code in localStorage
+      // Store referral code in localStorage (use both keys for compatibility)
+      localStorage.setItem('affiliateCode', refCode.toUpperCase())
       localStorage.setItem('referralCode', refCode.toUpperCase())
       localStorage.setItem('referralTimestamp', new Date().toISOString())
       

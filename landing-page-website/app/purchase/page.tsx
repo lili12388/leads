@@ -12,8 +12,8 @@ export default function PurchasePage() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    // Get affiliate code from localStorage
-    const storedCode = localStorage.getItem('affiliateCode')
+    // Get affiliate code from localStorage (stored as 'referralCode' from homepage)
+    const storedCode = localStorage.getItem('referralCode') || localStorage.getItem('affiliateCode')
     if (storedCode) {
       setAffiliateCode(storedCode)
     }
