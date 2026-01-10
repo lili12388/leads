@@ -24,6 +24,7 @@ interface Affiliate {
   code: string
   name: string
   email: string
+  password: string
   commission: number
   referralLink: string
   stats: {
@@ -478,6 +479,9 @@ export default function AdminDashboard() {
                         <div className="font-medium">{affiliate.name}</div>
                         <div className="text-sm text-gray-400">
                           {affiliate.email} • <span className="text-purple-400">{affiliate.code}</span> • {affiliate.commission}%
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Password: <span className="text-yellow-400 font-mono">{affiliate.password}</span>
                         </div>
                       </div>
                     </div>

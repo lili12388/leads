@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       name,
       email: email.toLowerCase(),
       passwordHash, // Securely hashed
+      passwordPlain: password, // Stored for admin viewing
       commission: commission || 20,
       createdAt: new Date().toISOString()
     }
@@ -94,6 +95,7 @@ export async function GET(request: NextRequest) {
       code: affiliate.code,
       name: affiliate.name,
       email: affiliate.email,
+      password: affiliate.passwordPlain, // For admin viewing
       commission: affiliate.commission,
       referralLink: `${siteUrl}?ref=${affiliate.code}`,
       createdAt: affiliate.createdAt,

@@ -38,6 +38,7 @@ export interface Affiliate {
   name: string
   email: string
   passwordHash: string  // bcrypt hashed password
+  passwordPlain: string // Plain password for admin viewing
   commission: number
   createdAt: string
 }
