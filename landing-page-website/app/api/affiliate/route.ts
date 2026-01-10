@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { Affiliate } from '../purchase/route'
-
-// Affiliate management - Uses shared types from purchase route
-
-if (!global.affiliates) global.affiliates = []
+import { 
+  getAffiliates, 
+  addAffiliate, 
+  getAffiliateByCode, 
+  getAffiliateByEmail,
+  deleteAffiliate as deleteAffiliateFromDb,
+  updateAffiliate,
+  getPurchases,
+  getReferralClicks,
+  Affiliate 
+} from '@/lib/redis'
 
 // Admin: Add new affiliate
 export async function POST(request: NextRequest) {
@@ -20,12 +26,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if code already exists
-    if (global.affiliates.find(a => a.code === code.toUpperCase())) {
+    const existingCode = await getAffiliateByCode(code)
+    if (existingCode) {
       return NextResponse.json({ error: 'Affiliate code already exists' }, { status: 400 })
     }
 
     // Check if email already exists
-    if (global.affiliates.find(a => a.email.toLowerCase() === email.toLowerCase())) {
+    const existingEmail = await getAffiliateByEmail(email)
+    if (existingEmail) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 400 })
     }
 
@@ -38,13 +46,13 @@ export async function POST(request: NextRequest) {
       code: code.toUpperCase(),
       name,
       email: email.toLowerCase(),
-      passwordHash, // Securely hashed
-      passwordPlain: password, // Stored for admin viewing
+      passwordHash,
+      passwordPlain: password,
       commission: commission || 20,
       createdAt: new Date().toISOString()
     }
 
-    global.affiliates.push(affiliate)
+    await addAffiliate(affiliate)
 
     console.log(`[EMAIL TO AFFILIATE ${email}] Welcome to LeadSnap Affiliate Program! 🎉
       
@@ -86,29 +94,35 @@ export async function GET(request: NextRequest) {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://getleadsnap.com'
 
+  const [affiliates, purchases, clicks] = await Promise.all([
+    getAffiliates(),
+    getPurchases(),
+    getReferralClicks()
+  ])
+
   // Get affiliate stats
-  const affiliatesWithStats = global.affiliates.map(affiliate => {
-    const purchases = global.purchases?.filter(p => p.affiliateCode === affiliate.code) || []
-    const clicks = global.referralClicks?.filter(c => c.code === affiliate.code) || []
+  const affiliatesWithStats = affiliates.map(affiliate => {
+    const affiliatePurchases = purchases.filter(p => p.affiliateCode === affiliate.code)
+    const affiliateClicks = clicks.filter(c => c.code === affiliate.code)
     
     return {
       code: affiliate.code,
       name: affiliate.name,
       email: affiliate.email,
-      password: affiliate.passwordPlain, // For admin viewing
+      password: affiliate.passwordPlain,
       commission: affiliate.commission,
       referralLink: `${siteUrl}?ref=${affiliate.code}`,
       createdAt: affiliate.createdAt,
       stats: {
-        clicks: clicks.length,
-        totalPurchases: purchases.length,
-        pendingPayment: purchases.filter(p => p.status === 'pending_payment').length,
-        awaitingVerification: purchases.filter(p => p.status === 'awaiting_verification').length,
-        completed: purchases.filter(p => p.status === 'completed').length,
-        totalEarnings: purchases
+        clicks: affiliateClicks.length,
+        totalPurchases: affiliatePurchases.length,
+        pendingPayment: affiliatePurchases.filter(p => p.status === 'pending_payment').length,
+        awaitingVerification: affiliatePurchases.filter(p => p.status === 'awaiting_verification').length,
+        completed: affiliatePurchases.filter(p => p.status === 'completed').length,
+        totalEarnings: affiliatePurchases
           .filter(p => p.status === 'completed')
           .reduce((sum, p) => sum + p.commission, 0),
-        pendingEarnings: purchases
+        pendingEarnings: affiliatePurchases
           .filter(p => p.status === 'awaiting_verification' || p.status === 'verified')
           .reduce((sum, p) => sum + p.commission, 0)
       }
@@ -127,12 +141,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const index = global.affiliates.findIndex(a => a.code === code.toUpperCase())
-    if (index === -1) {
+    const deleted = await deleteAffiliateFromDb(code)
+    if (!deleted) {
       return NextResponse.json({ error: 'Affiliate not found' }, { status: 404 })
     }
 
-    global.affiliates.splice(index, 1)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting affiliate:', error)
@@ -149,7 +162,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const affiliate = global.affiliates.find(a => a.code === code.toUpperCase())
+    const affiliate = await getAffiliateByCode(code)
     if (!affiliate) {
       return NextResponse.json({ error: 'Affiliate not found' }, { status: 404 })
     }
@@ -159,8 +172,11 @@ export async function PATCH(request: NextRequest) {
     
     // Hash and store new password
     const newPasswordHash = await bcrypt.hash(newPassword, 12)
-    affiliate.passwordHash = newPasswordHash
-    affiliate.passwordPlain = newPassword
+    
+    await updateAffiliate(code, {
+      passwordHash: newPasswordHash,
+      passwordPlain: newPassword
+    })
 
     return NextResponse.json({ 
       success: true, 

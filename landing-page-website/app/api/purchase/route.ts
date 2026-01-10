@@ -1,64 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { 
+  getPurchases, 
+  addPurchase, 
+  getPurchaseByToken,
+  getAffiliates,
+  getAffiliateByCode,
+  getReferralClicks,
+  Purchase,
+  Affiliate,
+  AuditEntry
+} from '@/lib/redis'
 
-// Types
-export interface Purchase {
-  id: string
-  token: string
-  name: string
-  email: string
-  affiliateCode: string | null
-  affiliateCodeLocked: boolean // Cannot be changed after creation
-  paymentMethod: string | null
-  status: 'pending_payment' | 'awaiting_verification' | 'verified' | 'completed'
-  amount: number
-  commission: number
-  createdAt: string
-  paidAt: string | null
-  verifiedAt: string | null
-  completedAt: string | null
-  paymentProof: PaymentProof | null // NEW: proof of payment
-  auditLog: AuditEntry[]
-}
-
-export interface PaymentProof {
-  type: 'transaction_hash' | 'screenshot'
-  value: string // hash or base64 image data
-  submittedAt: string
-}
-
-export interface AuditEntry {
-  timestamp: string
-  action: string
-  details: string
-  actor: 'system' | 'user' | 'admin'
-}
-
-export interface Affiliate {
-  code: string
-  name: string
-  email: string
-  passwordHash: string  // bcrypt hashed password
-  passwordPlain: string // Plain password for admin viewing
-  commission: number
-  createdAt: string
-}
-
-// Global data store (use database in production)
-declare global {
-  var purchases: Purchase[]
-  var affiliates: Affiliate[]
-  var referralClicks: Array<{
-    id: string
-    code: string
-    timestamp: string
-    userAgent: string
-    ip: string
-  }>
-}
-
-if (!global.purchases) global.purchases = []
-if (!global.affiliates) global.affiliates = []
-if (!global.referralClicks) global.referralClicks = []
+// Re-export types for other files
+export type { Purchase, Affiliate, AuditEntry }
 
 // Helper to generate unique tokens
 function generateToken(): string {
@@ -67,16 +21,6 @@ function generateToken(): string {
 
 function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-}
-
-// Helper to add audit log entry
-function addAuditLog(purchase: Purchase, action: string, details: string, actor: 'system' | 'user' | 'admin') {
-  purchase.auditLog.push({
-    timestamp: new Date().toISOString(),
-    action,
-    details,
-    actor
-  })
 }
 
 // POST - Create new purchase request
@@ -95,10 +39,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Get affiliate info if code provided
-    let affiliate: Affiliate | undefined
+    let affiliate: Affiliate | null = null
     let commissionRate = 0
     if (affiliateCode) {
-      affiliate = global.affiliates.find(a => a.code === affiliateCode.toUpperCase())
+      affiliate = await getAffiliateByCode(affiliateCode)
       if (affiliate) {
         commissionRate = affiliate.commission
       }
@@ -126,15 +70,25 @@ export async function POST(request: NextRequest) {
       auditLog: []
     }
 
-    addAuditLog(purchase, 'CREATED', `Purchase request created by ${email}`, 'user')
+    // Add audit logs
+    purchase.auditLog.push({
+      timestamp: new Date().toISOString(),
+      action: 'CREATED',
+      details: `Purchase request created by ${email}`,
+      actor: 'user'
+    })
     
     if (affiliate) {
-      addAuditLog(purchase, 'AFFILIATE_LOCKED', `Affiliate ${affiliate.code} (${affiliate.name}) permanently linked - cannot be changed`, 'system')
+      purchase.auditLog.push({
+        timestamp: new Date().toISOString(),
+        action: 'AFFILIATE_LOCKED',
+        details: `Affiliate ${affiliate.code} (${affiliate.name}) permanently linked - cannot be changed`,
+        actor: 'system'
+      })
     }
 
-    global.purchases.push(purchase)
+    await addPurchase(purchase)
 
-    // TODO: Send email notification to admin
     console.log(`[EMAIL] New purchase request from ${email}${affiliate ? ` via affiliate ${affiliate.code}` : ''}`)
 
     return NextResponse.json({
@@ -157,7 +111,7 @@ export async function GET(request: NextRequest) {
 
   // Get single purchase by token
   if (token) {
-    const purchase = global.purchases.find(p => p.token === token)
+    const purchase = await getPurchaseByToken(token)
     if (!purchase) {
       return NextResponse.json({ error: 'Purchase not found' }, { status: 404 })
     }
@@ -175,13 +129,18 @@ export async function GET(request: NextRequest) {
 
   // Admin: get all purchases
   if (adminKey === process.env.ADMIN_SECRET) {
-    const purchases = global.purchases.map(p => ({
+    const [purchases, affiliates] = await Promise.all([
+      getPurchases(),
+      getAffiliates()
+    ])
+    
+    const purchasesWithAffiliate = purchases.map(p => ({
       ...p,
-      affiliateName: global.affiliates.find(a => a.code === p.affiliateCode)?.name || null
+      affiliateName: affiliates.find(a => a.code === p.affiliateCode)?.name || null
     }))
     
     return NextResponse.json({
-      purchases: purchases.sort((a, b) => 
+      purchases: purchasesWithAffiliate.sort((a, b) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ),
       stats: {
@@ -197,17 +156,22 @@ export async function GET(request: NextRequest) {
 
   // Affiliate: get their referred purchases
   if (affiliateCode) {
-    const affiliate = global.affiliates.find(a => a.code === affiliateCode.toUpperCase())
+    const affiliate = await getAffiliateByCode(affiliateCode)
     if (!affiliate) {
       return NextResponse.json({ error: 'Affiliate not found' }, { status: 404 })
     }
 
-    const affiliatePurchases = global.purchases
+    const [allPurchases, allClicks] = await Promise.all([
+      getPurchases(),
+      getReferralClicks()
+    ])
+
+    const affiliatePurchases = allPurchases
       .filter(p => p.affiliateCode === affiliateCode.toUpperCase())
       .map(p => ({
         id: p.id,
         token: p.token,
-        email: p.email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Partially mask email
+        email: p.email.replace(/(.{2}).*(@.*)/, '$1***$2'),
         status: p.status,
         paymentMethod: p.paymentMethod,
         amount: p.amount,
@@ -217,7 +181,7 @@ export async function GET(request: NextRequest) {
         verifiedAt: p.verifiedAt
       }))
 
-    const clicks = global.referralClicks.filter(c => c.code === affiliateCode.toUpperCase())
+    const clicks = allClicks.filter(c => c.code === affiliateCode.toUpperCase())
 
     return NextResponse.json({
       purchases: affiliatePurchases.sort((a, b) => 

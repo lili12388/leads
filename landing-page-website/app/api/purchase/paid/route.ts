@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { 
+  getPurchases, 
+  savePurchases,
+  getPurchaseByToken,
+  getAffiliateByCode 
+} from '@/lib/redis'
 
-// Rate limiting store (simple in-memory, use Redis in production)
+// Rate limiting store (simple in-memory)
 const rateLimitStore: Map<string, { count: number; resetAt: number }> = new Map()
 
 function checkRateLimit(ip: string): boolean {
@@ -37,10 +43,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Token is required' }, { status: 400 })
     }
 
-    const purchase = global.purchases?.find(p => p.token === token)
-    if (!purchase) {
+    const purchases = await getPurchases()
+    const purchaseIndex = purchases.findIndex(p => p.token === token)
+    
+    if (purchaseIndex === -1) {
       return NextResponse.json({ error: 'Purchase not found' }, { status: 404 })
     }
+
+    const purchase = purchases[purchaseIndex]
 
     if (purchase.status !== 'pending_payment') {
       return NextResponse.json({ error: 'Purchase already marked as paid' }, { status: 400 })
@@ -79,9 +89,13 @@ export async function POST(request: NextRequest) {
       actor: 'user'
     })
 
+    // Save to Redis
+    purchases[purchaseIndex] = purchase
+    await savePurchases(purchases)
+
     // Get affiliate info for notification
     const affiliate = purchase.affiliateCode 
-      ? global.affiliates?.find(a => a.code === purchase.affiliateCode) 
+      ? await getAffiliateByCode(purchase.affiliateCode)
       : null
 
     // TODO: Send email notifications

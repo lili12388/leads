@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAffiliateByCode, addReferralClick, ReferralClick } from '@/lib/redis'
 
 // Track affiliate click
 export async function POST(request: NextRequest) {
@@ -10,13 +11,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify affiliate exists
-    const affiliate = global.affiliates?.find(a => a.code === code.toUpperCase())
+    const affiliate = await getAffiliateByCode(code)
     if (!affiliate) {
       // Still track but don't error - might be an old link
       console.log(`[WARN] Click for unknown affiliate code: ${code}`)
     }
 
-    const click = {
+    const click: ReferralClick = {
       id: `click_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       code: code.toUpperCase(),
       timestamp: new Date().toISOString(),
@@ -24,8 +25,7 @@ export async function POST(request: NextRequest) {
       ip: request.headers.get('x-forwarded-for') || 'Unknown'
     }
 
-    if (!global.referralClicks) global.referralClicks = []
-    global.referralClicks.push(click)
+    await addReferralClick(click)
 
     return NextResponse.json({ success: true })
   } catch (error) {

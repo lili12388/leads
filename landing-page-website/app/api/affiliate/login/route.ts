@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
+import { getAffiliateByEmail, getPurchases, getReferralClicks } from '@/lib/redis'
 
 // Affiliate login - supports both email and code login
 export async function POST(request: NextRequest) {
@@ -11,9 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find affiliate by email
-    const affiliate = global.affiliates?.find(
-      a => a.email.toLowerCase() === email.toLowerCase()
-    )
+    const affiliate = await getAffiliateByEmail(email)
 
     if (!affiliate) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
@@ -28,9 +27,14 @@ export async function POST(request: NextRequest) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://getleadsnap.com'
 
-    // Get affiliate's purchases
-    const purchases = global.purchases?.filter(p => p.affiliateCode === affiliate.code) || []
-    const clicks = global.referralClicks?.filter(c => c.code === affiliate.code) || []
+    // Get affiliate's purchases and clicks
+    const [allPurchases, allClicks] = await Promise.all([
+      getPurchases(),
+      getReferralClicks()
+    ])
+
+    const purchases = allPurchases.filter(p => p.affiliateCode === affiliate.code)
+    const clicks = allClicks.filter(c => c.code === affiliate.code)
 
     return NextResponse.json({
       success: true,
@@ -59,7 +63,7 @@ export async function POST(request: NextRequest) {
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .map(p => ({
           id: p.id,
-          email: p.email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Mask email for privacy
+          email: p.email.replace(/(.{2}).*(@.*)/, '$1***$2'),
           status: p.status,
           paymentMethod: p.paymentMethod,
           amount: p.amount,

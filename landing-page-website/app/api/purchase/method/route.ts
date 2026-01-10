@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getPurchases, savePurchases } from '@/lib/redis'
 
 // Set payment method for a purchase
 export async function POST(request: NextRequest) {
@@ -14,10 +15,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 })
     }
 
-    const purchase = global.purchases?.find(p => p.token === token)
-    if (!purchase) {
+    const purchases = await getPurchases()
+    const purchaseIndex = purchases.findIndex(p => p.token === token)
+    
+    if (purchaseIndex === -1) {
       return NextResponse.json({ error: 'Purchase not found' }, { status: 404 })
     }
+
+    const purchase = purchases[purchaseIndex]
 
     if (purchase.status !== 'pending_payment') {
       return NextResponse.json({ error: 'Payment method already set' }, { status: 400 })
@@ -32,6 +37,10 @@ export async function POST(request: NextRequest) {
       details: `Payment method set to ${paymentMethod.toUpperCase()}`,
       actor: 'user'
     })
+
+    // Save to Redis
+    purchases[purchaseIndex] = purchase
+    await savePurchases(purchases)
 
     return NextResponse.json({ success: true })
   } catch (error) {

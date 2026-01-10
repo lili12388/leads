@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getPurchases, savePurchases, getAffiliateByCode } from '@/lib/redis'
 
 // Admin: Verify payment and complete sale
 export async function POST(request: NextRequest) {
@@ -14,13 +15,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Purchase ID and action are required' }, { status: 400 })
     }
 
-    const purchase = global.purchases?.find(p => p.id === purchaseId)
-    if (!purchase) {
+    const purchases = await getPurchases()
+    const purchaseIndex = purchases.findIndex(p => p.id === purchaseId)
+    
+    if (purchaseIndex === -1) {
       return NextResponse.json({ error: 'Purchase not found' }, { status: 404 })
     }
 
+    const purchase = purchases[purchaseIndex]
+
     const affiliate = purchase.affiliateCode 
-      ? global.affiliates?.find(a => a.code === purchase.affiliateCode) 
+      ? await getAffiliateByCode(purchase.affiliateCode)
       : null
 
     if (action === 'verify') {
@@ -38,6 +43,10 @@ export async function POST(request: NextRequest) {
         details: notes ? `Payment verified by admin. Notes: ${notes}` : 'Payment verified by admin',
         actor: 'admin'
       })
+
+      // Save to Redis
+      purchases[purchaseIndex] = purchase
+      await savePurchases(purchases)
 
       console.log(`[EMAIL TO CUSTOMER ${purchase.email}] Payment Verified!
         Your payment has been verified. Your license is being prepared.
@@ -85,6 +94,10 @@ export async function POST(request: NextRequest) {
         })
       }
 
+      // Save to Redis
+      purchases[purchaseIndex] = purchase
+      await savePurchases(purchases)
+
       console.log(`[EMAIL TO CUSTOMER ${purchase.email}] 🎉 Your License is Ready!
         Thank you for your purchase!
         
@@ -126,6 +139,10 @@ export async function POST(request: NextRequest) {
 
       // Remove from active purchases or mark as rejected
       purchase.status = 'pending_payment' // Reset to allow retry
+
+      // Save to Redis
+      purchases[purchaseIndex] = purchase
+      await savePurchases(purchases)
 
       console.log(`[EMAIL TO CUSTOMER ${purchase.email}] Payment Issue
         We couldn't verify your payment. Please check the payment details and try again,
