@@ -84,6 +84,57 @@ export default function Home() {
   const [openFAQ, setOpenFAQ] = useState<number | null>(0)
   const [isScrolled, setIsScrolled] = useState(false)
 
+  // Silent Referral Tracking
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const refCode = urlParams.get('ref')
+    
+    if (refCode) {
+      // Store referral code in localStorage
+      localStorage.setItem('referralCode', refCode.toUpperCase())
+      localStorage.setItem('referralTimestamp', new Date().toISOString())
+      
+      // Track the visit on the server
+      fetch('/api/referral/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: refCode.toUpperCase(),
+          userAgent: navigator.userAgent
+        })
+      }).catch(() => {}) // Silent fail
+      
+      // Clean URL without reload (removes ?ref=XXX)
+      const cleanUrl = window.location.pathname
+      window.history.replaceState({}, '', cleanUrl)
+      
+      // Set Tawk.to visitor attribute (so admin sees which creator referred)
+      setTimeout(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const TawkAPI = (window as any).Tawk_API
+        if (TawkAPI?.setAttributes) {
+          TawkAPI.setAttributes({
+            'referralCode': refCode.toUpperCase()
+          })
+        }
+      }, 2000)
+    } else {
+      // Check if we have a stored referral code to set in Tawk.to
+      const storedRef = localStorage.getItem('referralCode')
+      if (storedRef) {
+        setTimeout(() => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const TawkAPI = (window as any).Tawk_API
+          if (TawkAPI?.setAttributes) {
+            TawkAPI.setAttributes({
+              'referralCode': storedRef
+            })
+          }
+        }, 2000)
+      }
+    }
+  }, [])
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50)
