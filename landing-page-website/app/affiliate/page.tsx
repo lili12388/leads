@@ -24,7 +24,7 @@ interface AffiliateData {
     createdAt: string
   }
   stats: {
-    clicks: number
+    totalClicks: number
     totalPurchases: number
     completed: number
     pendingEarnings: number
@@ -242,7 +242,7 @@ export default function AffiliateDashboard() {
         {/* Stats Cards */}
         <div className="grid md:grid-cols-5 gap-4 mb-8">
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
-            <div className="text-3xl font-bold text-blue-400">{data.stats.clicks}</div>
+            <div className="text-3xl font-bold text-blue-400">{data.stats.totalClicks}</div>
             <div className="text-gray-400 text-sm mt-1">Link Clicks</div>
           </div>
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
@@ -402,7 +402,7 @@ export default function AffiliateDashboard() {
         {/* Clicks Tab */}
         {activeTab === 'clicks' && (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
-            <h3 className="text-lg font-semibold mb-4">Recent Link Clicks ({data.stats.clicks} total)</h3>
+            <h3 className="text-lg font-semibold mb-4">Recent Link Clicks ({data.stats.totalClicks} total)</h3>
             <p className="text-gray-400 text-sm mb-6">
               Track when people click your referral link. Not all clicks convert to purchases.
             </p>
