@@ -36,6 +36,7 @@ interface AffiliateData {
 
 export default function AffiliateDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [checkingAuth, setCheckingAuth] = useState(true) // Start true to prevent login flash
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loginError, setLoginError] = useState("")
@@ -118,9 +119,13 @@ export default function AffiliateDashboard() {
         } else {
           localStorage.removeItem('affiliateAuth')
         }
+        setCheckingAuth(false)
       }).catch(() => {
         localStorage.removeItem('affiliateAuth')
+        setCheckingAuth(false)
       })
+    } else {
+      setCheckingAuth(false)
     }
   }, [])
 
@@ -142,6 +147,18 @@ export default function AffiliateDashboard() {
       case 'completed': return '✅ Sale Completed'
       default: return status
     }
+  }
+
+  // Loading state while checking auth
+  if (checkingAuth) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </main>
+    )
   }
 
   // Login Screen
