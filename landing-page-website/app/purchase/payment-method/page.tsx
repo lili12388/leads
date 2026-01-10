@@ -26,13 +26,6 @@ const paymentMethods = [
     color: 'from-green-600 to-teal-600'
   },
   {
-    id: 'payeer',
-    name: 'Payeer',
-    icon: '🏦',
-    description: 'Multi-currency wallet',
-    color: 'from-blue-500 to-cyan-600'
-  },
-  {
     id: 'redotpay',
     name: 'RedotPay',
     icon: '🔴',

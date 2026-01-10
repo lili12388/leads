@@ -54,21 +54,6 @@ const paymentDetails: Record<string, {
       { label: 'Reference', value: 'LeadSnap License' }
     ]
   },
-  payeer: {
-    title: 'Payeer Payment',
-    icon: '🏦',
-    instructions: [
-      'Send $59 USD to the Payeer account below',
-      'Use "Transfer" → "To Payeer Account"',
-      'Add your email in the comment for reference',
-      'After sending, click "I\'ve Paid!" below'
-    ],
-    details: [
-      { label: 'Payeer Account', value: 'P1234567890', copyable: true },
-      { label: 'Amount', value: '$59 USD' },
-      { label: 'Comment', value: 'Your email address' }
-    ]
-  },
   redotpay: {
     title: 'RedotPay Payment',
     icon: '🔴',

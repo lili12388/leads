@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Token and payment method are required' }, { status: 400 })
     }
 
-    const validMethods = ['usdt', 'skrill', 'neteller', 'bank', 'redotpay', 'payeer']
+    const validMethods = ['usdt', 'skrill', 'neteller', 'redotpay']
     if (!validMethods.includes(paymentMethod.toLowerCase())) {
       return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 })
     }

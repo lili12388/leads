@@ -190,7 +190,7 @@ export default function Home() {
     },
     {
       question: "What payment methods do you accept?",
-      answer: "We accept Binance (USDT), RedotPay, Skrill, Neteller, and Payeer. Choose the method that works best for you – all transactions are secure and processed quickly."
+      answer: "We accept USDT (TRC20/ERC20), RedotPay, Skrill, and Neteller. Choose the method that works best for you – all transactions are secure and processed quickly."
     },
     {
       question: "Do I need technical skills to use this?",
