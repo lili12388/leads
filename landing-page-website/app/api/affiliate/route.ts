@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
+import { Affiliate } from '../purchase/route'
 
-// Affiliate management - Updated to use new system
-
-interface Affiliate {
-  code: string
-  name: string
-  email: string
-  password: string
-  commission: number
-  createdAt: string
-}
-
-declare global {
-  var affiliates: Affiliate[]
-}
+// Affiliate management - Uses shared types from purchase route
 
 if (!global.affiliates) global.affiliates = []
 
@@ -42,11 +31,14 @@ export async function POST(request: NextRequest) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://getleadsnap.com'
 
+    // Hash the password with bcrypt
+    const passwordHash = await bcrypt.hash(password, 12)
+
     const affiliate: Affiliate = {
       code: code.toUpperCase(),
       name,
       email: email.toLowerCase(),
-      password, // In production, hash this!
+      passwordHash, // Securely hashed
       commission: commission || 20,
       createdAt: new Date().toISOString()
     }

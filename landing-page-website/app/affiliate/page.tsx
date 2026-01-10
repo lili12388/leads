@@ -136,10 +136,10 @@ export default function AffiliateDashboard() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'pending_payment': return '⏳ Pending Payment'
-      case 'awaiting_verification': return '🔍 Under Review'
-      case 'verified': return '✓ Verified'
-      case 'completed': return '✅ Completed'
+      case 'pending_payment': return '⏳ Payment Requested'
+      case 'awaiting_verification': return '🔍 Payment Sent'
+      case 'verified': return '✓ Payment Verified'
+      case 'completed': return '✅ Sale Completed'
       default: return status
     }
   }

@@ -7,6 +7,7 @@ export interface Purchase {
   name: string
   email: string
   affiliateCode: string | null
+  affiliateCodeLocked: boolean // Cannot be changed after creation
   paymentMethod: string | null
   status: 'pending_payment' | 'awaiting_verification' | 'verified' | 'completed'
   amount: number
@@ -15,7 +16,14 @@ export interface Purchase {
   paidAt: string | null
   verifiedAt: string | null
   completedAt: string | null
+  paymentProof: PaymentProof | null // NEW: proof of payment
   auditLog: AuditEntry[]
+}
+
+export interface PaymentProof {
+  type: 'transaction_hash' | 'screenshot'
+  value: string // hash or base64 image data
+  submittedAt: string
 }
 
 export interface AuditEntry {
@@ -29,7 +37,7 @@ export interface Affiliate {
   code: string
   name: string
   email: string
-  password: string
+  passwordHash: string  // bcrypt hashed password
   commission: number
   createdAt: string
 }
@@ -104,6 +112,7 @@ export async function POST(request: NextRequest) {
       name,
       email,
       affiliateCode: affiliateCode?.toUpperCase() || null,
+      affiliateCodeLocked: true, // LOCKED: Cannot be changed after creation
       paymentMethod: null,
       status: 'pending_payment',
       amount: productPrice,
@@ -112,13 +121,14 @@ export async function POST(request: NextRequest) {
       paidAt: null,
       verifiedAt: null,
       completedAt: null,
+      paymentProof: null,
       auditLog: []
     }
 
     addAuditLog(purchase, 'CREATED', `Purchase request created by ${email}`, 'user')
     
     if (affiliate) {
-      addAuditLog(purchase, 'AFFILIATE_LINKED', `Linked to affiliate ${affiliate.code} (${affiliate.name})`, 'system')
+      addAuditLog(purchase, 'AFFILIATE_LOCKED', `Affiliate ${affiliate.code} (${affiliate.name}) permanently linked - cannot be changed`, 'system')
     }
 
     global.purchases.push(purchase)

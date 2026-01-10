@@ -109,6 +109,10 @@ export default function PayPage() {
   const [purchaseToken, setPurchaseToken] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [error, setError] = useState("")
+  
+  // Payment proof fields
+  const [transactionHash, setTransactionHash] = useState("")
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('purchaseToken')
@@ -129,17 +133,42 @@ export default function PayPage() {
     setTimeout(() => setCopied(null), 2000)
   }
 
+  const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    // Limit file size to 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Screenshot must be less than 5MB')
+      return
+    }
+    
+    const reader = new FileReader()
+    reader.onload = () => {
+      setScreenshotPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
   const handlePaid = async () => {
     if (!purchaseToken) return
     
     setLoading(true)
     setError("")
 
+    // Build payment proof object
+    let paymentProof = null
+    if (paymentMethod === 'usdt' && transactionHash.trim()) {
+      paymentProof = { type: 'transaction_hash', value: transactionHash.trim() }
+    } else if (screenshotPreview) {
+      paymentProof = { type: 'screenshot', value: screenshotPreview }
+    }
+
     try {
       const res = await fetch('/api/purchase/paid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: purchaseToken })
+        body: JSON.stringify({ token: purchaseToken, paymentProof })
       })
 
       const data = await res.json()
@@ -233,6 +262,64 @@ export default function PayPage() {
               </li>
             ))}
           </ol>
+        </div>
+
+        {/* Payment Proof Section */}
+        <div className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-6 mb-6">
+          <h2 className="text-lg font-semibold text-purple-400 mb-2 flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            Proof of Payment <span className="text-gray-400 font-normal text-sm">(optional but speeds up verification)</span>
+          </h2>
+          <p className="text-gray-400 text-sm mb-4">
+            Attach proof to get verified faster and avoid back-and-forth.
+          </p>
+          
+          {paymentMethod === 'usdt' ? (
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">Transaction Hash (TxID)</label>
+              <input
+                type="text"
+                value={transactionHash}
+                onChange={(e) => setTransactionHash(e.target.value)}
+                className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 text-white font-mono text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                placeholder="e.g., 0x1234abcd..."
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">Screenshot of Payment</label>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleScreenshotUpload}
+                  className="hidden"
+                  id="screenshot-upload"
+                />
+                <label
+                  htmlFor="screenshot-upload"
+                  className="flex items-center justify-center gap-3 w-full bg-gray-700/50 border border-dashed border-gray-500 rounded-xl px-4 py-6 text-gray-400 cursor-pointer hover:border-purple-500 hover:text-purple-400 transition-colors"
+                >
+                  {screenshotPreview ? (
+                    <div className="text-center">
+                      <img src={screenshotPreview} alt="Payment proof" className="max-h-32 mx-auto rounded-lg mb-2" />
+                      <span className="text-green-400 text-sm">✓ Screenshot attached</span>
+                    </div>
+                  ) : (
+                    <>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span>Click to upload screenshot</span>
+                    </>
+                  )}
+                </label>
+              </div>
+              <p className="text-gray-500 text-xs mt-2">Max 5MB • PNG, JPG, or GIF</p>
+            </div>
+          )}
         </div>
 
         {/* Error */}

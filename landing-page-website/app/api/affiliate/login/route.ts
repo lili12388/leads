@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
 
 // Affiliate login - supports both email and code login
 export async function POST(request: NextRequest) {
@@ -9,12 +10,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
-    // Support login by email
+    // Find affiliate by email
     const affiliate = global.affiliates?.find(
-      a => a.email.toLowerCase() === email.toLowerCase() && a.password === password
+      a => a.email.toLowerCase() === email.toLowerCase()
     )
 
     if (!affiliate) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+    }
+
+    // Compare password with bcrypt hash
+    const isValidPassword = await bcrypt.compare(password, affiliate.passwordHash)
+    
+    if (!isValidPassword) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
