@@ -6,6 +6,31 @@ import {
   getAffiliateByCode 
 } from '@/lib/redis'
 
+// Telegram notification function
+async function sendTelegramNotification(message: string) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  
+  if (!botToken || !chatId) {
+    console.log('[TELEGRAM] Bot token or chat ID not configured')
+    return
+  }
+  
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'HTML'
+      })
+    })
+  } catch (error) {
+    console.error('[TELEGRAM] Failed to send notification:', error)
+  }
+}
+
 // Rate limiting store (simple in-memory)
 const rateLimitStore: Map<string, { count: number; resetAt: number }> = new Map()
 
@@ -106,6 +131,20 @@ export async function POST(request: NextRequest) {
       - Payment Method: ${purchase.paymentMethod?.toUpperCase()}
       - Affiliate: ${affiliate ? `${affiliate.name} (${affiliate.code})` : 'Direct sale'}
     `)
+
+    // Send Telegram notification
+    const telegramMessage = `🔔 <b>NEW PAYMENT SUBMITTED!</b>
+
+💰 <b>Amount:</b> $${purchase.amount}
+👤 <b>Customer:</b> ${purchase.name}
+📧 <b>Email:</b> ${purchase.email}
+💳 <b>Method:</b> ${purchase.paymentMethod?.toUpperCase()}
+${paymentProof ? `📎 <b>Proof:</b> ${paymentProof.type === 'transaction_hash' ? 'TX Hash attached' : 'Screenshot attached'}` : '⚠️ No proof attached'}
+${affiliate ? `🤝 <b>Affiliate:</b> ${affiliate.name} (${affiliate.code})` : '🎯 Direct sale'}
+
+🔗 <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://getleadsnap.com'}/admin">Open Admin Panel</a>`
+    
+    await sendTelegramNotification(telegramMessage)
 
     if (affiliate) {
       console.log(`[EMAIL TO AFFILIATE ${affiliate.email}] A referral has submitted payment:
