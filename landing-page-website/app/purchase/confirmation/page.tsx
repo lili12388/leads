@@ -36,7 +36,7 @@ export default function ConfirmationPage() {
             <span className="text-yellow-400 font-semibold">Awaiting Verification</span>
           </div>
           <p className="text-gray-300 text-sm">
-            Our team will verify your payment within <span className="text-white font-semibold">24 hours</span> (usually much faster).
+            Our team will verify your payment within <span className="text-white font-semibold">1 hour</span> (usually much faster).
           </p>
         </div>
 
