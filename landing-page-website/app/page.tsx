@@ -2,6 +2,17 @@
 
 import { useEffect, useRef, useState } from "react"
 
+// Cookie helper functions for persistent affiliate tracking
+function setCookie(name: string, value: string, days: number) {
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`
+}
+
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+  return match ? decodeURIComponent(match[2]) : null
+}
+
 // Helper function to open Tawk.to chat
 function openTawkChat() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,6 +105,9 @@ export default function Home() {
       localStorage.setItem('affiliateCode', refCode.toUpperCase())
       localStorage.setItem('referralCode', refCode.toUpperCase())
       localStorage.setItem('referralTimestamp', new Date().toISOString())
+      
+      // Also store in cookie for extra persistence (30 days)
+      setCookie('affiliateCode', refCode.toUpperCase(), 30)
       
       // Track the visit on the server (affiliate click tracking)
       fetch('/api/affiliate/track', {

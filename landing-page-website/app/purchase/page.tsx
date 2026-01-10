@@ -3,6 +3,13 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
+// Cookie helper function
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+  return match ? decodeURIComponent(match[2]) : null
+}
+
 export default function PurchasePage() {
   const router = useRouter()
   const [name, setName] = useState("")
@@ -12,10 +19,17 @@ export default function PurchasePage() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    // Get affiliate code from localStorage (stored as 'referralCode' from homepage)
-    const storedCode = localStorage.getItem('referralCode') || localStorage.getItem('affiliateCode')
+    // Get affiliate code from localStorage first, then cookie as fallback
+    const storedCode = localStorage.getItem('referralCode') 
+      || localStorage.getItem('affiliateCode')
+      || getCookie('affiliateCode')
     if (storedCode) {
       setAffiliateCode(storedCode)
+      // Sync back to localStorage if it came from cookie
+      if (!localStorage.getItem('affiliateCode')) {
+        localStorage.setItem('affiliateCode', storedCode)
+        localStorage.setItem('referralCode', storedCode)
+      }
     }
   }, [])
 
