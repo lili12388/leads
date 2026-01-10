@@ -1,5 +1,3 @@
 {
-  "buildCommand": "cd landing-page-website && npm install && npm run build",
-  "outputDirectory": "landing-page-website/.next",
-  "framework": "nextjs"
+  "rootDirectory": "landing-page-website"
 }
