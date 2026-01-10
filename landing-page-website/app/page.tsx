@@ -234,7 +234,13 @@ export default function Home() {
               Extract unlimited business leads from Google Maps in seconds. 
               <span className="text-foreground font-medium"> Names, emails, phones, reviews</span> – everything you need, exported directly to Google Sheets.
             </p>
-            <p className="text-sm text-accent mb-8 flex items-center justify-center gap-2">
+            <p className="text-sm text-accent mb-4 flex items-center justify-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              No more monthly payments! One-time lifetime license – hassle-free forever.
+            </p>
+            <p className="text-sm text-muted-foreground mb-8 flex items-center justify-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -636,10 +642,6 @@ export default function Home() {
 
               {/* Price */}
               <div className="mb-8">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <span className="text-2xl text-muted-foreground line-through">$199</span>
-                  <span className="px-3 py-1 bg-accent/20 text-accent rounded-full text-sm font-semibold">70% OFF</span>
-                </div>
                 <div className="text-7xl md:text-8xl font-bold text-foreground">
                   $59
                 </div>
