@@ -82,15 +82,6 @@ export default function PurchasePage() {
           <p className="text-gray-400 mt-2">LeadSnap Pro - One-time payment of <span className="text-green-400 font-semibold">$59</span></p>
         </div>
 
-        {/* Affiliate Badge */}
-        {affiliateCode && (
-          <div className="bg-purple-600/20 border border-purple-500/30 rounded-xl p-3 mb-6 text-center">
-            <span className="text-purple-300 text-sm">
-              🎁 Referred by: <span className="font-mono font-semibold">{affiliateCode}</span>
-            </span>
-          </div>
-        )}
-
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
