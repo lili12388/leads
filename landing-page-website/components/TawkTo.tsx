@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { usePathname } from "next/navigation"
 
 // Extend Window interface for Tawk.to
 declare global {
@@ -31,7 +32,27 @@ interface TawkToProps {
 }
 
 export default function TawkTo({ propertyId, widgetId }: TawkToProps) {
+  const pathname = usePathname()
+  
+  // Hide on admin and affiliate pages
+  const hiddenPaths = ['/admin', '/affiliate']
+  const shouldHide = hiddenPaths.some(path => pathname?.startsWith(path))
+
   useEffect(() => {
+    // Don't load on hidden paths
+    if (shouldHide) {
+      // Hide widget if already loaded
+      if (window.Tawk_API?.hideWidget) {
+        window.Tawk_API.hideWidget()
+      }
+      return
+    }
+
+    // Show widget if it was hidden
+    if (window.Tawk_API?.showWidget) {
+      window.Tawk_API.showWidget()
+    }
+
     // Prevent duplicate scripts
     if (document.getElementById("tawkto-script")) return
 
@@ -61,7 +82,7 @@ export default function TawkTo({ propertyId, widgetId }: TawkToProps) {
         existingScript.remove()
       }
     }
-  }, [propertyId, widgetId])
+  }, [propertyId, widgetId, shouldHide])
 
   return null // This component doesn't render anything visible
 }

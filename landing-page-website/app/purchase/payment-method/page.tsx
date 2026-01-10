@@ -38,13 +38,6 @@ const paymentMethods = [
     icon: '🔴',
     description: 'Crypto-friendly payments',
     color: 'from-red-500 to-rose-600'
-  },
-  {
-    id: 'bank',
-    name: 'Bank Transfer',
-    icon: '🏧',
-    description: 'Direct bank transfer',
-    color: 'from-gray-500 to-slate-600'
   }
 ]
 
