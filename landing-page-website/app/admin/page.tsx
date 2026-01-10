@@ -175,6 +175,28 @@ export default function AdminDashboard() {
     }
   }
 
+  const resetPassword = async (code: string, name: string) => {
+    if (!confirm(`Reset password for ${name}?`)) return
+    
+    try {
+      const res = await fetch('/api/affiliate', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, adminKey })
+      })
+      const data = await res.json()
+      
+      if (data.success) {
+        alert(`New password for ${name}: ${data.newPassword}`)
+        fetchData()
+      } else {
+        alert(data.error || 'Failed to reset password')
+      }
+    } catch {
+      alert('Failed to reset password')
+    }
+  }
+
   useEffect(() => {
     const savedKey = localStorage.getItem('adminKey')
     if (savedKey) {
@@ -507,6 +529,12 @@ export default function AdminDashboard() {
                         className="bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded text-sm"
                       >
                         Copy Link
+                      </button>
+                      <button 
+                        onClick={() => resetPassword(affiliate.code, affiliate.name)} 
+                        className="text-yellow-400 hover:text-yellow-300 text-sm"
+                      >
+                        Reset PW
                       </button>
                       <button onClick={() => deleteAffiliate(affiliate.code)} className="text-red-400 hover:text-red-300 text-sm">
                         Delete

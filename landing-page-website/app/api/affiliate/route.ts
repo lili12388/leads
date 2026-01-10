@@ -139,3 +139,36 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }
+
+// Admin: Reset affiliate password
+export async function PATCH(request: NextRequest) {
+  try {
+    const { code, adminKey } = await request.json()
+    
+    if (adminKey !== process.env.ADMIN_SECRET) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const affiliate = global.affiliates.find(a => a.code === code.toUpperCase())
+    if (!affiliate) {
+      return NextResponse.json({ error: 'Affiliate not found' }, { status: 404 })
+    }
+
+    // Generate new random password
+    const newPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase()
+    
+    // Hash and store new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 12)
+    affiliate.passwordHash = newPasswordHash
+    affiliate.passwordPlain = newPassword
+
+    return NextResponse.json({ 
+      success: true, 
+      newPassword,
+      message: `Password reset for ${affiliate.name}` 
+    })
+  } catch (error) {
+    console.error('Error resetting password:', error)
+    return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 })
+  }
+}
