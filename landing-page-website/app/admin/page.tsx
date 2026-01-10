@@ -2,38 +2,45 @@
 
 import { useState, useEffect } from "react"
 
-interface Creator {
+interface Purchase {
+  id: string
+  token: string
+  name: string
+  email: string
+  affiliateCode: string | null
+  affiliateName: string | null
+  paymentMethod: string | null
+  status: 'pending_payment' | 'awaiting_verification' | 'verified' | 'completed'
+  amount: number
+  commission: number
+  createdAt: string
+  paidAt: string | null
+  verifiedAt: string | null
+  completedAt: string | null
+  auditLog: Array<{ timestamp: string; action: string; details: string; actor: string }>
+}
+
+interface Affiliate {
   code: string
   name: string
+  email: string
   commission: number
   referralLink: string
-  createdAt: string
-}
-
-interface Visit {
-  id: string
-  code: string
-  timestamp: string
-  userAgent: string
-  ip: string
-}
-
-interface Conversion {
-  id: string
-  code: string
-  status: 'pending' | 'closed' | 'lost'
-  notes: string
-  timestamp: string
-  closedAt?: string
+  stats: {
+    clicks: number
+    totalPurchases: number
+    completed: number
+    totalEarnings: number
+  }
 }
 
 interface Stats {
-  totalVisits: number
-  totalConversions: number
-  totalClosed: number
-  creators: Array<{ code: string; visits: number; conversions: number; closed: number }>
-  recentVisits: Visit[]
-  allConversions: Conversion[]
+  total: number
+  pending: number
+  awaiting: number
+  verified: number
+  totalRevenue: number
+  totalCommissions: number
 }
 
 export default function AdminDashboard() {
@@ -42,14 +49,16 @@ export default function AdminDashboard() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [loginError, setLoginError] = useState("")
-  const [activeTab, setActiveTab] = useState<'overview' | 'creators' | 'visits' | 'conversions'>('overview')
+  const [activeTab, setActiveTab] = useState<'purchases' | 'affiliates' | 'overview'>('overview')
   
+  const [purchases, setPurchases] = useState<Purchase[]>([])
+  const [affiliates, setAffiliates] = useState<Affiliate[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
-  const [creators, setCreators] = useState<Creator[]>([])
   const [loading, setLoading] = useState(false)
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null)
 
-  // New creator form
-  const [newCreator, setNewCreator] = useState({ name: '', code: '', password: '', commission: 20 })
+  // New affiliate form
+  const [newAffiliate, setNewAffiliate] = useState({ name: '', code: '', email: '', password: '', commission: 20 })
 
   const login = async () => {
     setLoginError("")
@@ -83,52 +92,78 @@ export default function AdminDashboard() {
     if (!adminKey) return
     setLoading(true)
     try {
-      // Fetch stats
-      const statsRes = await fetch(`/api/referral/track?adminKey=${adminKey}`)
-      const statsData = await statsRes.json()
-      if (!statsData.error) setStats(statsData)
+      // Fetch purchases
+      const purchasesRes = await fetch(`/api/purchase?adminKey=${adminKey}`)
+      const purchasesData = await purchasesRes.json()
+      if (!purchasesData.error) {
+        setPurchases(purchasesData.purchases || [])
+        setStats(purchasesData.stats)
+      }
 
-      // Fetch creators
-      const creatorsRes = await fetch(`/api/referral/creators?adminKey=${adminKey}`)
-      const creatorsData = await creatorsRes.json()
-      if (!creatorsData.error) setCreators(creatorsData.creators || [])
+      // Fetch affiliates
+      const affiliatesRes = await fetch(`/api/affiliate?adminKey=${adminKey}`)
+      const affiliatesData = await affiliatesRes.json()
+      if (!affiliatesData.error) {
+        setAffiliates(affiliatesData.affiliates || [])
+      }
     } catch (err) {
       console.error('Failed to fetch data:', err)
     }
     setLoading(false)
   }
 
-  const addCreator = async () => {
-    if (!newCreator.name || !newCreator.code || !newCreator.password) {
+  const verifyPayment = async (purchaseId: string, action: 'verify' | 'complete' | 'reject') => {
+    try {
+      const res = await fetch('/api/purchase/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ purchaseId, action, adminKey })
+      })
+      const data = await res.json()
+      
+      if (data.success) {
+        fetchData()
+        setSelectedPurchase(null)
+        alert(`Action completed: ${action}`)
+      } else {
+        alert(data.error || 'Failed')
+      }
+    } catch {
+      alert('Failed to process')
+    }
+  }
+
+  const addAffiliate = async () => {
+    if (!newAffiliate.name || !newAffiliate.code || !newAffiliate.email || !newAffiliate.password) {
       alert('Please fill all fields')
       return
     }
     
     try {
-      const res = await fetch('/api/referral/creators', {
+      const res = await fetch('/api/affiliate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...newCreator, adminKey })
+        body: JSON.stringify({ ...newAffiliate, adminKey })
       })
       const data = await res.json()
       
       if (data.success) {
-        setNewCreator({ name: '', code: '', password: '', commission: 20 })
+        setNewAffiliate({ name: '', code: '', email: '', password: '', commission: 20 })
         fetchData()
-        alert('Creator added successfully!')
+        alert('Affiliate added!')
       } else {
-        alert(data.error || 'Failed to add creator')
+        alert(data.error || 'Failed to add affiliate')
       }
     } catch {
-      alert('Failed to add creator')
+      alert('Failed to add affiliate')
     }
   }
 
-  const deleteCreator = async (code: string) => {
-    if (!confirm(`Delete creator ${code}?`)) return
+  const deleteAffiliate = async (code: string) => {
+    if (!confirm(`Delete affiliate ${code}?`)) return
     
     try {
-      await fetch('/api/referral/creators', {
+      await fetch('/api/affiliate', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, adminKey })
@@ -136,33 +171,6 @@ export default function AdminDashboard() {
       fetchData()
     } catch {
       alert('Failed to delete')
-    }
-  }
-
-  const updateConversion = async (conversionId: string, status: string) => {
-    try {
-      await fetch('/api/referral/conversion', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversionId, status, adminKey })
-      })
-      fetchData()
-    } catch {
-      alert('Failed to update')
-    }
-  }
-
-  const markAsConversion = async (visit: Visit) => {
-    try {
-      await fetch('/api/referral/conversion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: visit.code, visitId: visit.id, adminKey })
-      })
-      fetchData()
-      alert('Marked as potential conversion!')
-    } catch {
-      alert('Failed to mark')
     }
   }
 
@@ -180,6 +188,26 @@ export default function AdminDashboard() {
     }
   }, [isLoggedIn, adminKey])
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending_payment': return 'bg-gray-600/30 text-gray-400'
+      case 'awaiting_verification': return 'bg-yellow-600/30 text-yellow-400'
+      case 'verified': return 'bg-blue-600/30 text-blue-400'
+      case 'completed': return 'bg-green-600/30 text-green-400'
+      default: return 'bg-gray-600/30 text-gray-400'
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending_payment': return 'Pending Payment'
+      case 'awaiting_verification': return 'Awaiting Verification'
+      case 'verified': return 'Verified'
+      case 'completed': return 'Completed'
+      default: return status
+    }
+  }
+
   // Login Screen
   if (!isLoggedIn) {
     return (
@@ -192,47 +220,30 @@ export default function AdminDashboard() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-            <p className="text-gray-400 mt-2">LeadSnap Referral System</p>
+            <p className="text-gray-400 mt-2">LeadSnap Sales & Affiliates</p>
           </div>
 
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
-                placeholder="Enter username"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && login()}
-                className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
-                placeholder="Enter password"
-              />
-            </div>
-
-            {loginError && (
-              <p className="text-red-400 text-sm text-center">{loginError}</p>
-            )}
-
-            <button
-              onClick={login}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25"
-            >
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 text-white"
+              placeholder="Username"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && login()}
+              className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 text-white"
+              placeholder="Password"
+            />
+            {loginError && <p className="text-red-400 text-sm text-center">{loginError}</p>}
+            <button onClick={login} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 rounded-xl">
               Sign In
             </button>
           </div>
-
-          <p className="text-center text-gray-500 text-xs mt-6">
-            Secure admin access only
-          </p>
         </div>
       </main>
     )
@@ -252,32 +263,27 @@ export default function AdminDashboard() {
             </div>
             <div>
               <h1 className="font-bold text-lg">LeadSnap Admin</h1>
-              <p className="text-xs text-gray-400">Referral Management</p>
+              <p className="text-xs text-gray-400">Sales & Affiliate Management</p>
             </div>
           </div>
-          <button
-            onClick={logout}
-            className="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Logout
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={fetchData} disabled={loading} className="text-gray-400 hover:text-white text-sm">
+              {loading ? '⏳' : '🔄'} Refresh
+            </button>
+            <button onClick={logout} className="text-gray-400 hover:text-white text-sm">Logout</button>
+          </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Tabs */}
         <div className="flex gap-2 mb-8 bg-gray-800/30 p-1 rounded-xl w-fit">
-          {(['overview', 'creators', 'visits', 'conversions'] as const).map((tab) => (
+          {(['overview', 'purchases', 'affiliates'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-2 rounded-lg font-medium text-sm transition-all ${
-                activeTab === tab
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
-                  : 'text-gray-400 hover:text-white'
+                activeTab === tab ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -285,260 +291,308 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {loading && (
-          <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto"></div>
-            <p className="text-gray-400 mt-4">Loading...</p>
-          </div>
-        )}
-
-        {!loading && activeTab === 'overview' && stats && (
+        {/* Overview Tab */}
+        {activeTab === 'overview' && stats && (
           <div className="space-y-8">
-            {/* Stats Cards */}
-            <div className="grid md:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-500/30 rounded-2xl p-6">
-                <div className="text-3xl font-bold text-blue-400">{stats.totalVisits}</div>
-                <div className="text-gray-400 text-sm mt-1">Total Referral Visits</div>
+            <div className="grid md:grid-cols-5 gap-4">
+              <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
+                <div className="text-3xl font-bold text-white">{stats.total}</div>
+                <div className="text-gray-400 text-sm mt-1">Total Purchases</div>
               </div>
-              <div className="bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-500/30 rounded-2xl p-6">
-                <div className="text-3xl font-bold text-purple-400">{creators.length}</div>
-                <div className="text-gray-400 text-sm mt-1">Active Creators</div>
+              <div className="bg-yellow-600/20 border border-yellow-500/30 rounded-2xl p-6">
+                <div className="text-3xl font-bold text-yellow-400">{stats.awaiting}</div>
+                <div className="text-gray-400 text-sm mt-1">Awaiting Verification</div>
               </div>
-              <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-800/20 border border-yellow-500/30 rounded-2xl p-6">
-                <div className="text-3xl font-bold text-yellow-400">{stats.totalConversions}</div>
-                <div className="text-gray-400 text-sm mt-1">Total Leads</div>
+              <div className="bg-green-600/20 border border-green-500/30 rounded-2xl p-6">
+                <div className="text-3xl font-bold text-green-400">{stats.verified}</div>
+                <div className="text-gray-400 text-sm mt-1">Completed Sales</div>
               </div>
-              <div className="bg-gradient-to-br from-green-600/20 to-green-800/20 border border-green-500/30 rounded-2xl p-6">
-                <div className="text-3xl font-bold text-green-400">{stats.totalClosed}</div>
-                <div className="text-gray-400 text-sm mt-1">Closed Deals</div>
+              <div className="bg-blue-600/20 border border-blue-500/30 rounded-2xl p-6">
+                <div className="text-3xl font-bold text-blue-400">${stats.totalRevenue}</div>
+                <div className="text-gray-400 text-sm mt-1">Total Revenue</div>
               </div>
-            </div>
-
-            {/* Creator Performance */}
-            <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Creator Performance</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-gray-400 text-sm border-b border-gray-700/50">
-                      <th className="pb-3">Creator</th>
-                      <th className="pb-3">Visits</th>
-                      <th className="pb-3">Leads</th>
-                      <th className="pb-3">Closed</th>
-                      <th className="pb-3">Conversion Rate</th>
-                      <th className="pb-3">Earnings</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.creators.map((c) => {
-                      const creator = creators.find(cr => cr.code === c.code)
-                      const rate = c.visits > 0 ? ((c.closed / c.visits) * 100).toFixed(1) : '0'
-                      const earnings = c.closed * 59 * ((creator?.commission || 20) / 100)
-                      return (
-                        <tr key={c.code} className="border-b border-gray-700/30">
-                          <td className="py-3">
-                            <span className="bg-purple-600/30 text-purple-300 px-3 py-1 rounded-full text-sm font-mono">
-                              {c.code}
-                            </span>
-                          </td>
-                          <td className="py-3 text-blue-400">{c.visits}</td>
-                          <td className="py-3 text-yellow-400">{c.conversions}</td>
-                          <td className="py-3 text-green-400">{c.closed}</td>
-                          <td className="py-3">{rate}%</td>
-                          <td className="py-3 text-green-400 font-semibold">${earnings.toFixed(0)}</td>
-                        </tr>
-                      )
-                    })}
-                    {stats.creators.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="py-8 text-center text-gray-500">
-                          No referral data yet
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!loading && activeTab === 'creators' && (
-          <div className="space-y-8">
-            {/* Add Creator Form */}
-            <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Add New Creator</h2>
-              <div className="grid md:grid-cols-5 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Name</label>
-                  <input
-                    type="text"
-                    value={newCreator.name}
-                    onChange={(e) => setNewCreator({...newCreator, name: e.target.value})}
-                    className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-2 text-white"
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Code</label>
-                  <input
-                    type="text"
-                    value={newCreator.code}
-                    onChange={(e) => setNewCreator({...newCreator, code: e.target.value.toUpperCase()})}
-                    className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-2 text-white uppercase"
-                    placeholder="JOHN"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Password</label>
-                  <input
-                    type="text"
-                    value={newCreator.password}
-                    onChange={(e) => setNewCreator({...newCreator, password: e.target.value})}
-                    className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-2 text-white"
-                    placeholder="creator123"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Commission %</label>
-                  <input
-                    type="number"
-                    value={newCreator.commission}
-                    onChange={(e) => setNewCreator({...newCreator, commission: Number(e.target.value)})}
-                    className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-2 text-white"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <button
-                    onClick={addCreator}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl px-4 py-2 transition-colors"
-                  >
-                    + Add
-                  </button>
-                </div>
+              <div className="bg-purple-600/20 border border-purple-500/30 rounded-2xl p-6">
+                <div className="text-3xl font-bold text-purple-400">${stats.totalCommissions}</div>
+                <div className="text-gray-400 text-sm mt-1">Affiliate Payouts</div>
               </div>
             </div>
 
-            {/* Creators List */}
+            {/* Awaiting Verification */}
             <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Active Creators ({creators.length})</h2>
-              <div className="space-y-3">
-                {creators.map((creator) => (
-                  <div key={creator.code} className="bg-gray-700/30 rounded-xl p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center font-bold">
-                        {creator.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-medium">{creator.name}</div>
-                        <div className="text-sm text-gray-400">
-                          Code: <span className="text-purple-400 font-mono">{creator.code}</span> • {creator.commission}% commission
-                        </div>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <span className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></span>
+                Awaiting Verification ({purchases.filter(p => p.status === 'awaiting_verification').length})
+              </h2>
+              <div className="space-y-2">
+                {purchases.filter(p => p.status === 'awaiting_verification').map(purchase => (
+                  <div key={purchase.id} className="bg-gray-700/30 rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{purchase.name} ({purchase.email})</div>
+                      <div className="text-sm text-gray-400">
+                        {purchase.paymentMethod?.toUpperCase()} • ${purchase.amount}
+                        {purchase.affiliateCode && <span className="text-purple-400"> • via {purchase.affiliateCode}</span>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex gap-2">
                       <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(creator.referralLink)
-                          alert('Link copied!')
-                        }}
-                        className="text-sm bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg transition-colors"
+                        onClick={() => verifyPayment(purchase.id, 'complete')}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"
                       >
-                        Copy Link
+                        ✓ Verify & Complete
                       </button>
                       <button
-                        onClick={() => deleteCreator(creator.code)}
-                        className="text-sm bg-red-600/30 hover:bg-red-600 text-red-400 hover:text-white px-4 py-2 rounded-lg transition-colors"
+                        onClick={() => setSelectedPurchase(purchase)}
+                        className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm"
                       >
-                        Delete
+                        View
                       </button>
                     </div>
                   </div>
                 ))}
-                {creators.length === 0 && (
-                  <p className="text-center text-gray-500 py-8">No creators yet. Add one above!</p>
+                {purchases.filter(p => p.status === 'awaiting_verification').length === 0 && (
+                  <p className="text-gray-500 text-center py-4">No payments awaiting verification</p>
                 )}
               </div>
             </div>
           </div>
         )}
 
-        {!loading && activeTab === 'visits' && stats && (
-          <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold mb-4">Recent Referral Visits</h2>
-            <div className="space-y-2">
-              {stats.recentVisits.map((visit) => (
-                <div key={visit.id} className="bg-gray-700/30 rounded-xl p-4 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <span className="bg-purple-600/30 text-purple-300 px-3 py-1 rounded-full text-sm font-mono">
-                        {visit.code}
-                      </span>
-                      <span className="text-gray-400 text-sm">
-                        {new Date(visit.timestamp).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1 truncate max-w-md">
-                      {visit.userAgent}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => markAsConversion(visit)}
-                    className="text-sm bg-yellow-600/30 hover:bg-yellow-600 text-yellow-400 hover:text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    Mark as Lead
-                  </button>
-                </div>
-              ))}
-              {stats.recentVisits.length === 0 && (
-                <p className="text-center text-gray-500 py-8">No visits yet</p>
-              )}
+        {/* Purchases Tab */}
+        {activeTab === 'purchases' && (
+          <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-gray-400 text-sm border-b border-gray-700/50">
+                    <th className="px-6 py-4">Customer</th>
+                    <th className="px-6 py-4">Payment</th>
+                    <th className="px-6 py-4">Affiliate</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Date</th>
+                    <th className="px-6 py-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {purchases.map((purchase) => (
+                    <tr key={purchase.id} className="border-b border-gray-700/30 hover:bg-gray-700/20">
+                      <td className="px-6 py-4">
+                        <div className="font-medium">{purchase.name}</div>
+                        <div className="text-sm text-gray-400">{purchase.email}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-green-400 font-semibold">${purchase.amount}</div>
+                        <div className="text-sm text-gray-400">{purchase.paymentMethod?.toUpperCase() || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {purchase.affiliateCode ? (
+                          <span className="bg-purple-600/30 text-purple-300 px-2 py-1 rounded text-sm">{purchase.affiliateCode}</span>
+                        ) : (
+                          <span className="text-gray-500">Direct</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(purchase.status)}`}>
+                          {getStatusLabel(purchase.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-400">
+                        {new Date(purchase.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <button onClick={() => setSelectedPurchase(purchase)} className="text-blue-400 hover:text-blue-300 text-sm">
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {purchases.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">No purchases yet</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
-        {!loading && activeTab === 'conversions' && stats && (
-          <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold mb-4">All Conversions</h2>
-            <div className="space-y-2">
-              {stats.allConversions.map((conv) => (
-                <div key={conv.id} className="bg-gray-700/30 rounded-xl p-4 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <span className="bg-purple-600/30 text-purple-300 px-3 py-1 rounded-full text-sm font-mono">
-                        {conv.code}
-                      </span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        conv.status === 'closed' ? 'bg-green-600/30 text-green-400' :
-                        conv.status === 'pending' ? 'bg-yellow-600/30 text-yellow-400' :
-                        'bg-red-600/30 text-red-400'
-                      }`}>
-                        {conv.status.toUpperCase()}
-                      </span>
-                      <span className="text-gray-400 text-sm">
-                        {new Date(conv.timestamp).toLocaleString()}
-                      </span>
+        {/* Affiliates Tab */}
+        {activeTab === 'affiliates' && (
+          <div className="space-y-6">
+            {/* Add Affiliate Form */}
+            <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
+              <h2 className="text-lg font-semibold mb-4">Add New Affiliate</h2>
+              <div className="grid md:grid-cols-6 gap-4">
+                <input
+                  type="text"
+                  value={newAffiliate.name}
+                  onChange={(e) => setNewAffiliate({...newAffiliate, name: e.target.value})}
+                  className="bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-2 text-white"
+                  placeholder="Name"
+                />
+                <input
+                  type="text"
+                  value={newAffiliate.code}
+                  onChange={(e) => setNewAffiliate({...newAffiliate, code: e.target.value.toUpperCase()})}
+                  className="bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-2 text-white uppercase"
+                  placeholder="Code"
+                />
+                <input
+                  type="email"
+                  value={newAffiliate.email}
+                  onChange={(e) => setNewAffiliate({...newAffiliate, email: e.target.value})}
+                  className="bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-2 text-white"
+                  placeholder="Email"
+                />
+                <input
+                  type="text"
+                  value={newAffiliate.password}
+                  onChange={(e) => setNewAffiliate({...newAffiliate, password: e.target.value})}
+                  className="bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-2 text-white"
+                  placeholder="Password"
+                />
+                <input
+                  type="number"
+                  value={newAffiliate.commission}
+                  onChange={(e) => setNewAffiliate({...newAffiliate, commission: Number(e.target.value)})}
+                  className="bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-2 text-white"
+                  placeholder="%"
+                />
+                <button onClick={addAffiliate} className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2">
+                  + Add
+                </button>
+              </div>
+            </div>
+
+            {/* Affiliates List */}
+            <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl p-6">
+              <h2 className="text-lg font-semibold mb-4">Affiliates ({affiliates.length})</h2>
+              <div className="space-y-3">
+                {affiliates.map((affiliate) => (
+                  <div key={affiliate.code} className="bg-gray-700/30 rounded-xl p-4 flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center font-bold text-lg">
+                        {affiliate.name.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="font-medium">{affiliate.name}</div>
+                        <div className="text-sm text-gray-400">
+                          {affiliate.email} • <span className="text-purple-400">{affiliate.code}</span> • {affiliate.commission}%
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-center">
+                        <div className="font-bold text-blue-400">{affiliate.stats.clicks}</div>
+                        <div className="text-xs text-gray-400">Clicks</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold text-yellow-400">{affiliate.stats.totalPurchases}</div>
+                        <div className="text-xs text-gray-400">Leads</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold text-green-400">{affiliate.stats.completed}</div>
+                        <div className="text-xs text-gray-400">Sales</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold text-green-400">${affiliate.stats.totalEarnings}</div>
+                        <div className="text-xs text-gray-400">Earned</div>
+                      </div>
+                      <button
+                        onClick={() => {navigator.clipboard.writeText(affiliate.referralLink); alert('Copied!')}}
+                        className="bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded text-sm"
+                      >
+                        Copy Link
+                      </button>
+                      <button onClick={() => deleteAffiliate(affiliate.code)} className="text-red-400 hover:text-red-300 text-sm">
+                        Delete
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => updateConversion(conv.id, 'closed')}
-                      className="text-sm bg-green-600/30 hover:bg-green-600 text-green-400 hover:text-white px-3 py-1 rounded-lg transition-colors"
-                    >
-                      ✓ Closed
-                    </button>
-                    <button
-                      onClick={() => updateConversion(conv.id, 'lost')}
-                      className="text-sm bg-red-600/30 hover:bg-red-600 text-red-400 hover:text-white px-3 py-1 rounded-lg transition-colors"
-                    >
-                      ✗ Lost
-                    </button>
+                ))}
+                {affiliates.length === 0 && (
+                  <p className="text-gray-500 text-center py-8">No affiliates yet</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Purchase Detail Modal */}
+        {selectedPurchase && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-xl font-bold">Purchase Details</h2>
+                <button onClick={() => setSelectedPurchase(null)} className="text-gray-400 hover:text-white text-2xl">×</button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="bg-gray-700/50 rounded-xl p-4">
+                    <div className="text-xs text-gray-400 uppercase">Customer</div>
+                    <div className="font-medium">{selectedPurchase.name}</div>
+                    <div className="text-gray-400">{selectedPurchase.email}</div>
+                  </div>
+                  <div className="bg-gray-700/50 rounded-xl p-4">
+                    <div className="text-xs text-gray-400 uppercase">Payment</div>
+                    <div className="font-medium text-green-400">${selectedPurchase.amount}</div>
+                    <div className="text-gray-400">{selectedPurchase.paymentMethod?.toUpperCase() || '-'}</div>
+                  </div>
+                  <div className="bg-gray-700/50 rounded-xl p-4">
+                    <div className="text-xs text-gray-400 uppercase">Status</div>
+                    <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(selectedPurchase.status)}`}>
+                      {getStatusLabel(selectedPurchase.status)}
+                    </span>
+                  </div>
+                  <div className="bg-gray-700/50 rounded-xl p-4">
+                    <div className="text-xs text-gray-400 uppercase">Affiliate</div>
+                    {selectedPurchase.affiliateCode ? (
+                      <div>
+                        <span className="text-purple-400">{selectedPurchase.affiliateCode}</span>
+                        <div className="text-sm text-gray-400">${selectedPurchase.commission} commission</div>
+                      </div>
+                    ) : (
+                      <div className="text-gray-500">Direct sale</div>
+                    )}
                   </div>
                 </div>
-              ))}
-              {stats.allConversions.length === 0 && (
-                <p className="text-center text-gray-500 py-8">No conversions yet</p>
-              )}
+
+                {/* Audit Log */}
+                <div className="bg-gray-700/50 rounded-xl p-4">
+                  <div className="text-xs text-gray-400 uppercase mb-3">Audit Log</div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto text-sm">
+                    {selectedPurchase.auditLog.map((entry, i) => (
+                      <div key={i} className="flex gap-3">
+                        <div className="text-gray-500 shrink-0 w-36">
+                          {new Date(entry.timestamp).toLocaleString()}
+                        </div>
+                        <div>
+                          <span className="text-blue-400">[{entry.action}]</span> {entry.details}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                {selectedPurchase.status === 'awaiting_verification' && (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => verifyPayment(selectedPurchase.id, 'complete')}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl"
+                    >
+                      ✓ Verify & Complete Sale
+                    </button>
+                    <button
+                      onClick={() => verifyPayment(selectedPurchase.id, 'reject')}
+                      className="bg-red-600/30 hover:bg-red-600 text-red-400 hover:text-white px-6 py-3 rounded-xl"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

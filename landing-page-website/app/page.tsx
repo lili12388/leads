@@ -94,8 +94,8 @@ export default function Home() {
       localStorage.setItem('referralCode', refCode.toUpperCase())
       localStorage.setItem('referralTimestamp', new Date().toISOString())
       
-      // Track the visit on the server
-      fetch('/api/referral/track', {
+      // Track the visit on the server (affiliate click tracking)
+      fetch('/api/affiliate/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -236,12 +236,12 @@ export default function Home() {
             <button onClick={() => scrollToSection("pricing")} className="text-muted-foreground hover:text-foreground transition-colors text-sm">Pricing</button>
             <button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-colors text-sm">FAQ</button>
           </div>
-          <button
-            onClick={openTawkChat}
+          <a
+            href="/purchase"
             className="px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-full text-sm hover:shadow-lg hover:shadow-primary/30 transition-all duration-200"
           >
             Get License
-          </button>
+          </a>
         </div>
       </nav>
 
@@ -305,15 +305,15 @@ export default function Home() {
             className="opacity-0 translate-y-10 transition-all duration-1000 flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
             style={{ transitionDelay: "200ms" }}
           >
-            <button
-              onClick={openTawkChat}
+            <a
+              href="/purchase"
               className="group px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 glow-md flex items-center gap-2"
             >
               <span>Get Lifetime Access – $59</span>
               <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-            </button>
+            </a>
             <a
               href="#how-it-works"
               onClick={(e) => { e.preventDefault(); scrollToSection("how-it-works") }}
@@ -723,12 +723,12 @@ export default function Home() {
               </div>
 
               {/* CTA */}
-              <button
-                onClick={openTawkChat}
-                className="w-full md:w-auto px-12 py-5 bg-gradient-to-r from-primary to-secondary text-white font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
+              <a
+                href="/purchase"
+                className="inline-block w-full md:w-auto px-12 py-5 bg-gradient-to-r from-primary to-secondary text-white font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 text-center"
               >
                 Get Lifetime Access Now →
-              </button>
+              </a>
 
               {/* Trust elements */}
               <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
@@ -820,15 +820,15 @@ export default function Home() {
           </div>
 
           <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 flex flex-col sm:flex-row gap-4 justify-center items-center mb-8" style={{ transitionDelay: "100ms" }}>
-            <button
-              onClick={openTawkChat}
+            <a
+              href="/purchase"
               className="group px-10 py-5 bg-gradient-to-r from-primary to-secondary text-white font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 flex items-center gap-3"
             >
               <span>Get Lifetime Access – $59</span>
               <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-            </button>
+            </a>
           </div>
 
           <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "200ms" }}>
