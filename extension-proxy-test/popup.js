@@ -1,5 +1,33 @@
 // Popup script for Google Maps Lead Extractor with License Protection
 document.addEventListener('DOMContentLoaded', async () => {
+  // ============================================
+  // THEME TOGGLE FUNCTIONALITY
+  // ============================================
+  const themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) {
+    // Default is dark mode (class already on body)
+    // Load saved theme - only switch to light if explicitly saved as light
+    chrome.storage.local.get(['gmePopupTheme'], (result) => {
+      if (result.gmePopupTheme === 'light') {
+        document.body.classList.remove('dark');
+        themeBtn.textContent = '🌙';
+      } else {
+        // Dark is default
+        themeBtn.textContent = '☀️';
+      }
+    });
+    
+    // Toggle theme
+    themeBtn.addEventListener('click', () => {
+      const isDark = document.body.classList.toggle('dark');
+      themeBtn.textContent = isDark ? '☀️' : '🌙';
+      chrome.storage.local.set({ gmePopupTheme: isDark ? 'dark' : 'light' });
+    });
+  }
+  
+  // ============================================
+  // ELEMENTS
+  // ============================================
   // Elements
   const btnStart = document.getElementById('btn-start');
   const btnStop = document.getElementById('btn-stop');
@@ -96,11 +124,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       return false;
     }
     
-    // If previously activated, show main content immediately - NO server check
+    // If previously activated, show main content immediately - NO server check, NO loading
     if (stored.licenseActivated === true) {
       const info = await licenseClient.getLicenseInfo();
       showMainContent(info);
-      // Start background validation (runs after 1 minute, not immediately)
+      // Start background validation (runs every 1 hour)
       startLicenseValidation();
       return true;
     }
@@ -131,9 +159,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     mainContent.style.display = 'none';
     notOnMaps.style.display = 'none';
     
+    // Remove checking message if present
+    const checkingMsg = document.getElementById('gme-checking-license');
+    if (checkingMsg) checkingMsg.remove();
+    
     if (errorMsg) {
       licenseError.textContent = errorMsg;
       licenseError.classList.add('show');
+    }
+  }
+  
+  // Show checking license state
+  function showCheckingLicense() {
+    licenseScreen.classList.remove('active');
+    mainContent.style.display = 'none';
+    notOnMaps.style.display = 'none';
+    
+    // Create or update checking message
+    let checkingDiv = document.getElementById('gme-checking-license');
+    if (!checkingDiv) {
+      checkingDiv = document.createElement('div');
+      checkingDiv.id = 'gme-checking-license';
+      checkingDiv.style.cssText = 'display: flex; align-items: center; justify-content: center; gap: 10px; padding: 40px 20px; color: var(--popup-text-secondary, #64748b);';
+      checkingDiv.innerHTML = `
+        <div style="width: 18px; height: 18px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: gme-spin 0.8s linear infinite;"></div>
+        <span style="font-size: 14px;">Checking your license...</span>
+        <style>@keyframes gme-spin { to { transform: rotate(360deg); } }</style>
+      `;
+      document.querySelector('.main-content-area').prepend(checkingDiv);
     }
   }
   
@@ -339,11 +392,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       serviceEmail.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText('sheets-writer@ggl-maps-extractor.iam.gserviceaccount.com');
-          const originalText = serviceEmail.textContent;
           serviceEmail.textContent = '✅ Copied to clipboard!';
-          setTimeout(() => {
-            serviceEmail.textContent = originalText;
-          }, 2000);
+          serviceEmail.style.cursor = 'default';
+          serviceEmail.style.opacity = '0.7';
+          // Remove the click functionality after copying
+          serviceEmail.style.pointerEvents = 'none';
         } catch (err) {
           // Fallback selection
           const range = document.createRange();
@@ -368,17 +421,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     notOnMaps.style.display = 'none';
     mainContent.style.display = 'block';
     
-    // Update license badge
-    if (licenseInfo) {
-      const type = licenseInfo.type || 'standard';
-      licenseType.textContent = type.charAt(0).toUpperCase() + type.slice(1) + ' License';
-      
-      if (type === 'lifetime') {
-        licenseBadge.className = 'license-badge pro';
-      } else {
-        licenseBadge.className = 'license-badge';
-      }
-    }
+    // Remove checking message if present
+    const checkingMsg = document.getElementById('gme-checking-license');
+    if (checkingMsg) checkingMsg.remove();
+    
+    // Update license badge - always show Lifetime License
+    licenseType.textContent = 'Lifetime License';
+    licenseBadge.className = 'license-badge pro';
     
     // REMOVE action buttons and settings - user must use floating window for extraction
     const controls = document.querySelector('.controls');
@@ -389,24 +438,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (settings) settings.remove();
     if (statusCard) statusCard.remove();
     
-    // Show message to use floating window (insert before sheets section)
+    // Show simple license status message (insert before sheets section)
     let messageDiv = document.getElementById('gme-popup-message');
     const sheetsSection = document.getElementById('sheets-section');
     
     if (!messageDiv) {
       messageDiv = document.createElement('div');
       messageDiv.id = 'gme-popup-message';
-      messageDiv.style.cssText = 'text-align: center; padding: 24px 16px; background: linear-gradient(135deg, #e8f5e9, #f0f4f8); border-radius: 12px; margin-bottom: 16px;';
+      messageDiv.style.cssText = 'padding: 12px 0 16px 0; border-bottom: 1px solid var(--popup-card-border, rgba(148, 163, 184, 0.2)); margin-bottom: 16px;';
       messageDiv.innerHTML = `
-        <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
-        <div style="font-size: 16px; font-weight: 700; color: #2e7d32; margin-bottom: 8px;">License Activated!</div>
-        <div style="font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 12px;">
-          Your license is active and ready to use.
-        </div>
-        <div style="font-size: 12px; color: #666; background: white; padding: 12px; border-radius: 8px; border-left: 3px solid #4285f4;">
-          <strong>📍 Go to Google Maps</strong><br>
-          Use the floating window to extract leads
-        </div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--gme-success, #059669); margin-bottom: 4px;">✓ License Activated!</div>
+        <div style="font-size: 12px; color: var(--popup-text-secondary, #64748b);">Your license is active and ready to use.</div>
       `;
       
       // Insert before sheets section if it exists
@@ -436,12 +478,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     licenseError.classList.remove('show');
     licenseKeyInput.classList.remove('error');
     
+    // Show checking license state (only during first activation)
+    showCheckingLicense();
+    
+    // Start timer for minimum display time (3700ms)
+    const startTime = Date.now();
+    const MIN_DISPLAY_TIME = 3700;
+    
     try {
       if (!licenseClient) {
         initLicenseClient();
       }
       
       const result = await licenseClient.activate(key);
+      
+      // Wait for minimum display time to complete
+      const elapsed = Date.now() - startTime;
+      if (elapsed < MIN_DISPLAY_TIME) {
+        await new Promise(r => setTimeout(r, MIN_DISPLAY_TIME - elapsed));
+      }
       
       if (result.success) {
         // Save activated state
@@ -450,14 +505,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Show main content
         showMainContent(result.license);
         
+        // Notify content script to show panel immediately
+        try {
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (tab && tab.url && tab.url.includes('google.com/maps')) {
+            chrome.tabs.sendMessage(tab.id, { type: 'LICENSE_ACTIVATED' });
+          }
+        } catch (e) {}
+        
         // Check if on maps
         await checkTab();
       } else {
+        // Hide checking state, show license screen with error
+        const checkingMsg = document.getElementById('gme-checking-license');
+        if (checkingMsg) checkingMsg.remove();
+        licenseScreen.classList.add('active');
+        
         const errorMsg = result.message || result.error || 'Activation failed. Please check your license key.';
         showLicenseError(errorMsg);
         licenseKeyInput.classList.add('error');
       }
     } catch (e) {
+      // Wait for minimum display time even on error
+      const elapsed = Date.now() - startTime;
+      if (elapsed < MIN_DISPLAY_TIME) {
+        await new Promise(r => setTimeout(r, MIN_DISPLAY_TIME - elapsed));
+      }
+      
+      // Hide checking state, show license screen with error
+      const checkingMsg = document.getElementById('gme-checking-license');
+      if (checkingMsg) checkingMsg.remove();
+      licenseScreen.classList.add('active');
+      
       showLicenseError('Connection error: ' + e.message);
       licenseKeyInput.classList.add('error');
     } finally {
@@ -539,18 +618,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     isExtracting = stats.isExtracting || false;
     
     // Update buttons
-    if (isExtracting) {
+    if (stats.isStoppingWithEnrichment) {
+      // Waiting for enrichment to finish - show yellow "Please wait" state
+      btnStart.style.display = 'block';
+      btnStart.disabled = true;
+      btnStop.style.display = 'none';
+      statusDiv.className = 'status-indicator extracting';
+      statusText.textContent = `⏳ Please wait... finishing ${stats.enrichmentRemaining} enrichment(s)`;
+    } else if (isExtracting) {
       btnStart.style.display = 'none';
+      btnStart.disabled = false;
       btnStop.style.display = 'block';
       statusDiv.className = 'status-indicator extracting';
-      statusText.textContent = 'Extracting leads...';
+      statusText.textContent = `Extracting... ${stats.total} leads`;
     } else {
       btnStart.style.display = 'block';
+      btnStart.disabled = false;
       btnStop.style.display = 'none';
-      statusDiv.className = 'status-indicator';
-      statusText.textContent = stats.total > 0 
-        ? `${stats.noWebsite} leads without website` 
-        : 'Ready to extract';
+      if (stats.total > 0) {
+        statusDiv.className = 'status-indicator paused';
+        statusText.textContent = `⏸ Paused — ${stats.total} leads | Click Start to resume`;
+      } else {
+        statusDiv.className = 'status-indicator';
+        statusText.textContent = 'Ready to extract';
+      }
     }
   }
   
@@ -559,7 +650,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!currentTab) return;
     
     try {
-      chrome.tabs.sendMessage(currentTab.id, { type: 'GET_STATS' });
+      chrome.tabs.sendMessage(currentTab.id, { type: 'GET_STATS' }, (response) => {
+        if (response) {
+          updateStatsDisplay(response);
+        }
+      });
     } catch (e) {
       // Silent error handling
     }

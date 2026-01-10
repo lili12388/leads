@@ -23,9 +23,8 @@
               type: "search",
               data: self.response
             }, "*");
-            console.log("📡 Intercepted search response:", self.response.length, "bytes");
           } catch (err) {
-            console.error("Error posting XHR response:", err);
+            // Silent error handling
           }
         }
       });
@@ -34,5 +33,3 @@
     return originalSend.apply(this, arguments);
   };
 })(XMLHttpRequest.prototype);
-
-console.log("🔌 Maps XHR Interceptor active");

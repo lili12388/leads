@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, initDatabase } from '@/lib/db';
-import { verifyToken } from '@/lib/crypto';
+import { verifyToken, isFingerprintSimilar, FingerprintComponents } from '@/lib/crypto';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { ValidateRequestSchema } from '@/lib/schemas';
 import { logAudit, getClientIp, getUserAgent } from '@/lib/audit';
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { token, extension_id, fingerprint_hash } = validation.data;
+    const { token, extension_id, fingerprint_hash, fingerprint_components } = validation.data;
 
     // Verify token
     const tokenResult = verifyToken(token);
@@ -64,20 +64,69 @@ export async function POST(request: NextRequest) {
 
     const payload = tokenResult.payload;
 
-    // Verify extension_id and fingerprint match (using short field names from TokenPayload)
-    if (payload.eid !== extension_id || !fingerprint_hash.startsWith(payload.fph.substring(0, 16))) {
+    // Check extension_id matches
+    if (payload.eid !== extension_id) {
       await logAudit({ 
         event: 'VALIDATE_FAIL', 
         licenseId: payload.lid, 
         activationId: payload.aid,
         ip, 
         userAgent, 
-        details: { reason: 'Device mismatch' } 
+        details: { reason: 'Extension ID mismatch' } 
       });
       return NextResponse.json(
         { ok: false, valid: false, code: 'DEVICE_MISMATCH', message: 'Token does not match this device' },
         { status: 403, headers: corsHeaders }
       );
+    }
+
+    // Get stored fingerprint components from activation
+    const activationForFingerprint = await db.execute({
+      sql: `SELECT fingerprint_components FROM activations WHERE id = ?`,
+      args: [payload.aid],
+    });
+    
+    let fingerprintValid = false;
+    let fingerprintScore = 0;
+    
+    if (activationForFingerprint.rows.length > 0 && activationForFingerprint.rows[0].fingerprint_components && fingerprint_components) {
+      // Use fuzzy matching with stored components
+      const storedComponents = JSON.parse(activationForFingerprint.rows[0].fingerprint_components as string) as FingerprintComponents;
+      const result = isFingerprintSimilar(storedComponents, fingerprint_components as FingerprintComponents, 70);
+      fingerprintValid = result.similar;
+      fingerprintScore = result.score;
+      
+      if (!fingerprintValid) {
+        await logAudit({ 
+          event: 'VALIDATE_FAIL', 
+          licenseId: payload.lid, 
+          activationId: payload.aid,
+          ip, 
+          userAgent, 
+          details: { reason: 'Fingerprint mismatch', score: result.score, mismatches: result.mismatches } 
+        });
+        return NextResponse.json(
+          { ok: false, valid: false, code: 'DEVICE_MISMATCH', message: `Device fingerprint mismatch (${result.score}% similar, need 70%)` },
+          { status: 403, headers: corsHeaders }
+        );
+      }
+    } else {
+      // Fallback to hash prefix matching (legacy support)
+      fingerprintValid = fingerprint_hash.startsWith(payload.fph.substring(0, 16));
+      if (!fingerprintValid) {
+        await logAudit({ 
+          event: 'VALIDATE_FAIL', 
+          licenseId: payload.lid, 
+          activationId: payload.aid,
+          ip, 
+          userAgent, 
+          details: { reason: 'Device mismatch (hash)' } 
+        });
+        return NextResponse.json(
+          { ok: false, valid: false, code: 'DEVICE_MISMATCH', message: 'Token does not match this device' },
+          { status: 403, headers: corsHeaders }
+        );
+      }
     }
 
     // Check if license still valid in database

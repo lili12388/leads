@@ -235,8 +235,6 @@
     demoModeActive = true;
     demoRateLimited = false;
     
-    console.log('🎬 Demo mode: Starting live stream...');
-    
     while (sheetsQueue.length > 0 && sheetsDemoMode && !demoRateLimited) {
       const result = await sendDemoLead();
       
@@ -244,7 +242,6 @@
         demoRateLimited = true;
         sheetsStats.lastError = '⚠️ Rate limit - switching to batch mode';
         updateSheetsStatusUI();
-        console.log('🎬 Demo mode: Rate limited, falling back to batch mode');
         break;
       }
       
@@ -319,10 +316,7 @@
   
   // Update sheets status UI (elements may not exist if UI is in popup)
   function updateSheetsStatusUI() {
-    // Status is shown in popup, but we log for debugging
-    if (sheetsStats.isConnected && sheetsStats.totalSent > 0) {
-      console.log('📊 Sheets sync: ' + sheetsStats.totalSent + ' sent, ' + sheetsQueue.length + ' pending');
-    }
+    // Status is shown in popup
   }
   
   // ============================================
@@ -642,13 +636,11 @@
         btn.disabled = true;
         updateStatus('waiting', '⏳ Finishing email enrichment...');
         updateEnrichmentProgress();
-        console.log("⏳ Waiting for enrichment to complete before stopping...");
       } else {
         // No enrichment running, stop immediately
         btn.textContent = '▶ Start';
         btn.classList.remove('active');
         updateStatus('ready', '✅ Stopped. ' + extractedLeads.size + ' leads captured');
-        console.log("⏹ Extraction stopped");
       }
     } else {
       // Turn on persistent extraction
@@ -663,7 +655,6 @@
         // Feed exists but we haven't captured it yet - ask user to refresh search
         isWaitingForSearchRefresh = true;
         showSearchAreaReminder();
-        console.log("🔍 Waiting for user to click 'Search this area' button...");
       } else if (feed && hasReceivedSearchData) {
         // Feed exists and has data - start extracting immediately
         isExtracting = true;
@@ -672,7 +663,6 @@
       } else {
         // No feed yet, just wait for search
         updateStatus('extracting', '🔍 Waiting for search results...');
-        console.log("🔄 Extraction enabled - waiting for search data");
       }
     }
   }
@@ -701,7 +691,6 @@
         var feed = results[64];
         
         if (!feed || !feed.length) {
-          console.log("📭 No feed data in response");
           return;
         }
         
@@ -803,19 +792,14 @@
               // Queue for email enrichment (real-time)
               // Sheets sync happens AFTER enrichment completes (see enrichLeadWithEmail)
               queueEmailEnrichment(lead, key);
-              
-              var phoneIcon = phone ? " 📞" : "";
-              var webIcon = hasWebsite ? " 🌐" : "";
-              console.log("✅ " + name + phoneIcon + webIcon);
             }
             
           } catch(itemErr) {
-            console.warn("Error processing item:", itemErr);
+            // Silent error handling
           }
         }
         
         if (newCount > 0) {
-          console.log("📊 Added " + newCount + " leads. Total: " + extractedLeads.size);
           updateStats();
           
           if (isAlwaysCapture) {
@@ -831,7 +815,7 @@
         }
         
       } catch(err) {
-        console.warn("Parse error:", err);
+        // Silent error handling
       }
     }
   });
@@ -930,12 +914,17 @@
       } else {
         lead.email = "";
         extractedLeads.set(key, lead);
+        // Still queue to Sheets even without email
+        queueLeadForSync(lead);
+        updateStats();
       }
       
     } catch (err) {
-      console.warn("Enrichment error for " + lead.name + ":", err.message);
       lead.email = "";
       extractedLeads.set(key, lead);
+      // Still queue to Sheets even on error
+      queueLeadForSync(lead);
+      updateStats();
     }
   }
   
@@ -1005,7 +994,6 @@
     }
     
     updateStatus('ready', '✅ Stopped. ' + extractedLeads.size + ' leads captured');
-    console.log("⏹ Extraction fully stopped");
   }
   
   // ============================================
@@ -1023,7 +1011,6 @@
       isExtracting = true; // Mark as extracting so button shows "Stop"
       isWaitingForSearchRefresh = true;
       showSearchAreaReminder();
-      console.log("🔍 Waiting for user to click 'Search this area' button...");
       return;
     }
     
@@ -1038,13 +1025,11 @@
     const shouldAutoScroll = autoScrollEnabled && autoScrollEnabled.checked;
     
     if (shouldAutoScroll) {
-      console.log("🚀 Starting extraction with auto-scroll...");
       updateStatus('extracting', '🔄 Extracting with auto-scroll...');
       updateStats();
       // Start auto-scrolling after a short delay
       setTimeout(autoScroll, 500);
     } else {
-      console.log("🚀 Starting extraction (manual scroll mode)...");
       updateStatus('extracting', '🔄 Extracting... scroll manually for more');
       updateStats();
     }
@@ -1066,7 +1051,6 @@
     
     var feed = document.querySelector('[role="feed"]');
     if (!feed) {
-      console.log("⚠️ Feed not found, waiting...");
       if (isAlwaysCapture) {
         // In always-on mode, keep waiting for a feed
         setTimeout(autoScroll, 2000);
@@ -1086,7 +1070,6 @@
     
     // Check if reached end
     if (document.getElementsByClassName("HlvSq").length > 0) {
-      console.log("📍 No more results in this area");
       isExtracting = false;
       scrollCount = 0;
       if (isAlwaysCapture) {
@@ -1111,7 +1094,6 @@
       }
       
       if (scrollCount > 30) {
-        console.log("📍 Feed not loading more, waiting for new search...");
         isExtracting = false;  // Stop scrolling but stay in capture mode
         scrollCount = 0;
         if (isAlwaysCapture) {
@@ -1138,7 +1120,6 @@
     isExtracting = false;
     isWaitingForSearchRefresh = false;
     isAlwaysCapture = false;  // Also stop persistent mode
-    console.log("⏹️ Extraction stopped. Total: " + extractedLeads.size);
     
     // Remove any toast
     const toast = document.getElementById('gme-toast');
@@ -1253,8 +1234,6 @@
     link.download = `google_maps_leads_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    
-    console.log("📥 Exported " + leads.length + " leads to CSV");
   }
   
   function exportToGoogleSheets() {
@@ -1304,20 +1283,17 @@
         sheetsBtn.disabled = false;
         
         if (chrome.runtime.lastError) {
-          console.error('Chrome runtime error:', chrome.runtime.lastError);
           alert('Failed to export: ' + chrome.runtime.lastError.message);
           return;
         }
         
         if (response && response.success) {
-          console.log("📊 Exported " + leads.length + " leads to Google Sheets");
           // Open the spreadsheet in a new tab
           if (response.spreadsheetUrl) {
             window.open(response.spreadsheetUrl, '_blank');
           }
         } else {
           const errorMsg = response ? response.error : 'Unknown error';
-          console.error('Export failed:', errorMsg);
           alert('Failed to export to Google Sheets: ' + errorMsg);
         }
       }
@@ -1334,7 +1310,6 @@
     scrollCount = 0;
     updateStats();
     updateStatus('ready', 'Data cleared - ready to extract');
-    console.log("🗑 Data cleared");
   }
   
   // ============================================
@@ -1371,7 +1346,6 @@
   function setupSearchListeners() {
     // This function is called after license is activated
     // It ensures that new searches trigger auto-extraction in Always-On mode
-    console.log('🔍 Search listeners ready for Always-On mode');
   }
   
   // ============================================

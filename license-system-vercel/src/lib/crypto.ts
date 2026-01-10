@@ -163,3 +163,122 @@ export function isWithinGracePeriod(payload: TokenPayload): boolean {
   const graceEnd = payload.iat + payload.grace;
   return now <= graceEnd;
 }
+
+// ===========================================
+// FINGERPRINT FUZZY MATCHING
+// ===========================================
+
+export interface FingerprintComponents {
+  // Core (weight 3) - must match
+  cores?: number;
+  memory?: number;
+  platform?: string;
+  gpu?: string;
+  
+  // Stable (weight 2) - should mostly match
+  screen?: string;
+  colorDepth?: number;
+  touchPoints?: number;
+  canvas?: string;
+  audio?: string;
+  
+  // Soft (weight 1) - can change
+  timezone?: string;
+  language?: string;
+  pixelRatio?: number;
+}
+
+/**
+ * Calculate similarity score between two fingerprints
+ * Returns a score from 0 to 100
+ * 
+ * Core components (cores, memory, platform, gpu) = 60% of score
+ * Stable components (screen, canvas, audio) = 30% of score
+ * Soft components (timezone, language, pixelRatio) = 10% of score
+ */
+export function calculateFingerprintSimilarity(
+  stored: FingerprintComponents,
+  current: FingerprintComponents
+): { score: number; mismatches: string[] } {
+  const mismatches: string[] = [];
+  let totalWeight = 0;
+  let matchedWeight = 0;
+  
+  // Core components (weight 3 each = 12 total out of ~20)
+  const coreComponents: (keyof FingerprintComponents)[] = ['cores', 'memory', 'platform', 'gpu'];
+  for (const key of coreComponents) {
+    totalWeight += 3;
+    if (stored[key] !== undefined && current[key] !== undefined) {
+      if (String(stored[key]) === String(current[key])) {
+        matchedWeight += 3;
+      } else {
+        mismatches.push(`${key}: ${stored[key]} → ${current[key]}`);
+      }
+    } else if (stored[key] === undefined) {
+      // If stored doesn't have it, give benefit of doubt
+      matchedWeight += 3;
+    }
+  }
+  
+  // Stable components (weight 2 each = 10 total)
+  const stableComponents: (keyof FingerprintComponents)[] = ['screen', 'colorDepth', 'touchPoints', 'canvas', 'audio'];
+  for (const key of stableComponents) {
+    totalWeight += 2;
+    if (stored[key] !== undefined && current[key] !== undefined) {
+      if (String(stored[key]) === String(current[key])) {
+        matchedWeight += 2;
+      } else {
+        // For audio, allow small variations (different decimal places)
+        if (key === 'audio') {
+          const storedAudio = parseFloat(String(stored[key])) || 0;
+          const currentAudio = parseFloat(String(current[key])) || 0;
+          if (Math.abs(storedAudio - currentAudio) < 1) {
+            matchedWeight += 2; // Close enough
+          } else {
+            mismatches.push(`${key}: ${stored[key]} → ${current[key]}`);
+          }
+        } else {
+          mismatches.push(`${key}: ${stored[key]} → ${current[key]}`);
+        }
+      }
+    } else if (stored[key] === undefined) {
+      matchedWeight += 2;
+    }
+  }
+  
+  // Soft components (weight 1 each = 3 total)
+  const softComponents: (keyof FingerprintComponents)[] = ['timezone', 'language', 'pixelRatio'];
+  for (const key of softComponents) {
+    totalWeight += 1;
+    if (stored[key] !== undefined && current[key] !== undefined) {
+      if (String(stored[key]) === String(current[key])) {
+        matchedWeight += 1;
+      } else {
+        // Don't add soft mismatches to the list - they're expected to change
+      }
+    } else {
+      matchedWeight += 1;
+    }
+  }
+  
+  const score = Math.round((matchedWeight / totalWeight) * 100);
+  return { score, mismatches };
+}
+
+/**
+ * Check if fingerprint is similar enough (threshold: 70% by default)
+ * This allows users to change display settings, timezone, etc.
+ * while still blocking different hardware
+ */
+export function isFingerprintSimilar(
+  stored: FingerprintComponents,
+  current: FingerprintComponents,
+  threshold: number = 70
+): { similar: boolean; score: number; mismatches: string[] } {
+  const { score, mismatches } = calculateFingerprintSimilarity(stored, current);
+  return {
+    similar: score >= threshold,
+    score,
+    mismatches,
+  };
+}

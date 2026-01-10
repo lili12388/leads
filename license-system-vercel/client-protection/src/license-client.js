@@ -15,24 +15,160 @@ const CONFIG = {
 };
 
 /**
- * Generate privacy-friendly device fingerprint
- * Uses only non-identifying browser characteristics
+ * Generate strong device fingerprint
+ * Uses multiple stable characteristics that are hard to spoof
+ * Returns both hash and individual components for fuzzy matching
  */
-function generateFingerprint() {
-  const components = [
-    navigator.userAgent,
-    navigator.language,
-    navigator.hardwareConcurrency || 'unknown',
-    new Date().getTimezoneOffset(),
-    screen.colorDepth,
-    navigator.platform,
-  ];
+async function generateFingerprint() {
+  const components = {};
   
-  return hashString(components.join('|'));
+  // === CORE COMPONENTS (must match - weight: 3) ===
+  // These rarely change and are hardware-specific
+  
+  // CPU cores - doesn't change
+  components.cores = navigator.hardwareConcurrency || 0;
+  
+  // Device memory (Chrome only) - hardware specific
+  components.memory = navigator.deviceMemory || 0;
+  
+  // Platform
+  components.platform = navigator.platform;
+  
+  // WebGL renderer (GPU info) - very stable
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      if (debugInfo) {
+        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+        const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+        components.gpu = hashShort(vendor + renderer);
+      } else {
+        components.gpu = '0';
+      }
+    } else {
+      components.gpu = '0';
+    }
+  } catch (e) {
+    components.gpu = '0';
+  }
+  
+  // === STABLE COMPONENTS (weight: 2) ===
+  // These are stable but might change occasionally
+  
+  // Screen resolution
+  components.screen = `${screen.width}x${screen.height}`;
+  
+  // Color depth
+  components.colorDepth = screen.colorDepth;
+  
+  // Max touch points
+  components.touchPoints = navigator.maxTouchPoints || 0;
+  
+  // Canvas fingerprint - very stable per device
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 50;
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#f60';
+    ctx.fillRect(125, 1, 62, 20);
+    ctx.fillStyle = '#069';
+    ctx.fillText('GMapExtractor', 2, 15);
+    ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+    ctx.fillText('GMapExtractor', 4, 17);
+    components.canvas = hashShort(canvas.toDataURL());
+  } catch (e) {
+    components.canvas = '0';
+  }
+  
+  // Audio fingerprint
+  try {
+    const AudioContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (AudioContext) {
+      const context = new AudioContext(1, 44100, 44100);
+      const oscillator = context.createOscillator();
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(10000, context.currentTime);
+      
+      const compressor = context.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-50, context.currentTime);
+      compressor.knee.setValueAtTime(40, context.currentTime);
+      compressor.ratio.setValueAtTime(12, context.currentTime);
+      compressor.attack.setValueAtTime(0, context.currentTime);
+      compressor.release.setValueAtTime(0.25, context.currentTime);
+      
+      oscillator.connect(compressor);
+      compressor.connect(context.destination);
+      oscillator.start(0);
+      
+      const audioBuffer = await context.startRendering();
+      const samples = audioBuffer.getChannelData(0);
+      
+      let audioHash = 0;
+      for (let i = 4500; i < 5000; i++) {
+        audioHash += Math.abs(samples[i]);
+      }
+      components.audio = audioHash.toFixed(2); // Reduced precision for stability
+    } else {
+      components.audio = '0';
+    }
+  } catch (e) {
+    components.audio = '0';
+  }
+  
+  // === SOFT COMPONENTS (weight: 1) ===
+  // These can change without affecting identity
+  
+  // Timezone
+  components.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown';
+  
+  // Language (just primary, not full locale)
+  components.language = (navigator.language || 'en').split('-')[0];
+  
+  // Device pixel ratio (can change with display settings)
+  components.pixelRatio = Math.round((window.devicePixelRatio || 1) * 100) / 100;
+  
+  // === GENERATE COMPOSITE HASH ===
+  // Create a stable string from core + stable components only
+  const coreString = [
+    components.cores,
+    components.memory,
+    components.platform,
+    components.gpu,
+    components.screen,
+    components.canvas,
+    components.audio,
+  ].join('|');
+  
+  // Use SHA-256 for strong hash
+  const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(coreString));
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return {
+    hash: hashHex,
+    components: components, // Send components for fuzzy matching on server
+  };
 }
 
 /**
- * Simple string hash function (djb2)
+ * Generate a short hash for component parts
+ */
+function hashShort(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16).substring(0, 8);
+}
+
+/**
+ * Simple string hash function (djb2) - kept for compatibility
  */
 function hashString(str) {
   let hash = 5381;
@@ -198,7 +334,8 @@ function getOSName() {
 class LicenseClient {
   constructor() {
     this._extensionId = getExtensionId();
-    this._fingerprint = generateFingerprint();
+    this._fingerprint = null; // Will be set asynchronously
+    this._fingerprintPromise = this._initFingerprint();
     this._validationTimer = null;
     this._isValid = false;
     this._plan = null;
@@ -208,6 +345,24 @@ class LicenseClient {
       onExpired: [],
       onError: [],
     };
+  }
+  
+  /**
+   * Initialize fingerprint asynchronously
+   */
+  async _initFingerprint() {
+    this._fingerprint = await generateFingerprint();
+    return this._fingerprint;
+  }
+  
+  /**
+   * Ensure fingerprint is ready before operations
+   */
+  async _ensureFingerprint() {
+    if (!this._fingerprint) {
+      await this._fingerprintPromise;
+    }
+    return this._fingerprint;
   }
   
   /**
@@ -253,6 +408,9 @@ class LicenseClient {
    */
   async activate(licenseKey) {
     try {
+      // Ensure fingerprint is ready
+      await this._ensureFingerprint();
+      
       const response = await fetch(`${CONFIG.API_BASE_URL}/api/v1/license/activate`, {
         method: 'POST',
         headers: {
@@ -261,7 +419,8 @@ class LicenseClient {
         body: JSON.stringify({
           license_key: licenseKey,
           extension_id: this._extensionId,
-          fingerprint_hash: this._fingerprint,
+          fingerprint_hash: this._fingerprint.hash,
+          fingerprint_components: this._fingerprint.components,
           client: getClientInfo(),
         }),
       });
@@ -344,6 +503,9 @@ class LicenseClient {
     }
     
     try {
+      // Ensure fingerprint is ready
+      await this._ensureFingerprint();
+      
       const response = await fetch(`${CONFIG.API_BASE_URL}/api/v1/license/validate`, {
         method: 'POST',
         headers: {
@@ -352,7 +514,8 @@ class LicenseClient {
         body: JSON.stringify({
           token: token,
           extension_id: this._extensionId,
-          fingerprint_hash: this._fingerprint,
+          fingerprint_hash: this._fingerprint.hash,
+          fingerprint_components: this._fingerprint.components,
         }),
       });
       

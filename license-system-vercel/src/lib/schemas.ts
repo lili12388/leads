@@ -24,6 +24,20 @@ export const ActivateRequestSchema = z.object({
       'License key must be in format LIC-XXXX-XXXX-XXXX-XXXX'),
   extension_id: z.string().min(1).max(100),
   fingerprint_hash: z.string().min(8).max(128),
+  fingerprint_components: z.object({
+    cores: z.number().optional(),
+    memory: z.number().optional(),
+    platform: z.string().optional(),
+    gpu: z.string().optional(),
+    screen: z.string().optional(),
+    colorDepth: z.number().optional(),
+    touchPoints: z.number().optional(),
+    canvas: z.string().optional(),
+    audio: z.string().optional(),
+    timezone: z.string().optional(),
+    language: z.string().optional(),
+    pixelRatio: z.number().optional(),
+  }).optional(),
   client: ClientInfoSchema.optional().default({}),
 });
 
@@ -42,10 +56,26 @@ export interface ActivateResponse {
 // VALIDATE REQUEST/RESPONSE
 // ===========================================
 
+export const FingerprintComponentsSchema = z.object({
+  cores: z.number().optional(),
+  memory: z.number().optional(),
+  platform: z.string().optional(),
+  gpu: z.string().optional(),
+  screen: z.string().optional(),
+  colorDepth: z.number().optional(),
+  touchPoints: z.number().optional(),
+  canvas: z.string().optional(),
+  audio: z.string().optional(),
+  timezone: z.string().optional(),
+  language: z.string().optional(),
+  pixelRatio: z.number().optional(),
+}).optional();
+
 export const ValidateRequestSchema = z.object({
   token: z.string().min(50),
   extension_id: z.string().min(10).max(100),
-  fingerprint_hash: z.string().length(64, 'Fingerprint hash must be SHA256 (64 chars)'),
+  fingerprint_hash: z.string().min(16).max(64), // Allow both short and full hash
+  fingerprint_components: FingerprintComponentsSchema,
 });
 
 export type ValidateRequest = z.infer<typeof ValidateRequestSchema>;

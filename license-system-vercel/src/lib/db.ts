@@ -48,6 +48,7 @@ export async function initDatabase() {
       license_id TEXT NOT NULL,
       extension_id TEXT NOT NULL,
       fingerprint_hash TEXT NOT NULL,
+      fingerprint_components TEXT,
       slot_index INTEGER NOT NULL,
       is_active INTEGER DEFAULT 1,
       last_validated_at TEXT,

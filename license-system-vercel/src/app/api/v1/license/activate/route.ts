@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { license_key, extension_id, fingerprint_hash, client } = validation.data;
+    const { license_key, extension_id, fingerprint_hash, fingerprint_components, client } = validation.data;
     const licenseKeyHash = hashLicenseKey(license_key);
 
     // Find license
@@ -100,13 +100,20 @@ export async function POST(request: NextRequest) {
     let slotIndex: number;
 
     if (existingActivation) {
-      // Reactivate existing
+      // Reactivate existing - update fingerprint components if provided
       activationId = existingActivation.id as string;
       slotIndex = existingActivation.slot_index as number;
       
       await db.execute({
-        sql: `UPDATE activations SET last_validated_at = datetime('now'), last_ip = ?, client_browser = ?, client_os = ?, client_timezone = ? WHERE id = ?`,
-        args: [ip, client.browser, client.os, client.timezone, activationId],
+        sql: `UPDATE activations SET 
+              last_validated_at = datetime('now'), 
+              last_ip = ?, 
+              client_browser = ?, 
+              client_os = ?, 
+              client_timezone = ?,
+              fingerprint_components = COALESCE(?, fingerprint_components)
+              WHERE id = ?`,
+        args: [ip, client.browser, client.os, client.timezone, fingerprint_components ? JSON.stringify(fingerprint_components) : null, activationId],
       });
     } else {
       // Check max activations
@@ -125,9 +132,9 @@ export async function POST(request: NextRequest) {
       while (usedSlots.has(slotIndex)) slotIndex++;
 
       await db.execute({
-        sql: `INSERT INTO activations (id, license_id, extension_id, fingerprint_hash, slot_index, last_validated_at, last_ip, client_browser, client_os, client_timezone)
-              VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, ?)`,
-        args: [activationId, license.id, extension_id, fingerprint_hash, slotIndex, ip, client.browser, client.os, client.timezone],
+        sql: `INSERT INTO activations (id, license_id, extension_id, fingerprint_hash, fingerprint_components, slot_index, last_validated_at, last_ip, client_browser, client_os, client_timezone)
+              VALUES (?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, ?)`,
+        args: [activationId, license.id, extension_id, fingerprint_hash, fingerprint_components ? JSON.stringify(fingerprint_components) : null, slotIndex, ip, client.browser, client.os, client.timezone],
       });
     }
 
