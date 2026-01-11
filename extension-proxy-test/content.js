@@ -23,6 +23,7 @@
   const SHEETS_API_URL = API_BASE_URL + '/api/sheets/append';
   const SHEETS_TEST_URL = API_BASE_URL + '/api/sheets/test';
   const ENRICH_API_URL = API_BASE_URL + '/api/enrich';
+  const LICENSE_VALIDATE_URL = API_BASE_URL + '/api/v1/license/validate';
   const SHEETS_API_KEY = CONFIG.apiKey;
   
   // ============================================
@@ -335,13 +336,147 @@
   // LICENSE CHECK
   // ============================================
   
-  async function checkLicenseStatus() {
+  // Generate device fingerprint for license validation
+  async function generateDeviceFingerprint() {
+    const components = {
+      cores: navigator.hardwareConcurrency || 0,
+      memory: navigator.deviceMemory || 0,
+      platform: navigator.platform,
+      screen: `${screen.width}x${screen.height}`,
+      colorDepth: screen.colorDepth,
+      touchPoints: navigator.maxTouchPoints || 0,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
+      language: (navigator.language || 'en').split('-')[0],
+    };
+    
+    // Get GPU info
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (gl) {
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (debugInfo) {
+          const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+          const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+          components.gpu = btoa(vendor + renderer).slice(0, 16);
+        }
+      }
+    } catch(e) { components.gpu = '0'; }
+    
+    // Generate hash
+    const coreString = Object.values(components).join('|');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(coreString));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    return { hash, components };
+  }
+  
+  // Get extension ID
+  function getExtensionId() {
+    try {
+      return chrome.runtime.id || 'unknown';
+    } catch(e) {
+      return 'unknown';
+    }
+  }
+  
+  // Check license with server - called on every page load
+  async function verifyLicenseWithServer() {
+    try {
+      // Get stored token
+      const stored = await new Promise(resolve => {
+        chrome.storage.local.get(['__maps_ext_token__', 'licenseActivated'], resolve);
+      });
+      
+      // No token = no license
+      if (!stored.__maps_ext_token__) {
+        log('No license token found');
+        return false;
+      }
+      
+      // Generate fingerprint
+      const fingerprint = await generateDeviceFingerprint();
+      
+      // Validate with server
+      const response = await fetch(LICENSE_VALIDATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: stored.__maps_ext_token__,
+          extension_id: getExtensionId(),
+          fingerprint_hash: fingerprint.hash,
+          fingerprint_components: fingerprint.components,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        const errorCode = data.code || data.error;
+        // Critical errors that should lock out the user
+        const criticalErrors = ['LICENSE_REVOKED', 'ACTIVATION_INVALID', 'LICENSE_EXPIRED'];
+        
+        if (criticalErrors.includes(errorCode)) {
+          log('License invalid:', errorCode);
+          // Clear license data
+          await chrome.storage.local.set({ licenseActivated: false });
+          await chrome.storage.local.remove(['__maps_ext_token__', '__maps_ext_cache__']);
+          return false;
+        }
+        
+        // For other errors (network, fingerprint mismatch during travel), 
+        // keep user logged in if they were previously activated
+        return stored.licenseActivated === true;
+      }
+      
+      // License is valid
+      log('License validated successfully');
+      await chrome.storage.local.set({ licenseActivated: true });
+      return true;
+      
+    } catch(e) {
+      // Network error - check if previously activated
+      log('License validation network error:', e.message);
+      const stored = await new Promise(resolve => {
+        chrome.storage.local.get(['licenseActivated'], resolve);
+      });
+      return stored.licenseActivated === true;
+    }
+  }
+  
+  // Quick local check (for UI responsiveness)
+  async function checkLicenseLocal() {
     return new Promise((resolve) => {
       chrome.storage.local.get(['licenseActivated'], (result) => {
         isLicenseValid = result.licenseActivated === true;
         resolve(isLicenseValid);
       });
     });
+  }
+  
+  // Full license check - verifies with server
+  async function checkLicenseStatus() {
+    // First do quick local check for UI
+    const localValid = await checkLicenseLocal();
+    
+    // If no local license, don't bother checking server
+    if (!localValid) {
+      isLicenseValid = false;
+      return false;
+    }
+    
+    // Verify with server (async, but wait for result)
+    const serverValid = await verifyLicenseWithServer();
+    isLicenseValid = serverValid;
+    
+    // If server says invalid, remove panel
+    if (!serverValid) {
+      const panel = document.getElementById('gme-floating-panel');
+      if (panel) panel.remove();
+    }
+    
+    return serverValid;
   }
   
   // Listen for license and sheets config changes from popup
@@ -516,8 +651,8 @@
     panel.innerHTML = `
       <div class="gme-header">
         <div class="gme-header-content">
-          <div class="gme-logo">📍</div>
-          <h3>Lead Extractor</h3>
+          <img src="${chrome.runtime.getURL('icons/logo.png')}" class="gme-logo-img" alt="MapsReach" style="width: 24px; height: 24px; border-radius: 4px;">
+          <h3>MapsReach</h3>
         </div>
         <div class="gme-header-actions">
           <button class="gme-theme-toggle" id="gme-theme-toggle" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
@@ -742,6 +877,11 @@
       // Data comes in event.data.payload.data from injected.js
       const payload = event.data.payload;
       if (payload && payload.data) {
+        // Only process if user has clicked start - don't auto-extract on page load
+        if (!userClickedStart) {
+          return;
+        }
+        
         // CRITICAL FIX: If we're waiting for search data and we receive ANY search-related data, trigger extraction
         // This ensures "Search this area" click always works, even if data parsing fails
         const wasWaiting = isWaitingForSearchRefresh;
@@ -749,7 +889,7 @@
         processInterceptedData(payload.data);
         
         // Backup: If we were waiting and still waiting after processing, force trigger
-        if (wasWaiting && isWaitingForSearchRefresh) {
+        if (wasWaiting && isWaitingForSearchRefresh && userClickedStart) {
           onSearchDataReceived();
         }
       }
@@ -758,6 +898,11 @@
     
     // Handle legacy XHR intercept format (backward compat)
     if (event.data && event.data.type === 'search' && event.data.data) {
+      // Only process if user has clicked start
+      if (!userClickedStart) {
+        return;
+      }
+      
       const wasWaiting = isWaitingForSearchRefresh;
       
       try {
@@ -771,15 +916,15 @@
         }
         
         // ALWAYS trigger if we were waiting - even if parsing found nothing
-        if (wasWaiting) {
+        if (wasWaiting && userClickedStart) {
           onSearchDataReceived();
-        } else if (hasReceivedSearchData && isAlwaysCapture) {
+        } else if (hasReceivedSearchData && isAlwaysCapture && userClickedStart) {
           updateStats();
         }
       } catch(err) {
         log('Legacy parse error:', err);
         // Even on error, if we were waiting, trigger extraction
-        if (wasWaiting && isWaitingForSearchRefresh) {
+        if (wasWaiting && isWaitingForSearchRefresh && userClickedStart) {
           onSearchDataReceived();
         }
       }
@@ -845,9 +990,9 @@
       if (businessesFound > 0 || isWaitingForSearchRefresh) {
         // CRITICAL: If waiting for search refresh, ALWAYS trigger even if no new businesses
         // This handles the case where user clicks "Search this area" but all businesses were already captured
-        if (isWaitingForSearchRefresh) {
+        if (isWaitingForSearchRefresh && userClickedStart) {
           onSearchDataReceived();
-        } else if (hasReceivedSearchData && isAlwaysCapture) {
+        } else if (hasReceivedSearchData && isAlwaysCapture && userClickedStart) {
           // Already capturing, just update stats
           updateStats();
         }
@@ -856,7 +1001,7 @@
         const foundInRecursive = searchForBusinesses(results);
         
         // Even if recursive search found nothing, if we're waiting, trigger extraction
-        if (isWaitingForSearchRefresh) {
+        if (isWaitingForSearchRefresh && userClickedStart) {
           onSearchDataReceived();
         }
       }
@@ -1585,6 +1730,18 @@
         isStoppingWithEnrichment: isStoppingWithEnrichment,
         enrichmentRemaining: enrichmentQueue.length + enrichmentInProgress
       });
+    } else if (msg.type === 'LICENSE_REVOKED') {
+      // License was revoked - immediately lock out\n      isLicenseValid = false;
+      isExtracting = false;
+      isAlwaysCapture = false;
+      userClickedStart = false;
+      
+      // Remove the floating panel
+      const panel = document.getElementById('gme-floating-panel');
+      if (panel) panel.remove();
+      
+      log('License revoked - panel removed');
+      sendResponse({ success: true });
     } else if (msg.type === 'LICENSE_ACTIVATED') {
       // License was just activated from popup
       // Note: storage.onChanged will also fire, so just update the flag

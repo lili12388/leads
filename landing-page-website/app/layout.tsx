@@ -13,7 +13,6 @@ export const metadata: Metadata = {
   description:
     "Stop hunting leads, start extracting them. Get business names, emails, phones, reviews from Google Maps with one click. $59 lifetime license. Used by 2,000+ freelancers.",
   keywords: ["lead generation", "Google Maps scraper", "business leads", "email extractor", "chrome extension", "freelancer tools"],
-  generator: "v0.app",
   openGraph: {
     title: "MapsReach - Extract Unlimited Leads from Google Maps",
     description: "Get business names, emails, phones from Google Maps in seconds. $59 lifetime license.",
@@ -27,16 +26,16 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
+        url: "/favicon.png",
+        type: "image/png",
+      },
+      {
         url: "/icon-light-32x32.png",
         media: "(prefers-color-scheme: light)",
       },
       {
         url: "/icon-dark-32x32.png",
         media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
       },
     ],
     apple: "/apple-icon.png",

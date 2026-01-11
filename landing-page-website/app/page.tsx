@@ -291,15 +291,96 @@ export default function Home() {
         ref={heroRef}
         className="relative min-h-screen flex items-center justify-center px-6 py-12 overflow-hidden"
       >
-        {/* Gradient background elements */}
-        <div className="absolute inset-0 opacity-40">
-          <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-primary rounded-full mix-blend-screen filter blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-[500px] h-[500px] bg-secondary rounded-full mix-blend-screen filter blur-3xl animate-pulse" style={{ animationDelay: "1s" }}></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-accent/40 rounded-full mix-blend-screen filter blur-3xl"></div>
+        {/* Premium Background - Radial Spotlight + Noise + Map Theme */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020a18] via-[#041225] to-[#020510]">
+          
+          {/* Animated pulsing blue bulbs */}
+          <div className="absolute top-[20%] left-[15%] w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.35)_0%,rgba(37,99,235,0.15)_30%,transparent_60%)] animate-[pulse-glow_4s_ease-in-out_infinite]"></div>
+          <div className="absolute bottom-[10%] right-[10%] w-[500px] h-[500px] bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.3)_0%,rgba(6,182,212,0.12)_30%,transparent_60%)] animate-[pulse-glow_4s_ease-in-out_infinite_1s]"></div>
+          
+          <style jsx>{`
+            @keyframes pulse-glow {
+              0%, 100% { opacity: 0.4; transform: scale(1); }
+              50% { opacity: 1; transform: scale(1.1); }
+            }
+          `}</style>
+          
+          {/* Central radial spotlight - draws focus to content */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1400px] h-[1000px] bg-[radial-gradient(ellipse_at_center,rgba(14,165,233,0.15)_0%,rgba(8,145,178,0.08)_30%,rgba(6,78,117,0.04)_55%,transparent_75%)]"></div>
+          
+          {/* Top glow accent */}
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.2)_0%,rgba(37,99,235,0.1)_40%,transparent_70%)]"></div>
+          
+          {/* Bottom corner accents */}
+          <div className="absolute -bottom-32 -left-32 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.12)_0%,transparent_60%)]"></div>
+          <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.1)_0%,transparent_60%)]"></div>
+          
+          {/* Map-inspired topographic contour lines */}
+          <div className="absolute inset-0 opacity-[0.08]">
+            <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="contour" x="0" y="0" width="250" height="250" patternUnits="userSpaceOnUse">
+                  <circle cx="125" cy="125" r="100" fill="none" stroke="rgba(59,130,246,0.6)" strokeWidth="0.5"/>
+                  <circle cx="125" cy="125" r="75" fill="none" stroke="rgba(6,182,212,0.5)" strokeWidth="0.5"/>
+                  <circle cx="125" cy="125" r="50" fill="none" stroke="rgba(59,130,246,0.4)" strokeWidth="0.5"/>
+                  <circle cx="125" cy="125" r="25" fill="none" stroke="rgba(6,182,212,0.3)" strokeWidth="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#contour)"/>
+            </svg>
+          </div>
+          
+          {/* Scattered location pins - map themed */}
+          <div className="absolute top-[12%] left-[8%] w-6 h-6 opacity-20 text-cyan-400">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <div className="absolute top-[22%] right-[12%] w-8 h-8 opacity-15 text-blue-400">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <div className="absolute bottom-[35%] left-[6%] w-5 h-5 opacity-15 text-sky-400">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <div className="absolute top-[55%] right-[10%] w-6 h-6 opacity-20 text-teal-400">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <div className="absolute bottom-[18%] right-[20%] w-4 h-4 opacity-15 text-blue-300">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <div className="absolute top-[38%] left-[4%] w-5 h-5 opacity-18 text-cyan-300">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <div className="absolute bottom-[28%] left-[15%] w-7 h-7 opacity-12 text-blue-400">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <div className="absolute top-[75%] right-[8%] w-5 h-5 opacity-18 text-sky-300">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          
+          {/* Noise texture overlay */}
+          <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+')]"></div>
+          
+          {/* Vignette */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,transparent_50%,rgba(2,5,16,0.6)_100%)]"></div>
         </div>
 
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
+        {/* Grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
 
         <div className="relative z-10 max-w-5xl mx-auto text-center pt-8">
           {/* Main Hero Content */}
@@ -392,9 +473,9 @@ export default function Home() {
       </section>
 
       {/* Social Proof Bar */}
-      <section className="py-10 px-6 border-y border-border bg-muted/20">
+      <section className="py-6 px-6 border-y border-border bg-muted/20">
         <div className="max-w-7xl mx-auto">
-          <p className="text-center text-muted-foreground text-base mb-8">Trusted by freelancers and agencies worldwide</p>
+          <p className="text-center text-muted-foreground text-base mb-4">Trusted by freelancers and agencies worldwide</p>
           <div className="flex flex-wrap justify-center items-center gap-10 md:gap-20 opacity-60">
             {["🏢 Real Estate", "🍽️ Restaurants", "🔧 Contractors", "💼 Agencies", "🏋️ Fitness", "🏥 Healthcare"].map((industry, idx) => (
               <span key={idx} className="text-muted-foreground font-medium text-lg whitespace-nowrap">{industry}</span>
@@ -404,9 +485,9 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-28 px-6 relative">
+      <section id="how-it-works" className="py-10 px-6 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-8">
             <span className="inline-block px-5 py-2 bg-primary/10 text-primary rounded-full text-base font-medium mb-5">Simple Process</span>
             <h2 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">From Search to Leads in 5 Steps</h2>
             <p className="text-muted-foreground text-xl max-w-3xl mx-auto">
@@ -475,9 +556,9 @@ export default function Home() {
       </section>
 
       {/* Data Extraction - What You Get */}
-      <section id="features" className="py-24 px-4 relative bg-muted/10">
+      <section id="features" className="py-10 px-4 relative bg-muted/10">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-6">
             <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">Complete Data</span>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Everything You Need to Close Deals</h2>
             <p className="text-muted-foreground text-lg">Extract comprehensive business data with a single click</p>
@@ -544,9 +625,9 @@ export default function Home() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-24 px-4 relative">
+      <section className="py-10 px-4 relative">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-6">
             <span className="inline-block px-4 py-1 bg-accent/10 text-accent rounded-full text-sm font-medium mb-4">Social Proof</span>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Loved by 2,000+ Users</h2>
             <p className="text-muted-foreground text-lg">Join thousands of freelancers already saving hours every day</p>
@@ -586,9 +667,9 @@ export default function Home() {
       </section>
 
       {/* Why Freelancers Love It - Benefits */}
-      <section className="py-24 px-4 relative bg-muted/10">
+      <section className="py-10 px-4 relative bg-muted/10">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-6">
             <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Benefits</span>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Why Smart Freelancers Choose MapsReach</h2>
             <p className="text-muted-foreground text-lg">Built by a freelancer who was tired of wasting time</p>
@@ -647,9 +728,9 @@ export default function Home() {
       </section>
 
       {/* Comparison Section */}
-      <section className="py-24 px-4 relative">
+      <section className="py-10 px-4 relative">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-6">
             <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">Comparison</span>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">MapsReach vs The Old Way</h2>
             <p className="text-muted-foreground text-lg">See why 2,000+ users made the switch</p>
@@ -712,9 +793,9 @@ export default function Home() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-24 px-4 relative bg-muted/10">
+      <section id="pricing" className="py-10 px-4 relative bg-muted/10">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-16">
+          <div className="mb-6">
             <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Pricing</span>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">One Price. Unlimited Value.</h2>
             <p className="text-muted-foreground text-lg">No subscriptions. No hidden fees. Just results.</p>
@@ -808,9 +889,9 @@ export default function Home() {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-24 px-4 relative">
+      <section id="faq" className="py-10 px-4 relative">
         <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-6">
             <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">FAQ</span>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Got Questions?</h2>
             <p className="text-muted-foreground text-lg">Everything you need to know before getting started</p>
@@ -841,7 +922,7 @@ export default function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 px-4 relative overflow-hidden bg-gradient-to-b from-background to-muted/20">
+      <section className="py-10 px-4 relative overflow-hidden bg-gradient-to-b from-background to-muted/20">
         {/* Background elements */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary rounded-full mix-blend-screen filter blur-3xl"></div>

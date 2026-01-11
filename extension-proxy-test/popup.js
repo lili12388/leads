@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 60 * 60 * 1000); // Every 1 HOUR (3600000 ms)
   }
   
-  // Check license status - ONLY checks local storage flag, no server call on open
+  // Check license status - VALIDATES WITH SERVER on every popup open
   async function checkLicense() {
     if (!licenseClient) {
       initLicenseClient();
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return false;
     }
     
-    // ONLY check local storage - no server validation on popup open
+    // Check for token first
     const stored = await chrome.storage.local.get(['licenseActivated', '__maps_ext_token__']);
     
     // No token at all - show license screen
@@ -124,28 +124,57 @@ document.addEventListener('DOMContentLoaded', async () => {
       return false;
     }
     
-    // If previously activated, show main content immediately - NO server check, NO loading
-    if (stored.licenseActivated === true) {
-      const info = await licenseClient.getLicenseInfo();
-      showMainContent(info);
-      // Start background validation (runs every 1 hour)
-      startLicenseValidation();
-      return true;
-    }
+    // Show checking state while validating with server
+    showCheckingLicense();
     
-    // Has token but licenseActivated is not true - this shouldn't happen normally
-    // but if it does, try to validate once
+    // ALWAYS validate with server on popup open (force server check, no cache)
     try {
-      const result = await licenseClient.validate(true); // Use cache
+      const result = await licenseClient.validate(false); // FALSE = force server check
+      
       if (result.valid) {
         const info = await licenseClient.getLicenseInfo();
         await chrome.storage.local.set({ licenseActivated: true });
         showMainContent(info);
+        // Start background validation as backup
+        startLicenseValidation();
+        return true;
+      } else {
+        // License is invalid/revoked/expired
+        const criticalErrors = ['LICENSE_REVOKED', 'ACTIVATION_INVALID', 'LICENSE_EXPIRED'];
+        
+        if (criticalErrors.includes(result.error)) {
+          // Clear license data
+          await chrome.storage.local.set({ licenseActivated: false });
+          await chrome.storage.local.remove(['__maps_ext_token__', '__maps_ext_cache__']);
+          
+          // Notify content script to remove panel
+          try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab?.id) {
+              chrome.tabs.sendMessage(tab.id, { type: 'LICENSE_REVOKED' });
+            }
+          } catch(e) {}
+          
+          showLicenseScreen(result.message || 'Your license has been revoked.');
+          return false;
+        }
+        
+        // For other errors, check if previously activated (grace period)
+        if (stored.licenseActivated === true) {
+          const info = await licenseClient.getLicenseInfo();
+          showMainContent(info);
+          startLicenseValidation();
+          return true;
+        }
+      }
+    } catch (e) {
+      // Network error - allow if previously activated
+      if (stored.licenseActivated === true) {
+        const info = await licenseClient.getLicenseInfo();
+        showMainContent(info);
         startLicenseValidation();
         return true;
       }
-    } catch (e) {
-      // Ignore errors
     }
     
     // Fall back to showing license screen
@@ -183,7 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       checkingDiv.style.cssText = 'display: flex; align-items: center; justify-content: center; gap: 10px; padding: 40px 20px; color: var(--popup-text-secondary, #64748b);';
       checkingDiv.innerHTML = `
         <div style="width: 18px; height: 18px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: gme-spin 0.8s linear infinite;"></div>
-        <span style="font-size: 14px;">Checking your license...</span>
+        <span style="font-size: 14px;">Please wait...</span>
         <style>@keyframes gme-spin { to { transform: rotate(360deg); } }</style>
       `;
       document.querySelector('.main-content-area').prepend(checkingDiv);
