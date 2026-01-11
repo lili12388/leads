@@ -94,6 +94,8 @@ export default function Home() {
   const featuresRef = useRef<HTMLDivElement>(null)
   const [openFAQ, setOpenFAQ] = useState<number | null>(0)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isNavHidden, setIsNavHidden] = useState(false)
+  const lastScrollY = useRef(0)
 
   // Silent Referral Tracking
   useEffect(() => {
@@ -152,9 +154,21 @@ export default function Home() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
+      const currentScrollY = window.scrollY
+      setIsScrolled(currentScrollY > 50)
+      
+      // Determine scroll direction
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        // Scrolling down & past threshold - hide nav
+        setIsNavHidden(true)
+      } else {
+        // Scrolling up - show nav
+        setIsNavHidden(false)
+      }
+      
+      lastScrollY.current = currentScrollY
     }
-    window.addEventListener("scroll", handleScroll)
+    window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
@@ -236,30 +250,36 @@ export default function Home() {
 
   return (
     <main className="bg-background text-foreground min-h-screen">
-      {/* Sticky Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-lg border-b border-border shadow-lg" : "bg-transparent"}`}>
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {/* Logo */}
-            <img src="/logo.png" alt="MapsReach" className="h-10 w-auto" />
-            {/* Slogan with creative styling */}
-            <div className="hidden sm:flex items-center gap-1.5">
-              <span className="text-[#3b82f6] font-bold text-sm tracking-wide">Extract</span>
-              <span className="text-[#60a5fa] font-light text-xs">•</span>
-              <span className="text-[#2563eb] font-bold text-sm tracking-wide">Export</span>
-              <span className="text-[#60a5fa] font-light text-xs">•</span>
-              <span className="text-[#1d4ed8] font-bold text-sm tracking-wide">Excel</span>
+      {/* Floating Navigation - no bar, just buttons */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 py-0 px-8 transition-all ${isNavHidden ? 'duration-200 -translate-y-full opacity-0' : 'duration-300 translate-y-0 opacity-100'}`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          {/* Logo - clickable, scrolls to top */}
+          <button 
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <img src="/logo.png" alt="MapsReach" className="h-28 w-auto" />
+            {/* Slogan right next to logo */}
+            <div className="hidden sm:flex items-center gap-2 -ml-1">
+              <span className="text-[#3b82f6] font-semibold text-base tracking-wide">Extract</span>
+              <span className="text-[#60a5fa] text-sm">•</span>
+              <span className="text-[#2563eb] font-semibold text-base tracking-wide">Export</span>
+              <span className="text-[#60a5fa] text-sm">•</span>
+              <span className="text-[#1d4ed8] font-semibold text-base tracking-wide">Excel</span>
             </div>
+          </button>
+          
+          {/* Floating navigation buttons */}
+          <div className="hidden md:flex items-center gap-4">
+            <button onClick={() => scrollToSection("how-it-works")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">How it Works</button>
+            <button onClick={() => scrollToSection("features")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Features</button>
+            <button onClick={() => scrollToSection("pricing")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Pricing</button>
+            <button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">FAQ</button>
           </div>
-          <div className="hidden md:flex items-center gap-8">
-            <button onClick={() => scrollToSection("how-it-works")} className="text-muted-foreground hover:text-foreground transition-colors text-sm">How it Works</button>
-            <button onClick={() => scrollToSection("features")} className="text-muted-foreground hover:text-foreground transition-colors text-sm">Features</button>
-            <button onClick={() => scrollToSection("pricing")} className="text-muted-foreground hover:text-foreground transition-colors text-sm">Pricing</button>
-            <button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-colors text-sm">FAQ</button>
-          </div>
+          
           <a
             href="/purchase"
-            className="px-4 py-2 bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] text-white font-semibold rounded-full text-sm hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200"
+            className="px-6 py-3 bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] text-white font-semibold rounded-full text-base hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200"
           >
             Get License
           </a>
@@ -269,78 +289,76 @@ export default function Home() {
       {/* Hero Section */}
       <section
         ref={heroRef}
-        className="relative min-h-screen flex items-center justify-center px-4 py-20 overflow-hidden"
+        className="relative min-h-screen flex items-center justify-center px-6 py-12 overflow-hidden"
       >
         {/* Gradient background elements */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary rounded-full mix-blend-screen filter blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-72 h-72 bg-secondary rounded-full mix-blend-screen filter blur-3xl animate-pulse" style={{ animationDelay: "1s" }}></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/30 rounded-full mix-blend-screen filter blur-3xl"></div>
+        <div className="absolute inset-0 opacity-40">
+          <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-primary rounded-full mix-blend-screen filter blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-[500px] h-[500px] bg-secondary rounded-full mix-blend-screen filter blur-3xl animate-pulse" style={{ animationDelay: "1s" }}></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-accent/40 rounded-full mix-blend-screen filter blur-3xl"></div>
         </div>
 
         {/* Grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
 
-        <div className="relative z-10 max-w-5xl mx-auto text-center pt-16">
-          {/* Trust Badge */}
-          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/30 rounded-full text-sm text-accent">
-              <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                4.9/5 from 500+ users
-              </span>
-              <span className="w-1 h-1 bg-accent rounded-full"></span>
-              <span>Trusted by 2,000+ freelancers</span>
-            </div>
-          </div>
-
-          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "100ms" }}>
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
+        <div className="relative z-10 max-w-5xl mx-auto text-center pt-8">
+          {/* Main Hero Content */}
+          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-5 leading-tight tracking-tight">
               <span className="text-foreground">Stop Hunting Leads.</span>
               <br />
               <span className="gradient-text">Start Extracting Them.</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-4 max-w-2xl mx-auto leading-relaxed">
+            
+            <p className="text-xl md:text-2xl text-muted-foreground mb-6 max-w-3xl mx-auto leading-normal">
               Extract unlimited business leads from Google Maps in seconds. 
               <span className="text-foreground font-medium"> Names, emails, phones, reviews</span> – everything you need, exported directly to Google Sheets.
             </p>
-            <p className="text-sm text-accent mb-4 flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              No more monthly payments! One-time lifetime license – hassle-free forever.
-            </p>
-            <p className="text-sm text-muted-foreground mb-8 flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Setup takes less than 30 seconds
-            </p>
+            
+            {/* Value props in a sleek row */}
+            <div className="flex flex-wrap justify-center gap-6 mb-8">
+              <div className="flex items-center gap-2 text-base text-accent">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>One-time payment</span>
+              </div>
+              <div className="flex items-center gap-2 text-base text-accent">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Lifetime updates</span>
+              </div>
+              <div className="flex items-center gap-2 text-base text-accent">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>30-second setup</span>
+              </div>
+            </div>
           </div>
 
           {/* CTA Buttons */}
           <div
             data-animate
-            className="opacity-0 translate-y-10 transition-all duration-1000 flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
+            className="opacity-0 translate-y-10 transition-all duration-1000 flex flex-col sm:flex-row gap-4 justify-center items-center mb-10"
             style={{ transitionDelay: "200ms" }}
           >
             <a
               href="/purchase"
-              className="group px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 glow-md flex items-center gap-2"
+              className="group px-10 py-5 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-full text-lg hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 flex items-center gap-3"
             >
               <span>Get Lifetime Access – $59</span>
-              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </a>
             <a
               href="#how-it-works"
               onClick={(e) => { e.preventDefault(); scrollToSection("how-it-works") }}
-              className="px-8 py-4 bg-muted/50 text-foreground font-semibold rounded-full border border-border hover:bg-muted transition-all duration-300 flex items-center gap-2"
+              className="px-10 py-5 bg-muted/50 text-foreground font-semibold rounded-full text-lg border border-border hover:bg-muted transition-all duration-300 flex items-center gap-3"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -349,49 +367,49 @@ export default function Home() {
           </div>
 
           {/* Stats */}
-          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 grid grid-cols-3 gap-8 max-w-2xl mx-auto" style={{ transitionDelay: "300ms" }}>
+          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 grid grid-cols-3 gap-10 max-w-3xl mx-auto" style={{ transitionDelay: "300ms" }}>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary"><AnimatedCounter end={2847} suffix="+" /></div>
-              <div className="text-sm text-muted-foreground">Active Users</div>
+              <div className="text-4xl md:text-5xl font-bold text-primary"><AnimatedCounter end={2847} suffix="+" /></div>
+              <div className="text-base text-muted-foreground">Active Users</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-secondary"><AnimatedCounter end={12} suffix="M+" /></div>
-              <div className="text-sm text-muted-foreground">Leads Extracted</div>
+              <div className="text-4xl md:text-5xl font-bold text-secondary"><AnimatedCounter end={12} suffix="M+" /></div>
+              <div className="text-base text-muted-foreground">Leads Extracted</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-accent"><AnimatedCounter end={4} suffix="hrs" /></div>
-              <div className="text-sm text-muted-foreground">Avg. Time Saved/Day</div>
+              <div className="text-4xl md:text-5xl font-bold text-accent"><AnimatedCounter end={4} suffix="hrs" /></div>
+              <div className="text-base text-muted-foreground">Avg. Time Saved/Day</div>
             </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce">
+          <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
       </section>
 
       {/* Social Proof Bar */}
-      <section className="py-8 px-4 border-y border-border bg-muted/20">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-center text-muted-foreground text-sm mb-6">Trusted by freelancers and agencies worldwide</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60">
+      <section className="py-10 px-6 border-y border-border bg-muted/20">
+        <div className="max-w-7xl mx-auto">
+          <p className="text-center text-muted-foreground text-base mb-8">Trusted by freelancers and agencies worldwide</p>
+          <div className="flex flex-wrap justify-center items-center gap-10 md:gap-20 opacity-60">
             {["🏢 Real Estate", "🍽️ Restaurants", "🔧 Contractors", "💼 Agencies", "🏋️ Fitness", "🏥 Healthcare"].map((industry, idx) => (
-              <span key={idx} className="text-muted-foreground font-medium whitespace-nowrap">{industry}</span>
+              <span key={idx} className="text-muted-foreground font-medium text-lg whitespace-nowrap">{industry}</span>
             ))}
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-24 px-4 relative">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Simple Process</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">From Search to Leads in 5 Steps</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+      <section id="how-it-works" className="py-28 px-6 relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <span className="inline-block px-5 py-2 bg-primary/10 text-primary rounded-full text-base font-medium mb-5">Simple Process</span>
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">From Search to Leads in 5 Steps</h2>
+            <p className="text-muted-foreground text-xl max-w-3xl mx-auto">
               No learning curve. No complex setup. Just install and start extracting.
             </p>
           </div>
