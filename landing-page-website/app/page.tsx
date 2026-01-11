@@ -450,16 +450,16 @@ export default function Home() {
           {/* Stats */}
           <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 grid grid-cols-3 gap-10 max-w-3xl mx-auto" style={{ transitionDelay: "300ms" }}>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-primary"><AnimatedCounter end={2847} suffix="+" /></div>
-              <div className="text-base text-muted-foreground">Active Users</div>
+              <div className="text-4xl md:text-5xl font-bold gradient-text"><AnimatedCounter end={2847} suffix="+" /></div>
+              <div className="text-base text-foreground font-medium">Active Users</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-secondary"><AnimatedCounter end={12} suffix="M+" /></div>
-              <div className="text-base text-muted-foreground">Leads Extracted</div>
+              <div className="text-4xl md:text-5xl font-bold gradient-text"><AnimatedCounter end={12} suffix="M+" /></div>
+              <div className="text-base text-foreground font-medium">Leads Extracted</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-accent"><AnimatedCounter end={4} suffix="hrs" /></div>
-              <div className="text-base text-muted-foreground">Avg. Time Saved/Day</div>
+              <div className="text-4xl md:text-5xl font-bold gradient-text"><AnimatedCounter end={4} suffix="hrs" /></div>
+              <div className="text-base text-foreground font-medium">Avg. Time Saved/Day</div>
             </div>
           </div>
         </div>
