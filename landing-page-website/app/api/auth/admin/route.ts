@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
     const { username, password } = await request.json()
     
     const adminUsername = process.env.ADMIN_USERNAME || 'admin'
-    const adminPassword = process.env.ADMIN_PASSWORD || 'leadsnap2024'
+    const adminPassword = process.env.ADMIN_PASSWORD || 'mapsreach2024'
     
     if (username === adminUsername && password === adminPassword) {
       return NextResponse.json({ 

@@ -1,5 +1,5 @@
 /**
- * G-Maps Extractor - Background Service Worker
+ * MapsReach - Background Service Worker
  * 
  * Handles:
  * - Extension installation
@@ -11,8 +11,6 @@
 // INSTALLATION
 // ============================================
 chrome.runtime.onInstalled.addListener(function(details) {
-  console.log('[GME Background] Extension installed:', details.reason);
-  
   if (details.reason === 'install') {
     // First time install
     chrome.storage.local.set({
@@ -26,8 +24,6 @@ chrome.runtime.onInstalled.addListener(function(details) {
 // MESSAGE HANDLING
 // ============================================
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  console.log('[GME Background] Message received:', request.action);
-  
   if (request.action === 'getStats') {
     chrome.storage.local.get(['totalLeadsExtracted'], function(data) {
       sendResponse({ total: data.totalLeadsExtracted || 0 });
@@ -44,5 +40,3 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     return true;
   }
 });
-
-console.log('[GME Background] Service worker started');

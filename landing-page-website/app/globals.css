@@ -4,75 +4,76 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Dark futuristic theme */
-  --background: oklch(0.08 0 0);
+  /* MapsReach Blue Theme - matching logo colors */
+  --background: oklch(0.08 0.02 240);
   --foreground: oklch(0.98 0 0);
-  --card: oklch(0.12 0 0);
+  --card: oklch(0.12 0.02 240);
   --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.12 0 0);
+  --popover: oklch(0.12 0.02 240);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.45 0.3 262);
+  --primary: oklch(0.55 0.2 240);
   --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.55 0.25 200);
+  --secondary: oklch(0.65 0.15 220);
   --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.35 0 0);
+  --muted: oklch(0.35 0.02 240);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.65 0.2 150);
-  --accent-foreground: oklch(0.08 0 0);
+  --accent: oklch(0.75 0.12 210);
+  --accent-foreground: oklch(0.15 0.1 240);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.2 0 0);
-  --input: oklch(0.15 0 0);
-  --ring: oklch(0.45 0.3 262);
-  --chart-1: oklch(0.45 0.3 262);
-  --chart-2: oklch(0.55 0.25 200);
-  --chart-3: oklch(0.65 0.2 150);
-  --chart-4: oklch(0.45 0.3 262);
-  --chart-5: oklch(0.55 0.25 200);
+  --border: oklch(0.22 0.03 240);
+  --input: oklch(0.15 0.02 240);
+  --ring: oklch(0.55 0.2 240);
+  --chart-1: oklch(0.55 0.2 240);
+  --chart-2: oklch(0.65 0.15 220);
+  --chart-3: oklch(0.75 0.12 210);
+  --chart-4: oklch(0.45 0.18 250);
+  --chart-5: oklch(0.60 0.16 230);
   --radius: 0.625rem;
-  --sidebar: oklch(0.12 0 0);
+  --sidebar: oklch(0.12 0.02 240);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.45 0.3 262);
+  --sidebar-primary: oklch(0.55 0.2 240);
   --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.55 0.25 200);
+  --sidebar-accent: oklch(0.65 0.15 220);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.2 0 0);
-  --sidebar-ring: oklch(0.45 0.3 262);
+  --sidebar-border: oklch(0.22 0.03 240);
+  --sidebar-ring: oklch(0.55 0.2 240);
 }
 
 .dark {
-  --background: oklch(0.08 0 0);
+  /* MapsReach Blue Theme - matching logo colors */
+  --background: oklch(0.08 0.02 240);
   --foreground: oklch(0.98 0 0);
-  --card: oklch(0.12 0 0);
+  --card: oklch(0.12 0.02 240);
   --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.12 0 0);
+  --popover: oklch(0.12 0.02 240);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.45 0.3 262);
+  --primary: oklch(0.55 0.2 240);
   --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.55 0.25 200);
+  --secondary: oklch(0.65 0.15 220);
   --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.35 0 0);
+  --muted: oklch(0.35 0.02 240);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.65 0.2 150);
-  --accent-foreground: oklch(0.08 0 0);
+  --accent: oklch(0.75 0.12 210);
+  --accent-foreground: oklch(0.15 0.1 240);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.2 0 0);
-  --input: oklch(0.15 0 0);
-  --ring: oklch(0.45 0.3 262);
-  --chart-1: oklch(0.45 0.3 262);
-  --chart-2: oklch(0.55 0.25 200);
-  --chart-3: oklch(0.65 0.2 150);
-  --chart-4: oklch(0.45 0.3 262);
-  --chart-5: oklch(0.55 0.25 200);
-  --sidebar: oklch(0.12 0 0);
+  --border: oklch(0.22 0.03 240);
+  --input: oklch(0.15 0.02 240);
+  --ring: oklch(0.55 0.2 240);
+  --chart-1: oklch(0.55 0.2 240);
+  --chart-2: oklch(0.65 0.15 220);
+  --chart-3: oklch(0.75 0.12 210);
+  --chart-4: oklch(0.45 0.18 250);
+  --chart-5: oklch(0.60 0.16 230);
+  --sidebar: oklch(0.12 0.02 240);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.45 0.3 262);
+  --sidebar-primary: oklch(0.55 0.2 240);
   --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.55 0.25 200);
+  --sidebar-accent: oklch(0.65 0.15 220);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.2 0 0);
-  --sidebar-ring: oklch(0.45 0.3 262);
+  --sidebar-border: oklch(0.22 0.03 240);
+  --sidebar-ring: oklch(0.55 0.2 240);
 }
 
 @theme inline {

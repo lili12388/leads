@@ -36,7 +36,7 @@ const paymentDetails: Record<string, {
     details: [
       { label: 'Skrill Email', value: 'your-skrill@email.com', copyable: true },
       { label: 'Amount', value: '$59 USD' },
-      { label: 'Reference', value: 'LeadSnap License' }
+      { label: 'Reference', value: 'MapsReach License' }
     ]
   },
   neteller: {
@@ -51,7 +51,7 @@ const paymentDetails: Record<string, {
     details: [
       { label: 'Neteller Email', value: 'your-neteller@email.com', copyable: true },
       { label: 'Amount', value: '$59 USD' },
-      { label: 'Reference', value: 'LeadSnap License' }
+      { label: 'Reference', value: 'MapsReach License' }
     ]
   },
   redotpay: {
@@ -343,8 +343,8 @@ export default function PayPage() {
         <div className="text-center mt-8 pt-6 border-t border-gray-700/50">
           <p className="text-gray-400 text-sm">
             Need help? Contact us at{' '}
-            <a href="mailto:support@leadsnap.pro" className="text-green-400 hover:underline">
-              support@leadsnap.pro
+            <a href="mailto:support@mapsreach.com" className="text-green-400 hover:underline">
+              support@mapsreach.com
             </a>
           </p>
         </div>

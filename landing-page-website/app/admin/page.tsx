@@ -243,7 +243,7 @@ export default function AdminDashboard() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-            <p className="text-gray-400 mt-2">LeadSnap Sales & Affiliates</p>
+            <p className="text-gray-400 mt-2">MapsReach Sales & Affiliates</p>
           </div>
 
           <div className="space-y-4">
@@ -285,7 +285,7 @@ export default function AdminDashboard() {
               </svg>
             </div>
             <div>
-              <h1 className="font-bold text-lg">LeadSnap Admin</h1>
+              <h1 className="font-bold text-lg">MapsReach Admin</h1>
               <p className="text-xs text-gray-400">Sales & Affiliate Management</p>
             </div>
           </div>

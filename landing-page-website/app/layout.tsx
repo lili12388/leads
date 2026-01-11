@@ -9,19 +9,19 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "LeadSnap - Extract Unlimited Leads from Google Maps in Seconds",
+  title: "MapsReach - Extract Unlimited Leads from Google Maps in Seconds",
   description:
     "Stop hunting leads, start extracting them. Get business names, emails, phones, reviews from Google Maps with one click. $59 lifetime license. Used by 2,000+ freelancers.",
   keywords: ["lead generation", "Google Maps scraper", "business leads", "email extractor", "chrome extension", "freelancer tools"],
   generator: "v0.app",
   openGraph: {
-    title: "LeadSnap - Extract Unlimited Leads from Google Maps",
+    title: "MapsReach - Extract Unlimited Leads from Google Maps",
     description: "Get business names, emails, phones from Google Maps in seconds. $59 lifetime license.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "LeadSnap - Google Maps Lead Extractor",
+    title: "MapsReach - Google Maps Lead Extractor",
     description: "Extract unlimited business leads from Google Maps. One-time $59 payment.",
   },
   icons: {

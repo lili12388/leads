@@ -81,8 +81,8 @@ export default function ConfirmationPage() {
         {/* Support */}
         <div className="text-gray-400 text-sm">
           Questions? Email us at{' '}
-          <a href="mailto:support@leadsnap.pro" className="text-green-400 hover:underline">
-            support@leadsnap.pro
+          <a href="mailto:support@mapsreach.com" className="text-green-400 hover:underline">
+            support@mapsreach.com
           </a>
         </div>
 

@@ -30,7 +30,7 @@
       'gen204',            // Tracking pixel
       'photometa',         // Photo metadata
     ],
-    debug: true  // Set to false in production
+    debug: false  // Set to false in production
   };
   
   // ============================================
@@ -124,10 +124,6 @@
             log(`XHR Response received! Length: ${data?.length || 0}`);
             
             if (data && data.length > 100) {
-              // Print first 500 chars to console for debugging
-              console.log('[GME DEBUG] Full response preview (first 1000 chars):');
-              console.log(data.substring(0, 1000));
-              
               // Send to content script
               if (shouldCapture(capturedUrl)) {
                 sendToContentScript(capturedUrl, data, capturedMethod, 'xhr');
@@ -216,12 +212,6 @@
           log(`Fetch Response: ${data?.length || 0} bytes`);
           
           if (data && data.length > 100) {
-            // Print preview for debugging
-            if (urlStr.includes('search') || urlStr.includes('batchexecute')) {
-              console.log('[GME DEBUG FETCH] Full response preview (first 1000 chars):');
-              console.log(data.substring(0, 1000));
-            }
-            
             sendToContentScript(url, data, method, 'fetch');
           }
         } catch (e) {

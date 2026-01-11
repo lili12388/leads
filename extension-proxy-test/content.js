@@ -205,8 +205,6 @@
     if (demoModeActive) return;
     demoModeActive = true;
     
-    console.log('🚀 Fast streaming mode: sending leads at max speed...');
-    
     while (sheetsQueue.length > 0 && !demoRateLimited) {
       const result = await sendSingleLead();
       
@@ -214,7 +212,6 @@
         demoRateLimited = true;
         sheetsStats.lastError = '⚠️ Rate limit hit - slowing down';
         updateSheetsStatusUI();
-        console.log('⚠️ Rate limited, falling back to batch mode');
         break;
       }
       
@@ -437,8 +434,6 @@
   }
   
   function onSearchDataReceived() {
-    console.log('[GME] onSearchDataReceived called, isWaitingForSearchRefresh:', isWaitingForSearchRefresh);
-    
     // Always process - the caller already verified we should trigger this
     isWaitingForSearchRefresh = false;
     hasReceivedSearchData = true;
@@ -459,7 +454,6 @@
     const autoScrollEnabled = document.getElementById('gme-auto-scroll');
     if (autoScrollEnabled && autoScrollEnabled.checked) {
       isExtracting = true;
-      console.log('[GME] Starting auto-scroll');
       setTimeout(autoScroll, 500);
     } else {
       isExtracting = true;
@@ -748,9 +742,6 @@
       // Data comes in event.data.payload.data from injected.js
       const payload = event.data.payload;
       if (payload && payload.data) {
-        console.log('[GME Content] 📦 Received data capture:', payload.url?.substring(0, 60));
-        console.log('[GME Content] Data length:', payload.data?.length, 'Source:', payload.source, 'isWaitingForSearchRefresh:', isWaitingForSearchRefresh);
-        
         // CRITICAL FIX: If we're waiting for search data and we receive ANY search-related data, trigger extraction
         // This ensures "Search this area" click always works, even if data parsing fails
         const wasWaiting = isWaitingForSearchRefresh;
@@ -759,7 +750,6 @@
         
         // Backup: If we were waiting and still waiting after processing, force trigger
         if (wasWaiting && isWaitingForSearchRefresh) {
-          console.log('[GME Content] ⚠️ Backup trigger: forcing onSearchDataReceived');
           onSearchDataReceived();
         }
       }
@@ -768,8 +758,6 @@
     
     // Handle legacy XHR intercept format (backward compat)
     if (event.data && event.data.type === 'search' && event.data.data) {
-      console.log('[GME] Legacy search data received, isWaitingForSearchRefresh:', isWaitingForSearchRefresh);
-      
       const wasWaiting = isWaitingForSearchRefresh;
       
       try {
@@ -784,7 +772,6 @@
         
         // ALWAYS trigger if we were waiting - even if parsing found nothing
         if (wasWaiting) {
-          console.log('[GME] Legacy: Triggering onSearchDataReceived');
           onSearchDataReceived();
         } else if (hasReceivedSearchData && isAlwaysCapture) {
           updateStats();
@@ -793,7 +780,6 @@
         log('Legacy parse error:', err);
         // Even on error, if we were waiting, trigger extraction
         if (wasWaiting && isWaitingForSearchRefresh) {
-          console.log('[GME] Legacy: Error but still triggering onSearchDataReceived');
           onSearchDataReceived();
         }
       }
@@ -803,8 +789,6 @@
   // Process intercepted data from new Proxy+Fetch method
   function processInterceptedData(body) {
     try {
-      console.log('[GME Content] Processing data, length:', body?.length);
-      
       // Handle both string and already-parsed data
       let rawData = typeof body === 'string' ? body : JSON.stringify(body);
       
@@ -821,7 +805,6 @@
       }
       
       if (!innerData || typeof innerData !== 'string') {
-        console.log('[GME Content] No inner data found');
         return;
       }
       
@@ -830,17 +813,12 @@
         innerData = innerData.substring(innerData.indexOf('\n') + 1);
       }
       
-      console.log('[GME Content] Inner data preview:', innerData.substring(0, 200));
-      
       let results;
       try {
         results = JSON.parse(innerData);
       } catch(e) {
-        console.log('[GME Content] Failed to parse inner data as JSON:', e.message);
         return;
       }
-      
-      console.log('[GME Content] Parsed results, isArray:', Array.isArray(results), 'length:', results?.length);
       
       // The response is an array, the first element contains search query and metadata
       // Business data is typically in specific array indices
@@ -865,32 +843,26 @@
       }
       
       if (businessesFound > 0 || isWaitingForSearchRefresh) {
-        console.log('[GME Content] ✅ Businesses in response:', businessesFound, '(new unique)');
-        console.log('[GME Content] State: isWaitingForSearchRefresh=', isWaitingForSearchRefresh, 'hasReceivedSearchData=', hasReceivedSearchData, 'isAlwaysCapture=', isAlwaysCapture);
-        
         // CRITICAL: If waiting for search refresh, ALWAYS trigger even if no new businesses
         // This handles the case where user clicks "Search this area" but all businesses were already captured
         if (isWaitingForSearchRefresh) {
-          console.log('[GME Content] 🚀 Triggering onSearchDataReceived!');
           onSearchDataReceived();
         } else if (hasReceivedSearchData && isAlwaysCapture) {
           // Already capturing, just update stats
           updateStats();
         }
       } else {
-        console.log('[GME Content] No businesses found in this response, trying recursive search...');
         // Recursive search as fallback
         const foundInRecursive = searchForBusinesses(results);
         
         // Even if recursive search found nothing, if we're waiting, trigger extraction
         if (isWaitingForSearchRefresh) {
-          console.log('[GME Content] 🚀 Triggering onSearchDataReceived (after recursive)!');
           onSearchDataReceived();
         }
       }
       
     } catch (err) {
-      console.log('[GME Content] Process error:', err);
+      // Error processing intercepted data
     }
   }
   
@@ -1094,7 +1066,6 @@
       };
       
       extractedLeads.set(key, lead);
-      console.log('[GME Content] ✅ Added lead:', name, hasWebsite ? '🌐' : (facebook ? '📘' : (instagram ? '📷' : '')));
       
       // Add to enrichment queue if has website
       if (hasWebsite && actualWebsite) {
@@ -1648,21 +1619,17 @@
   // ============================================
   
   async function init() {
-    console.log('[GME Content] Init started...');
-    
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', init);
       return;
     }
     
     const licenseStatus = await checkLicenseStatus();
-    console.log('[GME Content] License status:', licenseStatus);
     
     // Only create panel if licensed
     createFloatingPanel();
     
     if (isLicenseValid) {
-      console.log('[GME Content] Setting up search listeners...');
       setupSearchListeners();
     }
     
@@ -1676,7 +1643,6 @@
     });
     
     observer.observe(document.body, { childList: true, subtree: true });
-    console.log('[GME Content] Init complete. isAlwaysCapture:', isAlwaysCapture);
   }
   
   init();

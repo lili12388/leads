@@ -79,7 +79,7 @@ export default function PurchasePage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-white">Get Lifetime Access</h1>
-          <p className="text-gray-400 mt-2">LeadSnap Pro - One-time payment of <span className="text-green-400 font-semibold">$59</span></p>
+          <p className="text-gray-400 mt-2">MapsReach Pro - One-time payment of <span className="text-green-400 font-semibold">$59</span></p>
         </div>
 
         {/* Form */}

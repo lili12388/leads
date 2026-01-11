@@ -9,7 +9,7 @@ export default function HowAffiliateTrackingWorksPage() {
       <header className="border-b border-gray-700/50 bg-gray-900/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            <span className="text-2xl">📍</span> LeadSnap
+            <span className="text-2xl">📍</span> MapsReach
           </Link>
           <Link 
             href="/affiliate/signup"
@@ -47,7 +47,7 @@ export default function HowAffiliateTrackingWorksPage() {
                 <span>🔗</span> Visitor Clicks Your Link
               </h3>
               <p className="text-gray-300 mb-4">
-                When someone clicks your unique affiliate link (e.g., <code className="bg-gray-700/50 px-2 py-0.5 rounded text-purple-300">leadsnap.co?ref=YOUR_CODE</code>), 
+                When someone clicks your unique affiliate link (e.g., <code className="bg-gray-700/50 px-2 py-0.5 rounded text-purple-300">mapsreach.com?ref=YOUR_CODE</code>), 
                 we capture this click instantly.
               </p>
               <div className="bg-gray-900/50 rounded-xl p-4 text-sm">
@@ -252,7 +252,7 @@ export default function HowAffiliateTrackingWorksPage() {
       {/* Footer */}
       <footer className="border-t border-gray-800 mt-20">
         <div className="max-w-4xl mx-auto px-6 py-8 text-center text-gray-500 text-sm">
-          <p>© 2024 LeadSnap. All rights reserved.</p>
+          <p>© 2024 MapsReach. All rights reserved.</p>
           <div className="flex justify-center gap-4 mt-2">
             <Link href="/" className="hover:text-gray-300 transition">Home</Link>
             <Link href="/affiliate/login" className="hover:text-gray-300 transition">Affiliate Login</Link>

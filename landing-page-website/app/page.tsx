@@ -28,7 +28,7 @@ function openTawkChat() {
         TawkAPIRetry.maximize()
       } else {
         // If Tawk.to isn't configured yet, show an alert
-        alert("Chat is loading... Please try again in a moment, or email us directly at support@leadsnap.io")
+        alert("Chat is loading... Please try again in a moment, or email us directly at support@mapsreach.com")
       }
     }, 1000)
   }
@@ -194,7 +194,7 @@ export default function Home() {
     },
     {
       question: "Do I need technical skills to use this?",
-      answer: "Not at all! If you can use Google Maps, you can use LeadSnap. Just search, click, and export. It takes literally 30 seconds to learn."
+      answer: "Not at all! If you can use Google Maps, you can use MapsReach. Just search, click, and export. It takes literally 30 seconds to learn."
     },
     {
       question: "What's included in the lifetime license?",
@@ -238,12 +238,18 @@ export default function Home() {
     <main className="bg-background text-foreground min-h-screen">
       {/* Sticky Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-lg border-b border-border shadow-lg" : "bg-transparent"}`}>
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <span className="text-white font-bold text-sm">LS</span>
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {/* Logo */}
+            <img src="/logo.png" alt="MapsReach" className="h-10 w-auto" />
+            {/* Slogan with creative styling */}
+            <div className="hidden sm:flex items-center gap-1.5">
+              <span className="text-[#3b82f6] font-bold text-sm tracking-wide">Extract</span>
+              <span className="text-[#60a5fa] font-light text-xs">•</span>
+              <span className="text-[#2563eb] font-bold text-sm tracking-wide">Export</span>
+              <span className="text-[#60a5fa] font-light text-xs">•</span>
+              <span className="text-[#1d4ed8] font-bold text-sm tracking-wide">Excel</span>
             </div>
-            <span className="font-bold text-xl gradient-text">LeadSnap</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
             <button onClick={() => scrollToSection("how-it-works")} className="text-muted-foreground hover:text-foreground transition-colors text-sm">How it Works</button>
@@ -253,7 +259,7 @@ export default function Home() {
           </div>
           <a
             href="/purchase"
-            className="px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-full text-sm hover:shadow-lg hover:shadow-primary/30 transition-all duration-200"
+            className="px-4 py-2 bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] text-white font-semibold rounded-full text-sm hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200"
           >
             Get License
           </a>
@@ -397,7 +403,7 @@ export default function Home() {
             {[
               { step: 1, title: "Open Google Maps", icon: "🗺️", desc: "Go to maps.google.com" },
               { step: 2, title: "Search Your Niche", icon: "🔍", desc: '"Restaurants in NYC"' },
-              { step: 3, title: "Click LeadSnap", icon: "⚡", desc: "Open the extension" },
+              { step: 3, title: "Click MapsReach", icon: "⚡", desc: "Open the extension" },
               { step: 4, title: "Hit Extract", icon: "🚀", desc: "Watch the magic happen" },
               { step: 5, title: "Export Data", icon: "📊", desc: "To Sheets or CSV" },
             ].map((item, idx) => (
@@ -566,7 +572,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Benefits</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Why Smart Freelancers Choose LeadSnap</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Why Smart Freelancers Choose MapsReach</h2>
             <p className="text-muted-foreground text-lg">Built by a freelancer who was tired of wasting time</p>
           </div>
 
@@ -574,7 +580,7 @@ export default function Home() {
             {[
               { 
                 title: "Save 4+ Hours Daily", 
-                desc: "What takes a VA days to do manually, LeadSnap does in minutes. Reclaim your time.", 
+                desc: "What takes a VA days to do manually, MapsReach does in minutes. Reclaim your time.", 
                 icon: "⏱️",
                 stat: "4hrs",
                 statLabel: "saved daily"
@@ -627,7 +633,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">Comparison</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">LeadSnap vs The Old Way</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">MapsReach vs The Old Way</h2>
             <p className="text-muted-foreground text-lg">See why 2,000+ users made the switch</p>
           </div>
 
@@ -658,13 +664,13 @@ export default function Home() {
                 </ul>
               </div>
 
-              {/* LeadSnap Way */}
+              {/* MapsReach Way */}
               <div className="bg-card border border-accent/50 rounded-2xl p-6 shadow-lg shadow-accent/5">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
                     <span className="text-accent text-xl">✓</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-foreground">With LeadSnap</h3>
+                  <h3 className="text-xl font-semibold text-foreground">With MapsReach</h3>
                 </div>
                 <ul className="space-y-4">
                   {[
@@ -776,7 +782,7 @@ export default function Home() {
                 <span className="font-semibold">Quick Math:</span> If your time is worth $30/hour and you save 4 hours/day...
               </p>
               <p className="text-2xl font-bold text-accent">
-                LeadSnap pays for itself in just 30 minutes of use.
+                MapsReach pays for itself in just 30 minutes of use.
               </p>
             </div>
           </div>
@@ -876,11 +882,19 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">LS</span>
+              <div className="flex items-center gap-4 mb-4">
+                {/* Logo */}
+                <img src="/logo.png" alt="MapsReach" className="h-12 w-auto" />
+                {/* Slogan */}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[#3b82f6] font-bold text-sm">Extract</span>
+                    <span className="text-[#60a5fa]">•</span>
+                    <span className="text-[#2563eb] font-bold text-sm">Export</span>
+                    <span className="text-[#60a5fa]">•</span>
+                    <span className="text-[#1d4ed8] font-bold text-sm">Excel</span>
+                  </div>
                 </div>
-                <span className="font-bold text-xl gradient-text">LeadSnap</span>
               </div>
               <p className="text-muted-foreground text-sm max-w-md">
                 The fastest way to extract business leads from Google Maps. Built by a freelancer, for freelancers.
@@ -907,7 +921,7 @@ export default function Home() {
           </div>
           <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-muted-foreground text-sm">
-              © 2026 LeadSnap. All rights reserved.
+              © 2026 MapsReach. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <span className="text-muted-foreground text-sm">Accepted payments:</span>

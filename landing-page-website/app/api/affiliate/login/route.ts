@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://getleadsnap.com'
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mapsreach.com'
 
     // Get affiliate's purchases and clicks
     const [allPurchases, allClicks] = await Promise.all([

@@ -447,7 +447,7 @@ export default function AffiliateDashboard() {
         <div className="mt-8 text-center">
           <p className="text-gray-500 text-sm">
             🔒 Full transparency - every referral click, purchase attempt, and payment is logged and visible to you.
-            <br />Questions? Contact us at support@leadsnap.app
+            <br />Questions? Contact us at support@mapsreach.com
           </p>
         </div>
       </div>
