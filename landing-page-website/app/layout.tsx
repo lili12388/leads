@@ -47,8 +47,51 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "MapsReach",
+    "url": "https://www.mapsreach.com",
+    "logo": "https://www.mapsreach.com/logo.png",
+    "description": "Extract unlimited business leads from Google Maps in seconds. Names, emails, phones, reviews – everything you need.",
+    "sameAs": [],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "email": "laithou123@gmail.com",
+      "contactType": "customer support"
+    }
+  };
+
+  const softwareJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "MapsReach - Google Maps Lead Extractor",
+    "operatingSystem": "Chrome, Edge",
+    "applicationCategory": "BusinessApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "59",
+      "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "ratingCount": "2847"
+    }
+  };
+
   return (
     <html lang="en" className="dark">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
+        />
+      </head>
       <body className={`font-sans antialiased bg-background text-foreground`}>
         {children}
         <Analytics />
