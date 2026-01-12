@@ -392,6 +392,12 @@ export default function Home() {
                 </svg>
                 <span>30-second setup</span>
               </div>
+              <div className="flex items-center gap-2 text-base text-accent">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>4+ hours saved daily</span>
+              </div>
             </div>
           </div>
 
@@ -421,14 +427,6 @@ export default function Home() {
               </svg>
               Watch Demo
             </a>
-          </div>
-
-          {/* Stats */}
-          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 flex justify-center" style={{ transitionDelay: "300ms" }}>
-            <div className="text-center px-12 py-6 bg-card/50 border border-border/50 rounded-2xl backdrop-blur-sm">
-              <div className="text-5xl md:text-6xl font-bold gradient-text mb-2"><AnimatedCounter end={4} suffix="+ hours" /></div>
-              <div className="text-lg text-foreground font-medium">Saved Every Day by Our Users</div>
-            </div>
           </div>
         </div>
 
