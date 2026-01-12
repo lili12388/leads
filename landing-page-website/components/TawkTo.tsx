@@ -35,7 +35,7 @@ export default function TawkTo({ propertyId, widgetId }: TawkToProps) {
   const pathname = usePathname()
   
   // Hide on admin and affiliate pages
-  const hiddenPaths = ['/admin', '/affiliate']
+  const hiddenPaths = ['/12admin19', '/affiliate']
   const shouldHide = hiddenPaths.some(path => pathname?.startsWith(path))
 
   useEffect(() => {
