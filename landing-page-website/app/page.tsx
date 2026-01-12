@@ -249,7 +249,7 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-4">
             <button onClick={() => scrollToSection("how-it-works")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">How it Works</button>
             <button onClick={() => scrollToSection("features")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Features</button>
-            <button onClick={() => scrollToSection("pricing")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Pricing</button>
+            <a href="/purchase" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Pricing</a>
             <button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">FAQ</button>
           </div>
           
@@ -358,64 +358,159 @@ export default function Home() {
         {/* Grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
 
-        <div className="relative z-10 max-w-5xl mx-auto text-center pt-8">
-          {/* Main Hero Content */}
-          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000">
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-5 leading-tight tracking-tight">
-              <span className="text-foreground">Stop Hunting Leads.</span>
-              <br />
-              <span className="gradient-text">Start Extracting Them.</span>
-            </h1>
+        <div className="relative z-10 max-w-7xl mx-auto pt-8 px-6">
+          {/* Two Column Hero Layout */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[80vh]">
             
-            <p className="text-xl md:text-2xl text-muted-foreground mb-6 max-w-3xl mx-auto leading-normal">
-              Extract unlimited business leads from Google Maps in seconds. 
-              <span className="text-foreground font-medium"> Names, emails, phones, reviews</span> – everything you need, exported directly to Google Sheets.
-            </p>
-            
-            {/* Value props in a sleek row */}
-            <div className="flex flex-wrap justify-center gap-6 mb-8">
-              <div className="flex items-center gap-2 text-base text-accent">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>One-time payment</span>
+            {/* Left Column - Text Content */}
+            <div className="text-left" data-animate>
+              <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-6 leading-tight tracking-tight opacity-0 translate-y-10 transition-all duration-1000">
+                <span className="text-foreground">Stop Hunting Leads.</span>
+                <br />
+                <span className="gradient-text">Start Extracting Them.</span>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "100ms" }}>
+                Get all the data you need in one click with our <span className="text-foreground font-semibold italic">no-code</span> Chrome extension.
+              </p>
+              
+              {/* Value props */}
+              <div className="flex flex-wrap gap-4 mb-8 opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "200ms" }}>
+                {["One-time payment", "Lifetime updates", "30-second setup", "4+ hours saved daily"].map((prop, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-sm text-accent">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{prop}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-2 text-base text-accent">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Lifetime updates</span>
-              </div>
-              <div className="flex items-center gap-2 text-base text-accent">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>30-second setup</span>
-              </div>
-              <div className="flex items-center gap-2 text-base text-accent">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>4+ hours saved daily</span>
+
+              {/* CTA Button */}
+              <div className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "300ms" }}>
+                <a
+                  href="/purchase"
+                  className="group inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-full text-lg hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
+                >
+                  <span>Get Lifetime Access – $59</span>
+                  <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </a>
+                <p className="text-sm text-muted-foreground mt-4">→ Works on Chrome & Edge</p>
               </div>
             </div>
-          </div>
 
-          {/* CTA Buttons */}
-          <div
-            data-animate
-            className="opacity-0 translate-y-10 transition-all duration-1000 flex justify-center items-center mb-10"
-            style={{ transitionDelay: "200ms" }}
-          >
-            <a
-              href="/purchase"
-              className="group px-10 py-5 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-full text-lg hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 flex items-center gap-3"
-            >
-              <span>Get Lifetime Access – $59</span>
-              <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </a>
+            {/* Right Column - Floating Data Pills */}
+            <div className="relative hidden lg:block h-[500px]" data-animate>
+              {/* Floating animated data badges - staggered organic layout */}
+              <div className="absolute inset-0 opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "400ms" }}>
+                
+                {/* Row 1 */}
+                <div className="absolute top-[5%] right-[10%] animate-float" style={{ animationDelay: "0s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-2xl">🔍</span>
+                    <span className="text-foreground font-medium">Search Results</span>
+                  </div>
+                </div>
+                
+                <div className="absolute top-[5%] right-[45%] animate-float" style={{ animationDelay: "0.5s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
+                    <span className="text-2xl">📊</span>
+                    <span className="text-foreground font-medium">Analytics Data</span>
+                  </div>
+                </div>
+
+                {/* Row 2 */}
+                <div className="absolute top-[20%] right-[0%] animate-float" style={{ animationDelay: "1s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
+                    <span className="text-2xl">🏢</span>
+                    <span className="text-foreground font-medium">Business Names</span>
+                  </div>
+                </div>
+                
+                <div className="absolute top-[20%] right-[35%] animate-float" style={{ animationDelay: "1.5s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-2xl">⭐</span>
+                    <span className="text-foreground font-medium">Reviews</span>
+                  </div>
+                </div>
+                
+                <div className="absolute top-[20%] right-[60%] animate-float" style={{ animationDelay: "2s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
+                    <span className="text-2xl">👤</span>
+                    <span className="text-foreground font-medium">Lead Lists</span>
+                  </div>
+                </div>
+
+                {/* Row 3 */}
+                <div className="absolute top-[38%] right-[5%] animate-float" style={{ animationDelay: "0.3s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-2xl">🗺️</span>
+                    <span className="text-foreground font-medium">Maps Businesses</span>
+                  </div>
+                </div>
+                
+                <div className="absolute top-[38%] right-[42%] animate-float" style={{ animationDelay: "0.8s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
+                    <span className="text-2xl">📦</span>
+                    <span className="text-foreground font-medium">Product Lists</span>
+                  </div>
+                </div>
+
+                {/* Row 4 */}
+                <div className="absolute top-[53%] right-[0%] animate-float" style={{ animationDelay: "1.2s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
+                    <span className="text-2xl">📞</span>
+                    <span className="text-foreground font-medium">Phone Numbers</span>
+                  </div>
+                </div>
+                
+                <div className="absolute top-[53%] right-[33%] animate-float" style={{ animationDelay: "1.7s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-2xl">📈</span>
+                    <span className="text-foreground font-medium">Market Research</span>
+                  </div>
+                </div>
+                
+                <div className="absolute top-[53%] right-[65%] animate-float" style={{ animationDelay: "2.2s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
+                    <span className="text-2xl">📧</span>
+                    <span className="text-foreground font-medium">Email Lists</span>
+                  </div>
+                </div>
+
+                {/* Row 5 */}
+                <div className="absolute top-[68%] right-[8%] animate-float" style={{ animationDelay: "0.6s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
+                    <span className="text-2xl">🛒</span>
+                    <span className="text-foreground font-medium">E-commerce Data</span>
+                  </div>
+                </div>
+                
+                <div className="absolute top-[68%] right-[45%] animate-float" style={{ animationDelay: "1.1s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
+                    <span className="text-2xl">📱</span>
+                    <span className="text-foreground font-medium">Social Media</span>
+                  </div>
+                </div>
+
+                {/* Row 6 */}
+                <div className="absolute top-[83%] right-[20%] animate-float" style={{ animationDelay: "1.4s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-2xl">💼</span>
+                    <span className="text-foreground font-medium">Job Listings</span>
+                  </div>
+                </div>
+                
+                <div className="absolute top-[83%] right-[55%] animate-float" style={{ animationDelay: "1.9s" }}>
+                  <div className="flex items-center gap-3 px-5 py-3 bg-muted/50 backdrop-blur-sm border border-border rounded-full shadow-lg cursor-default">
+                    <span className="text-foreground font-medium">+ more</span>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
           </div>
         </div>
 
@@ -473,77 +568,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Data Extraction - What You Get */}
-      <section id="features" className="py-10 px-4 relative bg-muted/10">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-6">
-            <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">Complete Data</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Everything You Need to Close Deals</h2>
-            <p className="text-muted-foreground text-lg">Extract comprehensive business data with a single click</p>
-          </div>
-
-          <div
-            data-animate
-            className="opacity-0 translate-y-10 transition-all duration-1000"
-          >
-            {/* Main data grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-              {[
-                { icon: "🏢", label: "Business Name", desc: "Full legal name" },
-                { icon: "📞", label: "Phone Number", desc: "Direct contact" },
-                { icon: "📧", label: "Email Address", desc: "When available" },
-                { icon: "🌐", label: "Website URL", desc: "Official site" },
-                { icon: "📍", label: "Full Address", desc: "Street & city" },
-              ].map((item, idx) => (
-                <div key={idx} className="bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group">
-                  <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{item.icon}</div>
-                  <p className="font-semibold text-foreground">{item.label}</p>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
-              {[
-                { icon: "📱", label: "Social Media", desc: "FB, IG, LinkedIn" },
-                { icon: "⭐", label: "Rating", desc: "Star rating" },
-                { icon: "💬", label: "Reviews", desc: "Review count" },
-                { icon: "🏷️", label: "Category", desc: "Business type" },
-                { icon: "🔗", label: "Maps Link", desc: "Direct URL" },
-              ].map((item, idx) => (
-                <div key={idx} className="bg-card border border-border rounded-xl p-5 hover:border-secondary/50 hover:shadow-lg hover:shadow-secondary/5 transition-all duration-300 group">
-                  <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{item.icon}</div>
-                  <p className="font-semibold text-foreground">{item.label}</p>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Export options */}
-          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 mt-12">
-            <div className="bg-card border border-border rounded-2xl p-8 text-center">
-              <h3 className="text-xl font-semibold mb-4 text-foreground">Export Anywhere</h3>
-              <div className="flex flex-wrap justify-center gap-4">
-                {[
-                  { name: "Google Sheets", icon: "📊" },
-                  { name: "CSV File", icon: "📄" },
-                  { name: "Excel", icon: "📗" },
-                  { name: "Copy to Clipboard", icon: "📋" },
-                ].map((item, idx) => (
-                  <div key={idx} className="px-6 py-3 bg-muted/50 rounded-full border border-border flex items-center gap-2">
-                    <span>{item.icon}</span>
-                    <span className="text-muted-foreground">{item.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Why Freelancers Love It - Benefits */}
-      <section className="py-10 px-4 relative bg-muted/10">
+      <section id="features" className="py-10 px-4 relative bg-muted/10">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-6">
             <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Benefits</span>
@@ -668,102 +694,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-10 px-4 relative bg-muted/10">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-6">
-            <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Pricing</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">One Price. Unlimited Value.</h2>
-            <p className="text-muted-foreground text-lg">No subscriptions. No hidden fees. Just results.</p>
-          </div>
-
-          <div
-            data-animate
-            className="opacity-0 translate-y-10 transition-all duration-1000"
-          >
-            <div className="bg-card border-2 border-primary/50 rounded-3xl p-8 md:p-12 relative overflow-hidden shadow-2xl shadow-primary/10">
-              {/* Popular badge */}
-              <div className="absolute top-0 right-0 bg-gradient-to-r from-primary to-secondary text-white px-6 py-2 rounded-bl-2xl font-semibold text-sm">
-                LIFETIME ACCESS
-              </div>
-
-              {/* Price */}
-              <div className="mb-8">
-                <div className="text-7xl md:text-8xl font-bold text-foreground">
-                  $59
-                </div>
-                <p className="text-xl text-muted-foreground mt-2">One-time payment • Forever access</p>
-              </div>
-
-              {/* Features */}
-              <div className="grid md:grid-cols-2 gap-4 text-left mb-8 max-w-xl mx-auto">
-                {[
-                  "Unlimited lead extractions",
-                  "All 10+ data fields",
-                  "Export to Sheets & CSV",
-                  "Chrome & Edge support",
-                  "Priority email support",
-                  "All future updates free",
-                  "Instant license delivery",
-                  "No monthly fees ever"
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-foreground">{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* CTA */}
-              <a
-                href="/purchase"
-                className="inline-block w-full md:w-auto px-12 py-5 bg-gradient-to-r from-primary to-secondary text-white font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 text-center"
-              >
-                Get Lifetime Access Now →
-              </a>
-
-              {/* Trust elements */}
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-                <span className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  Secure Payment
-                </span>
-                <span className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                  Multiple Payment Options
-                </span>
-                <span className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Activation in Minutes
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* ROI Calculator hint */}
-          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 mt-12">
-            <div className="bg-card border border-border rounded-2xl p-6 text-center">
-              <p className="text-foreground mb-2">
-                <span className="font-semibold">Quick Math:</span> If your time is worth $30/hour and you save 4 hours/day...
-              </p>
-              <p className="text-2xl font-bold text-accent">
-                MapsReach pays for itself in just 30 minutes of use.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* FAQ Section */}
       <section id="faq" className="py-10 px-4 relative">
         <div className="max-w-3xl mx-auto">
@@ -880,7 +810,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm">
                 <li><button onClick={() => scrollToSection("how-it-works")} className="text-muted-foreground hover:text-foreground transition-colors">How it Works</button></li>
                 <li><button onClick={() => scrollToSection("features")} className="text-muted-foreground hover:text-foreground transition-colors">Features</button></li>
-                <li><button onClick={() => scrollToSection("pricing")} className="text-muted-foreground hover:text-foreground transition-colors">Pricing</button></li>
+                <li><a href="/purchase" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
                 <li><button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-colors">FAQ</button></li>
               </ul>
             </div>
