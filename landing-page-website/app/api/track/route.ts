@@ -25,31 +25,63 @@ interface VisitorData {
 }
 
 // Parse user agent to get browser, OS, device
-function parseUserAgent(ua: string): { browser: string; os: string; device: string } {
+function parseUserAgent(ua: string): { browser: string; os: string; device: string; isBot: boolean } {
   let browser = 'Unknown'
   let os = 'Unknown'
   let device = 'Desktop'
+  let isBot = false
 
-  // Browser detection
-  if (ua.includes('Firefox')) browser = 'Firefox'
-  else if (ua.includes('Edg')) browser = 'Edge'
-  else if (ua.includes('Chrome')) browser = 'Chrome'
-  else if (ua.includes('Safari')) browser = 'Safari'
-  else if (ua.includes('Opera') || ua.includes('OPR')) browser = 'Opera'
+  // Bot detection - check first
+  const botPatterns = [
+    'bot', 'crawler', 'spider', 'scraper', 'headless',
+    'vercel', 'pingdom', 'uptimerobot', 'monitoring',
+    'googlebot', 'bingbot', 'slurp', 'duckduckbot',
+    'baiduspider', 'yandex', 'facebookexternalhit',
+    'twitterbot', 'linkedinbot', 'whatsapp', 'telegram',
+    'curl', 'wget', 'python', 'java/', 'go-http',
+    'apache-httpclient', 'okhttp', 'node-fetch'
+  ]
+  
+  const uaLower = ua.toLowerCase()
+  if (botPatterns.some(pattern => uaLower.includes(pattern)) || ua.length < 20) {
+    isBot = true
+    browser = 'Bot'
+    os = 'Bot'
+    device = 'Bot'
+    return { browser, os, device, isBot }
+  }
+
+  // Browser detection (order matters - check specific before generic)
+  if (ua.includes('Edg/') || ua.includes('Edge/')) browser = 'Edge'
+  else if (ua.includes('OPR/') || ua.includes('Opera/')) browser = 'Opera'
+  else if (ua.includes('Brave')) browser = 'Brave'
+  else if (ua.includes('Vivaldi')) browser = 'Vivaldi'
+  else if (ua.includes('Firefox/')) browser = 'Firefox'
+  else if (ua.includes('Chrome/') && !ua.includes('Chromium')) browser = 'Chrome'
+  else if (ua.includes('Safari/') && !ua.includes('Chrome')) browser = 'Safari'
+  else if (ua.includes('MSIE') || ua.includes('Trident/')) browser = 'IE'
 
   // OS detection
-  if (ua.includes('Windows NT 10')) os = 'Windows 10/11'
+  if (ua.includes('Windows NT 10') || ua.includes('Windows NT 11')) os = 'Windows 10/11'
+  else if (ua.includes('Windows NT 6.3')) os = 'Windows 8.1'
+  else if (ua.includes('Windows NT 6.2')) os = 'Windows 8'
+  else if (ua.includes('Windows NT 6.1')) os = 'Windows 7'
   else if (ua.includes('Windows')) os = 'Windows'
   else if (ua.includes('Mac OS X')) os = 'macOS'
-  else if (ua.includes('Linux')) os = 'Linux'
+  else if (ua.includes('CrOS')) os = 'Chrome OS'
   else if (ua.includes('Android')) os = 'Android'
-  else if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS'
+  else if (ua.includes('Linux')) os = 'Linux'
+  else if (ua.includes('iPhone') || ua.includes('iPad') || ua.includes('iPod')) os = 'iOS'
 
   // Device detection
-  if (ua.includes('Mobile') || ua.includes('Android') || ua.includes('iPhone')) device = 'Mobile'
-  else if (ua.includes('Tablet') || ua.includes('iPad')) device = 'Tablet'
+  if (ua.includes('Mobile') || ua.includes('Android') && !ua.includes('Tablet')) {
+    if (ua.includes('iPhone')) device = 'iPhone'
+    else device = 'Mobile'
+  } else if (ua.includes('Tablet') || ua.includes('iPad')) {
+    device = 'Tablet'
+  }
 
-  return { browser, os, device }
+  return { browser, os, device, isBot }
 }
 
 export async function POST(request: NextRequest) {
@@ -62,7 +94,12 @@ export async function POST(request: NextRequest) {
       || 'Unknown'
     
     const userAgent = request.headers.get('user-agent') || ''
-    const { browser, os, device } = parseUserAgent(userAgent)
+    const { browser, os, device, isBot } = parseUserAgent(userAgent)
+    
+    // Skip bot tracking entirely
+    if (isBot) {
+      return NextResponse.json({ success: true, skipped: 'bot' })
+    }
     
     // Get geo data from Vercel's headers (free on Vercel)
     const country = request.headers.get('x-vercel-ip-country') || 'Unknown'
