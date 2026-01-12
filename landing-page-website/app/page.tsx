@@ -220,30 +220,6 @@ export default function Home() {
     }
   ]
 
-  const testimonials = [
-    {
-      name: "Sarah M.",
-      role: "Marketing Freelancer",
-      text: "Extracted 500+ restaurant leads in under an hour. This used to take me a whole week!",
-      avatar: "S",
-      rating: 5
-    },
-    {
-      name: "Mike R.",
-      role: "Lead Generation Agency",
-      text: "Best investment I've made for my agency. Paid for itself on the first client job.",
-      avatar: "M",
-      rating: 5
-    },
-    {
-      name: "Jessica L.",
-      role: "Real Estate Agent",
-      text: "Finding local business contacts has never been easier. Game changer for networking.",
-      avatar: "J",
-      rating: 5
-    }
-  ]
-
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
   }
@@ -448,18 +424,10 @@ export default function Home() {
           </div>
 
           {/* Stats */}
-          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 grid grid-cols-3 gap-10 max-w-3xl mx-auto" style={{ transitionDelay: "300ms" }}>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold gradient-text"><AnimatedCounter end={2847} suffix="+" /></div>
-              <div className="text-base text-foreground font-medium">Active Users</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold gradient-text"><AnimatedCounter end={12} suffix="M+" /></div>
-              <div className="text-base text-foreground font-medium">Leads Extracted</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold gradient-text"><AnimatedCounter end={4} suffix="hrs" /></div>
-              <div className="text-base text-foreground font-medium">Avg. Time Saved/Day</div>
+          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 flex justify-center" style={{ transitionDelay: "300ms" }}>
+            <div className="text-center px-12 py-6 bg-card/50 border border-border/50 rounded-2xl backdrop-blur-sm">
+              <div className="text-5xl md:text-6xl font-bold gradient-text mb-2"><AnimatedCounter end={4} suffix="+ hours" /></div>
+              <div className="text-lg text-foreground font-medium">Saved Every Day by Our Users</div>
             </div>
           </div>
         </div>
@@ -469,18 +437,6 @@ export default function Home() {
           <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
-        </div>
-      </section>
-
-      {/* Social Proof Bar */}
-      <section className="py-6 px-6 border-y border-border bg-muted/20">
-        <div className="max-w-7xl mx-auto">
-          <p className="text-center text-muted-foreground text-base mb-4">Trusted by freelancers and agencies worldwide</p>
-          <div className="flex flex-wrap justify-center items-center gap-10 md:gap-20 opacity-60">
-            {["🏢 Real Estate", "🍽️ Restaurants", "🔧 Contractors", "💼 Agencies", "🏋️ Fitness", "🏥 Healthcare"].map((industry, idx) => (
-              <span key={idx} className="text-muted-foreground font-medium text-lg whitespace-nowrap">{industry}</span>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -526,31 +482,6 @@ export default function Home() {
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Video/Demo placeholder */}
-          <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 mt-16">
-            <div className="relative rounded-2xl overflow-hidden border border-border bg-card shadow-2xl">
-              <div className="aspect-video bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center group cursor-pointer">
-                <div className="text-center">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary transition-all duration-300 shadow-lg shadow-primary/30">
-                    <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                  <p className="text-muted-foreground">Watch the 60-second demo</p>
-                </div>
-              </div>
-              {/* Browser mockup frame */}
-              <div className="absolute top-0 left-0 right-0 h-10 bg-muted/50 border-b border-border flex items-center px-4 gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500/70"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/70"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500/70"></div>
-                </div>
-                <div className="flex-1 mx-4 h-6 bg-muted rounded-md"></div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -620,48 +551,6 @@ export default function Home() {
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-10 px-4 relative">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-6">
-            <span className="inline-block px-4 py-1 bg-accent/10 text-accent rounded-full text-sm font-medium mb-4">Social Proof</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Loved by 2,000+ Users</h2>
-            <p className="text-muted-foreground text-lg">Join thousands of freelancers already saving hours every day</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial, idx) => (
-              <div
-                key={idx}
-                data-animate
-                className="opacity-0 translate-y-10 transition-all duration-1000"
-                style={{ transitionDelay: `${idx * 100}ms` }}
-              >
-                <div className="bg-card border border-border rounded-2xl p-6 h-full hover:border-primary/30 transition-colors">
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <svg key={i} className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <p className="text-foreground mb-6 leading-relaxed">"{testimonial.text}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold">
-                      {testimonial.avatar}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>

@@ -44,19 +44,45 @@ interface Stats {
   totalCommissions: number
 }
 
+interface Visitor {
+  ip: string
+  country: string
+  city: string
+  region: string
+  browser: string
+  os: string
+  device: string
+  page: string
+  referrer: string
+  screenWidth: number
+  screenHeight: number
+  language: string
+  timestamp: string
+  sessionId: string
+}
+
+interface VisitorStats {
+  date: string
+  unique: number
+  pageviews: number
+}
+
 export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [adminKey, setAdminKey] = useState("")
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [loginError, setLoginError] = useState("")
-  const [activeTab, setActiveTab] = useState<'purchases' | 'affiliates' | 'overview'>('overview')
+  const [activeTab, setActiveTab] = useState<'purchases' | 'affiliates' | 'overview' | 'visitors'>('overview')
   
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [affiliates, setAffiliates] = useState<Affiliate[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null)
+  const [visitors, setVisitors] = useState<Visitor[]>([])
+  const [visitorStats, setVisitorStats] = useState<VisitorStats[]>([])
+  const [todayVisitors, setTodayVisitors] = useState({ unique: 0, pageviews: 0 })
 
   // New affiliate form
   const [newAffiliate, setNewAffiliate] = useState({ name: '', code: '', email: '', password: '', commission: 20 })
@@ -106,6 +132,17 @@ export default function AdminDashboard() {
       const affiliatesData = await affiliatesRes.json()
       if (!affiliatesData.error) {
         setAffiliates(affiliatesData.affiliates || [])
+      }
+      
+      // Fetch visitors
+      const visitorsRes = await fetch('/api/track', {
+        headers: { 'x-admin-key': adminKey }
+      })
+      const visitorsData = await visitorsRes.json()
+      if (!visitorsData.error) {
+        setVisitors(visitorsData.visitors || [])
+        setVisitorStats(visitorsData.stats || [])
+        setTodayVisitors(visitorsData.today || { unique: 0, pageviews: 0 })
       }
     } catch (err) {
       console.error('Failed to fetch data:', err)
@@ -231,6 +268,15 @@ export default function AdminDashboard() {
     }
   }
 
+  const getCountryFlag = (countryCode: string) => {
+    if (!countryCode || countryCode === 'Unknown') return '🌍'
+    const codePoints = countryCode
+      .toUpperCase()
+      .split('')
+      .map(char => 127397 + char.charCodeAt(0))
+    return String.fromCodePoint(...codePoints)
+  }
+
   // Login Screen
   if (!isLoggedIn) {
     return (
@@ -301,7 +347,7 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Tabs */}
         <div className="flex gap-2 mb-8 bg-gray-800/30 p-1 rounded-xl w-fit">
-          {(['overview', 'purchases', 'affiliates'] as const).map((tab) => (
+          {(['overview', 'purchases', 'affiliates', 'visitors'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -544,6 +590,94 @@ export default function AdminDashboard() {
                 ))}
                 {affiliates.length === 0 && (
                   <p className="text-gray-500 text-center py-8">No affiliates yet</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Visitors Tab */}
+        {activeTab === 'visitors' && (
+          <div className="space-y-6">
+            {/* Today's Stats */}
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+                <div className="text-gray-400 text-sm mb-2">Today&apos;s Unique Visitors</div>
+                <div className="text-4xl font-bold text-purple-400">{todayVisitors.unique}</div>
+              </div>
+              <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+                <div className="text-gray-400 text-sm mb-2">Today&apos;s Page Views</div>
+                <div className="text-4xl font-bold text-blue-400">{todayVisitors.pageviews}</div>
+              </div>
+              <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+                <div className="text-gray-400 text-sm mb-2">Total Tracked</div>
+                <div className="text-4xl font-bold text-green-400">{visitors.length}</div>
+              </div>
+            </div>
+
+            {/* 7 Day Chart */}
+            <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+              <h3 className="font-semibold mb-4">Last 7 Days</h3>
+              <div className="grid grid-cols-7 gap-2">
+                {visitorStats.map((day, i) => (
+                  <div key={i} className="text-center">
+                    <div className="text-xs text-gray-500 mb-2">{new Date(day.date).toLocaleDateString('en', { weekday: 'short' })}</div>
+                    <div className="bg-gray-700/50 rounded-lg p-3">
+                      <div className="text-lg font-bold text-purple-400">{day.unique}</div>
+                      <div className="text-xs text-gray-400">unique</div>
+                      <div className="text-sm text-blue-400 mt-1">{day.pageviews}</div>
+                      <div className="text-xs text-gray-400">views</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Visitors Table */}
+            <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+              <h3 className="font-semibold mb-4">Recent Visitors</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-gray-400 text-left border-b border-gray-700">
+                      <th className="pb-3 pr-4">Time</th>
+                      <th className="pb-3 pr-4">Location</th>
+                      <th className="pb-3 pr-4">Device</th>
+                      <th className="pb-3 pr-4">Browser</th>
+                      <th className="pb-3 pr-4">Page</th>
+                      <th className="pb-3">Referrer</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visitors.slice(0, 50).map((visitor, i) => (
+                      <tr key={i} className="border-b border-gray-700/30 hover:bg-gray-700/20">
+                        <td className="py-3 pr-4 text-gray-400">
+                          {new Date(visitor.timestamp).toLocaleString()}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className="text-lg mr-1">{getCountryFlag(visitor.country)}</span>
+                          <span>{visitor.city}, {visitor.country}</span>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            visitor.device === 'Mobile' ? 'bg-green-500/20 text-green-400' :
+                            visitor.device === 'Tablet' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-blue-500/20 text-blue-400'
+                          }`}>
+                            {visitor.device}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4 text-gray-300">{visitor.browser} / {visitor.os}</td>
+                        <td className="py-3 pr-4 text-purple-400">{visitor.page}</td>
+                        <td className="py-3 text-gray-400 truncate max-w-[200px]" title={visitor.referrer}>
+                          {visitor.referrer === 'Direct' ? '🔗 Direct' : visitor.referrer}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {visitors.length === 0 && (
+                  <p className="text-gray-500 text-center py-8">No visitors tracked yet</p>
                 )}
               </div>
             </div>
