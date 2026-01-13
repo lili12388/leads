@@ -6,16 +6,31 @@ export default function PricingPage() {
   return (
     <main className="bg-background text-foreground min-h-screen">
       {/* Navigation */}
-      <nav className="py-4 px-8 border-b border-border/50">
+      <nav className="py-0 px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-            <img src="/logo.png" alt="MapsReach" className="h-16 w-auto" />
+            <img src="/logo.png" alt="MapsReach" className="h-28 w-auto" />
+            <div className="hidden sm:flex items-center gap-2 -ml-1">
+              <span className="text-[#3b82f6] font-semibold text-base tracking-wide">Extract</span>
+              <span className="text-[#60a5fa] text-sm">•</span>
+              <span className="text-[#2563eb] font-semibold text-base tracking-wide">Export</span>
+              <span className="text-[#60a5fa] text-sm">•</span>
+              <span className="text-[#1d4ed8] font-semibold text-base tracking-wide">Excel</span>
+            </div>
           </Link>
+          
+          <div className="hidden md:flex items-center gap-4">
+            <Link href="/pricing" className="text-accent hover:text-foreground transition-all duration-300 text-base font-semibold px-4 py-2 rounded-lg border border-accent/30 hover:border-accent/60 hover:bg-accent/10">💰 Pricing</Link>
+            <Link href="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10">How it Works</Link>
+            <Link href="/#features" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10">Features</Link>
+            <Link href="/#faq" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10">FAQ</Link>
+          </div>
+          
           <Link
-            href="/purchase"
-            className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full text-base hover:shadow-lg hover:shadow-primary/30 transition-all duration-200"
+            href="/coming-soon"
+            className="px-6 py-3 bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] text-white font-semibold rounded-full text-base hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200"
           >
-            Get License
+            Try for Free
           </Link>
         </div>
       </nav>
@@ -32,10 +47,10 @@ export default function PricingPage() {
           {/* Pricing Cards */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             
-            {/* Single License */}
-            <div className="bg-card border border-border/50 rounded-3xl p-8 relative overflow-hidden shadow-xl">
-              <div className="absolute top-0 right-0 bg-accent/20 text-accent px-4 py-1 rounded-bl-2xl font-semibold text-sm">
-                STARTER
+            {/* Single License - Most Popular */}
+            <div className="bg-card border-2 border-primary/50 rounded-3xl p-8 relative overflow-hidden shadow-2xl shadow-primary/10">
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-primary to-secondary text-white px-4 py-1 rounded-bl-2xl font-semibold text-sm">
+                MOST POPULAR
               </div>
               
               <h3 className="text-xl font-bold text-foreground mt-4 mb-6">Single License</h3>
@@ -67,16 +82,16 @@ export default function PricingPage() {
               
               <Link
                 href="/purchase"
-                className="block w-full py-4 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-full transition-all text-center"
+                className="block w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all text-center"
               >
                 Get Single License →
               </Link>
             </div>
 
-            {/* Extended License - Featured */}
-            <div className="bg-card border-2 border-primary/50 rounded-3xl p-8 relative overflow-hidden shadow-2xl shadow-primary/10">
-              <div className="absolute top-0 right-0 bg-gradient-to-r from-primary to-secondary text-white px-4 py-1 rounded-bl-2xl font-semibold text-sm">
-                MOST POPULAR
+            {/* Extended License - Professional */}
+            <div className="bg-card border border-border/50 rounded-3xl p-8 relative overflow-hidden shadow-xl">
+              <div className="absolute top-0 right-0 bg-secondary/20 text-secondary px-4 py-1 rounded-bl-2xl font-semibold text-sm">
+                PROFESSIONAL
               </div>
               
               <h3 className="text-xl font-bold text-foreground mt-4 mb-6">Extended License</h3>
@@ -109,7 +124,7 @@ export default function PricingPage() {
               
               <Link
                 href="/purchase"
-                className="block w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all text-center"
+                className="block w-full py-4 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-full transition-all text-center"
               >
                 Get Extended License →
               </Link>

@@ -254,7 +254,7 @@ export default function Home() {
           </div>
           
           <a
-            href="/purchase"
+            href="/coming-soon"
             className="px-6 py-3 bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] text-white font-semibold rounded-full text-base hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200"
           >
             Try for Free
@@ -394,21 +394,16 @@ export default function Home() {
 
               {/* CTA Button */}
               <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "300ms" }}>
-                <div className="flex items-center gap-3 mb-3">
-                  <a
-                    href="/purchase"
-                    className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-full text-lg hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
-                  >
-                    <span>Add to Chrome</span>
-                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </a>
-                  <a href="/pricing" className="px-6 py-4 bg-accent/20 text-accent font-semibold rounded-full text-lg border border-accent/30 hover:bg-accent/30 transition-colors cursor-pointer">
-                    Get 40% OFF
-                  </a>
-                </div>
-                <p className="text-sm text-muted-foreground">→ Available in the Chrome Web Store</p>
+                <a
+                  href="/coming-soon"
+                  className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-full text-lg hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 mb-3"
+                >
+                  <span>Add to Chrome</span>
+                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </a>
+                <p className="text-sm text-muted-foreground mt-3">→ Available in the Chrome Web Store</p>
               </div>
             </div>
 
