@@ -374,7 +374,7 @@ export default function Home() {
               
               <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "100ms" }}>
                 <p className="text-lg md:text-xl text-muted-foreground mb-4 leading-relaxed">
-                  Get all the data you need in one click with our <span className="text-foreground font-semibold italic">no-code</span> Chrome extension.
+                  Extract leads from Google Maps in one click. <span className="text-foreground font-semibold">No coding required.</span>
                 </p>
               </div>
               
@@ -824,28 +824,11 @@ export default function Home() {
                 <li><button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-colors">FAQ</button></li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Support</h4>
-              <ul className="space-y-2 text-sm">
-                <li><button onClick={openTawkChat} className="text-muted-foreground hover:text-foreground transition-colors">Contact Founder</button></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Sales Policy</a></li>
-              </ul>
-            </div>
           </div>
-          <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-center gap-4">
             <p className="text-muted-foreground text-sm">
               © 2026 MapsReach. All rights reserved.
             </p>
-            <div className="flex items-center gap-4">
-              <span className="text-muted-foreground text-sm">Accepted payments:</span>
-              <div className="flex items-center gap-2">
-                {["💳", "🅿️", "🍎"].map((icon, idx) => (
-                  <span key={idx} className="text-xl">{icon}</span>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </footer>
