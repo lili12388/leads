@@ -247,9 +247,9 @@ export default function Home() {
           
           {/* Floating navigation buttons */}
           <div className="hidden md:flex items-center gap-4">
+            <a href="/pricing" className="text-accent hover:text-foreground transition-all duration-300 text-base font-semibold px-4 py-2 rounded-lg border border-accent/30 hover:border-accent/60 hover:bg-accent/10">💰 Pricing</a>
             <button onClick={() => scrollToSection("how-it-works")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">How it Works</button>
             <button onClick={() => scrollToSection("features")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Features</button>
-            <a href="/purchase" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Pricing</a>
             <button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">FAQ</button>
           </div>
           
@@ -257,7 +257,7 @@ export default function Home() {
             href="/purchase"
             className="px-6 py-3 bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] text-white font-semibold rounded-full text-base hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200"
           >
-            Get License
+            Try for Free
           </a>
         </div>
       </nav>
@@ -265,7 +265,7 @@ export default function Home() {
       {/* Hero Section */}
       <section
         ref={heroRef}
-        className="relative min-h-screen flex items-center justify-center px-6 py-12 overflow-hidden"
+        className="relative h-screen flex items-center justify-center px-6 py-4 overflow-hidden"
       >
         {/* Premium Background - Radial Spotlight + Noise + Map Theme */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#020a18] via-[#041225] to-[#020510]">
@@ -358,154 +358,164 @@ export default function Home() {
         {/* Grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
 
-        <div className="relative z-10 max-w-7xl mx-auto pt-8 px-6">
+        <div className="relative z-10 max-w-7xl mx-auto pt-0 px-6">
           {/* Two Column Hero Layout */}
-          <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[80vh]">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
             
             {/* Left Column - Text Content */}
-            <div className="text-left" data-animate>
-              <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-6 leading-tight tracking-tight opacity-0 translate-y-10 transition-all duration-1000">
-                <span className="text-foreground">Stop Hunting Leads.</span>
-                <br />
-                <span className="gradient-text">Start Extracting Them.</span>
-              </h1>
+            <div className="text-left">
+              <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-3 leading-tight tracking-tight">
+                  <span className="text-foreground">Stop Hunting Leads.</span>
+                  <br />
+                  <span className="gradient-text">Start Extracting Them.</span>
+                </h1>
+              </div>
               
-              <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "100ms" }}>
-                Get all the data you need in one click with our <span className="text-foreground font-semibold italic">no-code</span> Chrome extension.
-              </p>
+              <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "100ms" }}>
+                <p className="text-lg md:text-xl text-muted-foreground mb-4 leading-relaxed">
+                  Get all the data you need in one click with our <span className="text-foreground font-semibold italic">no-code</span> Chrome extension.
+                </p>
+              </div>
               
-              {/* Value props */}
-              <div className="flex flex-wrap gap-4 mb-8 opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "200ms" }}>
-                {["One-time payment", "Lifetime updates", "30-second setup", "4+ hours saved daily"].map((prop, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm text-accent">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{prop}</span>
-                  </div>
-                ))}
+              {/* Value props - 2x2 grid */}
+              <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "200ms" }}>
+                <div className="grid grid-cols-2 gap-2 mb-4 max-w-md">
+                  {["One-time payment", "Lifetime updates", "30-second setup", "4+ hours saved daily"].map((prop, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-sm text-accent">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>{prop}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* CTA Button */}
-              <div className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "300ms" }}>
-                <a
-                  href="/purchase"
-                  className="group inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-full text-lg hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
-                >
-                  <span>Get Lifetime Access – $59</span>
-                  <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </a>
-                <p className="text-sm text-muted-foreground mt-4">→ Works on Chrome & Edge</p>
+              <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "300ms" }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <a
+                    href="/purchase"
+                    className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-full text-lg hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
+                  >
+                    <span>Add to Chrome</span>
+                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </a>
+                  <a href="/pricing" className="px-6 py-4 bg-accent/20 text-accent font-semibold rounded-full text-lg border border-accent/30 hover:bg-accent/30 transition-colors cursor-pointer">
+                    Get 40% OFF
+                  </a>
+                </div>
+                <p className="text-sm text-muted-foreground">→ Available in the Chrome Web Store</p>
               </div>
             </div>
 
             {/* Right Column - Floating Data Pills */}
-            <div className="relative hidden lg:block h-[500px]" data-animate>
-              {/* Floating animated data badges - staggered organic layout */}
-              <div className="absolute inset-0 opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "400ms" }}>
+            <div className="relative hidden lg:block h-[350px]">
+              <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 absolute inset-0" style={{ transitionDelay: "400ms" }}>
                 
                 {/* Row 1 */}
-                <div className="absolute top-[5%] right-[10%] animate-float" style={{ animationDelay: "0s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
-                    <span className="text-2xl">🔍</span>
-                    <span className="text-foreground font-medium">Search Results</span>
+                <div className="absolute top-[0%] right-[15%] animate-float" style={{ animationDelay: "0s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-xl">🔍</span>
+                    <span className="text-foreground font-medium text-sm">Search Results</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[5%] right-[45%] animate-float" style={{ animationDelay: "0.5s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
-                    <span className="text-2xl">📊</span>
-                    <span className="text-foreground font-medium">Analytics Data</span>
+                <div className="absolute top-[0%] right-[55%] animate-float" style={{ animationDelay: "0.5s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
+                    <span className="text-xl">📊</span>
+                    <span className="text-foreground font-medium text-sm">Analytics Data</span>
                   </div>
                 </div>
 
                 {/* Row 2 */}
-                <div className="absolute top-[20%] right-[0%] animate-float" style={{ animationDelay: "1s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
-                    <span className="text-2xl">🏢</span>
-                    <span className="text-foreground font-medium">Business Names</span>
+                <div className="absolute top-[18%] right-[5%] animate-float" style={{ animationDelay: "1s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
+                    <span className="text-xl">🏢</span>
+                    <span className="text-foreground font-medium text-sm">Business Names</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[20%] right-[35%] animate-float" style={{ animationDelay: "1.5s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
-                    <span className="text-2xl">⭐</span>
-                    <span className="text-foreground font-medium">Reviews</span>
+                <div className="absolute top-[18%] right-[40%] animate-float" style={{ animationDelay: "1.5s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-xl">⭐</span>
+                    <span className="text-foreground font-medium text-sm">Reviews</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[20%] right-[60%] animate-float" style={{ animationDelay: "2s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
-                    <span className="text-2xl">👤</span>
-                    <span className="text-foreground font-medium">Lead Lists</span>
+                <div className="absolute top-[18%] right-[65%] animate-float" style={{ animationDelay: "2s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
+                    <span className="text-xl">👤</span>
+                    <span className="text-foreground font-medium text-sm">Lead Lists</span>
                   </div>
                 </div>
 
                 {/* Row 3 */}
-                <div className="absolute top-[38%] right-[5%] animate-float" style={{ animationDelay: "0.3s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
-                    <span className="text-2xl">🗺️</span>
-                    <span className="text-foreground font-medium">Maps Businesses</span>
+                <div className="absolute top-[36%] right-[10%] animate-float" style={{ animationDelay: "0.3s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-xl">🗺️</span>
+                    <span className="text-foreground font-medium text-sm">Maps Businesses</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[38%] right-[42%] animate-float" style={{ animationDelay: "0.8s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
-                    <span className="text-2xl">📦</span>
-                    <span className="text-foreground font-medium">Product Lists</span>
+                <div className="absolute top-[36%] right-[50%] animate-float" style={{ animationDelay: "0.8s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
+                    <span className="text-xl">📦</span>
+                    <span className="text-foreground font-medium text-sm">Product Lists</span>
                   </div>
                 </div>
 
                 {/* Row 4 */}
-                <div className="absolute top-[53%] right-[0%] animate-float" style={{ animationDelay: "1.2s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
-                    <span className="text-2xl">📞</span>
-                    <span className="text-foreground font-medium">Phone Numbers</span>
+                <div className="absolute top-[54%] right-[0%] animate-float" style={{ animationDelay: "1.2s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
+                    <span className="text-xl">📞</span>
+                    <span className="text-foreground font-medium text-sm">Phone Numbers</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[53%] right-[33%] animate-float" style={{ animationDelay: "1.7s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
-                    <span className="text-2xl">📈</span>
-                    <span className="text-foreground font-medium">Market Research</span>
+                <div className="absolute top-[54%] right-[35%] animate-float" style={{ animationDelay: "1.7s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-xl">📈</span>
+                    <span className="text-foreground font-medium text-sm">Market Research</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[53%] right-[65%] animate-float" style={{ animationDelay: "2.2s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
-                    <span className="text-2xl">📧</span>
-                    <span className="text-foreground font-medium">Email Lists</span>
+                <div className="absolute top-[54%] right-[70%] animate-float" style={{ animationDelay: "2.2s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
+                    <span className="text-xl">📧</span>
+                    <span className="text-foreground font-medium text-sm">Email Lists</span>
                   </div>
                 </div>
 
                 {/* Row 5 */}
-                <div className="absolute top-[68%] right-[8%] animate-float" style={{ animationDelay: "0.6s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
-                    <span className="text-2xl">🛒</span>
-                    <span className="text-foreground font-medium">E-commerce Data</span>
+                <div className="absolute top-[72%] right-[12%] animate-float" style={{ animationDelay: "0.6s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
+                    <span className="text-xl">🛒</span>
+                    <span className="text-foreground font-medium text-sm">E-commerce Data</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[68%] right-[45%] animate-float" style={{ animationDelay: "1.1s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
-                    <span className="text-2xl">📱</span>
-                    <span className="text-foreground font-medium">Social Media</span>
+                <div className="absolute top-[72%] right-[50%] animate-float" style={{ animationDelay: "1.1s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
+                    <span className="text-xl">📱</span>
+                    <span className="text-foreground font-medium text-sm">Social Media</span>
                   </div>
                 </div>
 
                 {/* Row 6 */}
-                <div className="absolute top-[83%] right-[20%] animate-float" style={{ animationDelay: "1.4s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
-                    <span className="text-2xl">💼</span>
-                    <span className="text-foreground font-medium">Job Listings</span>
+                <div className="absolute top-[90%] right-[25%] animate-float" style={{ animationDelay: "1.4s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-xl">💼</span>
+                    <span className="text-foreground font-medium text-sm">Job Listings</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[83%] right-[55%] animate-float" style={{ animationDelay: "1.9s" }}>
-                  <div className="flex items-center gap-3 px-5 py-3 bg-muted/50 backdrop-blur-sm border border-border rounded-full shadow-lg cursor-default">
-                    <span className="text-foreground font-medium">+ more</span>
+                <div className="absolute top-[90%] right-[60%] animate-float" style={{ animationDelay: "1.9s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 backdrop-blur-sm border border-border rounded-full shadow-lg cursor-default">
+                    <span className="text-foreground font-medium text-sm">+ more</span>
                   </div>
                 </div>
                 
@@ -515,8 +525,8 @@ export default function Home() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce">
-          <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 animate-bounce">
+          <svg className="w-6 h-6 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
@@ -810,7 +820,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm">
                 <li><button onClick={() => scrollToSection("how-it-works")} className="text-muted-foreground hover:text-foreground transition-colors">How it Works</button></li>
                 <li><button onClick={() => scrollToSection("features")} className="text-muted-foreground hover:text-foreground transition-colors">Features</button></li>
-                <li><a href="/purchase" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
                 <li><button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-colors">FAQ</button></li>
               </ul>
             </div>
