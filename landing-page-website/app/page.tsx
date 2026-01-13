@@ -366,15 +366,17 @@ export default function Home() {
             <div className="text-left">
               <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000">
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-3 leading-tight tracking-tight">
-                  <span className="text-foreground">Stop Hunting Leads.</span>
+                  <span className="text-foreground">Best Free Google Maps Scraper</span>
                   <br />
-                  <span className="gradient-text">Start Extracting Them.</span>
+                  <span className="gradient-text">Lead Generation Tool 2026</span>
                 </h1>
+                {/* SEO: Hidden but crawlable text for search engines */}
+                <span className="sr-only">Best free B2B lead generation tool extracts leads from Google Maps business info free. Compare to Outscraper, Phantombuster, TexAu Google Maps scraper pricing.</span>
               </div>
               
               <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "100ms" }}>
                 <p className="text-lg md:text-xl text-muted-foreground mb-4 leading-relaxed">
-                  Extract leads from Google Maps in one click. <span className="text-foreground font-semibold">No coding required.</span>
+                  Free B2B lead generation tool that extracts business info from Google Maps. <span className="text-foreground font-semibold">No coding required.</span>
                 </p>
               </div>
               
@@ -532,9 +534,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8">
             <span className="inline-block px-5 py-2 bg-primary/10 text-primary rounded-full text-base font-medium mb-5">Simple Process</span>
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">From Search to Leads in 5 Steps</h2>
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">Free Google Maps Scraper – Extract Leads in 5 Steps</h2>
             <p className="text-muted-foreground text-xl max-w-3xl mx-auto">
-              No learning curve. No complex setup. Just install and start extracting.
+              No learning curve. No complex setup. The best free lead generation tool for 2026 – just install and start extracting.
             </p>
           </div>
 
@@ -578,8 +580,8 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-6">
             <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Benefits</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Why Smart Freelancers Choose MapsReach</h2>
-            <p className="text-muted-foreground text-lg">Built by a freelancer who was tired of wasting time</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Best Free B2B Lead Generation Tool Features</h2>
+            <p className="text-muted-foreground text-lg">Free Google Maps scraping tool with features that beat paid alternatives like Outscraper & Phantombuster</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -638,9 +640,9 @@ export default function Home() {
       <section className="py-10 px-4 relative">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-6">
-            <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">Comparison</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">MapsReach vs The Old Way</h2>
-            <p className="text-muted-foreground text-lg">See why 2,000+ users made the switch</p>
+            <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">Pricing Comparison</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Better Than Outscraper, Phantombuster & TexAu Pricing</h2>
+            <p className="text-muted-foreground text-lg">Best paid Google Maps scraper with one-time pricing vs expensive monthly subscriptions</p>
           </div>
 
           <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000">
@@ -704,8 +706,8 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-6">
             <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">FAQ</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Got Questions?</h2>
-            <p className="text-muted-foreground text-lg">Everything you need to know before getting started</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Google Maps Lead Extractor FAQ</h2>
+            <p className="text-muted-foreground text-lg">Everything about our free Google Maps scraper and lead generation features</p>
           </div>
 
           <div className="space-y-3">
@@ -742,11 +744,11 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000">
             <h2 className="text-4xl md:text-6xl font-bold mb-6">
-              <span className="text-foreground">Ready to </span>
-              <span className="gradient-text">10x Your Lead Gen?</span>
+              <span className="text-foreground">Get the </span>
+              <span className="gradient-text">Best Free Lead Generation Tool 2026</span>
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join 2,000+ freelancers who stopped wasting time and started closing more deals.
+              Join 2,000+ users who chose the best free Google Maps scraper tool for B2B lead generation. Extract business info free.
             </p>
           </div>
 
@@ -807,7 +809,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-muted-foreground text-sm max-w-md">
-                The fastest way to extract business leads from Google Maps. Built by a freelancer, for freelancers.
+                The best free Google Maps scraper tool for lead generation in 2026. Extract B2B business leads, emails, and phones free. Better pricing than Outscraper, Phantombuster, and TexAu.
               </p>
             </div>
             <div>
