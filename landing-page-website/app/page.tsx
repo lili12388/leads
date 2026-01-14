@@ -825,6 +825,8 @@ export default function Home() {
           <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-center gap-4">
             <p className="text-muted-foreground text-sm">
               © 2026 MapsReach. All rights reserved.
+              <span className="mx-2">|</span>
+              <a href="/privacy" className="hover:underline text-primary">Privacy Policy</a>
             </p>
           </div>
         </div>
