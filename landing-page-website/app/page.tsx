@@ -375,17 +375,17 @@ export default function Home() {
             <div className="text-left">
               <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000">
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-3 leading-tight tracking-tight">
-                  <span className="text-foreground">Best Free Google Maps Scraper</span>
+                  <span className="text-foreground">Best Google Maps Scraper</span>
                   <br />
                   <span className="gradient-text">Lead Generation Tool 2026</span>
                 </h1>
                 {/* SEO: Hidden but crawlable text for search engines */}
-                <span className="sr-only">Best free B2B lead generation tool extracts leads from Google Maps business info free. Compare to Outscraper, Phantombuster, TexAu Google Maps scraper pricing.</span>
+                <span className="sr-only">Best B2B lead generation tool extracts business info from Google Maps. Compare to Outscraper, Phantombuster, TexAu Google Maps scraper pricing.</span>
               </div>
               
               <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "100ms" }}>
                 <p className="text-lg md:text-xl text-muted-foreground mb-4 leading-relaxed">
-                  Free B2B lead generation tool that extracts business info from Google Maps. <span className="text-foreground font-semibold">No coding required.</span>
+                  <span className="text-primary font-semibold">B2B lead generation tool</span> that extracts business info from <span className="text-primary font-semibold">Google Maps</span>. <span className="text-foreground font-semibold">Clean leads</span>, without the busywork.
                 </p>
               </div>
               
@@ -845,3 +845,4 @@ export default function Home() {
     </main>
   )
 }
+

@@ -11,7 +11,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.mapsreach.com"),
-  title: "MapsReach - Free Google Maps Lead Scraper",
+  title: "MapsReach - The Ultimate Google Maps Lead Scraper",
   description:
     "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses.",
   keywords: [
@@ -30,13 +30,13 @@ export const metadata: Metadata = {
     "email extractor chrome extension"
   ],
   openGraph: {
-    title: "MapsReach - Free Google Maps Lead Scraper",
+    title: "MapsReach - The Ultimate Google Maps Lead Scraper",
     description: "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "MapsReach - Free Google Maps Lead Scraper",
+    title: "MapsReach - The Ultimate Google Maps Lead Scraper",
     description: "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses.",
   },
   icons: {
