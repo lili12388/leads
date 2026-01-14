@@ -426,14 +426,14 @@ export default function Home() {
                 <div className="absolute top-[0%] right-[15%] animate-float" style={{ animationDelay: "0s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">🔍</span>
-                    <span className="text-foreground font-medium text-sm">Search Results</span>
+                    <span className="text-foreground font-medium text-sm">Freelancers</span>
                   </div>
                 </div>
                 
                 <div className="absolute top-[0%] right-[55%] animate-float" style={{ animationDelay: "0.5s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
                     <span className="text-xl">📊</span>
-                    <span className="text-foreground font-medium text-sm">Analytics Data</span>
+                    <span className="text-foreground font-medium text-sm">Marketing Agencies</span>
                   </div>
                 </div>
 
@@ -441,21 +441,21 @@ export default function Home() {
                 <div className="absolute top-[18%] right-[5%] animate-float" style={{ animationDelay: "1s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
                     <span className="text-xl">🏢</span>
-                    <span className="text-foreground font-medium text-sm">Business Names</span>
+                    <span className="text-foreground font-medium text-sm">Sales Teams</span>
                   </div>
                 </div>
                 
                 <div className="absolute top-[18%] right-[40%] animate-float" style={{ animationDelay: "1.5s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">⭐</span>
-                    <span className="text-foreground font-medium text-sm">Reviews</span>
+                    <span className="text-foreground font-medium text-sm">Real Estate Pros</span>
                   </div>
                 </div>
                 
                 <div className="absolute top-[18%] right-[65%] animate-float" style={{ animationDelay: "2s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
                     <span className="text-xl">👤</span>
-                    <span className="text-foreground font-medium text-sm">Lead Lists</span>
+                    <span className="text-foreground font-medium text-sm">Local Consultants</span>
                   </div>
                 </div>
 
@@ -463,14 +463,14 @@ export default function Home() {
                 <div className="absolute top-[36%] right-[10%] animate-float" style={{ animationDelay: "0.3s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">🗺️</span>
-                    <span className="text-foreground font-medium text-sm">Maps Businesses</span>
+                    <span className="text-foreground font-medium text-sm">Business Leads</span>
                   </div>
                 </div>
                 
                 <div className="absolute top-[36%] right-[50%] animate-float" style={{ animationDelay: "0.8s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
                     <span className="text-xl">📦</span>
-                    <span className="text-foreground font-medium text-sm">Product Lists</span>
+                    <span className="text-foreground font-medium text-sm">B2B Outreach</span>
                   </div>
                 </div>
 
@@ -478,21 +478,21 @@ export default function Home() {
                 <div className="absolute top-[54%] right-[0%] animate-float" style={{ animationDelay: "1.2s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
                     <span className="text-xl">📞</span>
-                    <span className="text-foreground font-medium text-sm">Phone Numbers</span>
+                    <span className="text-foreground font-medium text-sm">One-Click Extract</span>
                   </div>
                 </div>
                 
                 <div className="absolute top-[54%] right-[35%] animate-float" style={{ animationDelay: "1.7s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">📈</span>
-                    <span className="text-foreground font-medium text-sm">Market Research</span>
+                    <span className="text-foreground font-medium text-sm">Export to Sheets</span>
                   </div>
                 </div>
                 
                 <div className="absolute top-[54%] right-[70%] animate-float" style={{ animationDelay: "2.2s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
                     <span className="text-xl">📧</span>
-                    <span className="text-foreground font-medium text-sm">Email Lists</span>
+                    <span className="text-foreground font-medium text-sm">Export to CSV</span>
                   </div>
                 </div>
 
@@ -500,14 +500,14 @@ export default function Home() {
                 <div className="absolute top-[72%] right-[12%] animate-float" style={{ animationDelay: "0.6s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
                     <span className="text-xl">🛒</span>
-                    <span className="text-foreground font-medium text-sm">E-commerce Data</span>
+                    <span className="text-foreground font-medium text-sm">Unlimited Leads</span>
                   </div>
                 </div>
                 
                 <div className="absolute top-[72%] right-[50%] animate-float" style={{ animationDelay: "1.1s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
                     <span className="text-xl">📱</span>
-                    <span className="text-foreground font-medium text-sm">Social Media</span>
+                    <span className="text-foreground font-medium text-sm">Auto-Scroll</span>
                   </div>
                 </div>
 
@@ -515,13 +515,13 @@ export default function Home() {
                 <div className="absolute top-[90%] right-[25%] animate-float" style={{ animationDelay: "1.4s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">💼</span>
-                    <span className="text-foreground font-medium text-sm">Job Listings</span>
+                    <span className="text-foreground font-medium text-sm">Duplicate Check</span>
                   </div>
                 </div>
                 
                 <div className="absolute top-[90%] right-[60%] animate-float" style={{ animationDelay: "1.9s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 backdrop-blur-sm border border-border rounded-full shadow-lg cursor-default">
-                    <span className="text-foreground font-medium text-sm">+ more</span>
+                    <span className="text-foreground font-medium text-sm">Dark/Light Mode</span>
                   </div>
                 </div>
                 
