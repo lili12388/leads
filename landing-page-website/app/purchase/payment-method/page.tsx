@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
+import { safeLocalStorageGet, safeLocalStorageSet } from "@/lib/safe-storage"
 
 const paymentMethods = [
   {
@@ -41,7 +42,7 @@ export default function PaymentMethodPage() {
   const [purchaseToken, setPurchaseToken] = useState<string | null>(null)
 
   useEffect(() => {
-    const token = localStorage.getItem('purchaseToken')
+    const token = safeLocalStorageGet('purchaseToken')
     if (!token) {
       router.push('/purchase')
       return
@@ -68,7 +69,7 @@ export default function PaymentMethodPage() {
       const data = await res.json()
 
       if (data.success) {
-        localStorage.setItem('paymentMethod', methodId)
+        safeLocalStorageSet('paymentMethod', methodId)
         router.push('/purchase/pay')
       } else {
         setError(data.error || 'Failed to select payment method')

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { safeLocalStorageGet, safeLocalStorageSet } from "@/lib/safe-storage"
 
 // Cookie helper function
 function getCookie(name: string): string | null {
@@ -20,15 +21,15 @@ export default function PurchasePage() {
 
   useEffect(() => {
     // Get affiliate code from localStorage first, then cookie as fallback
-    const storedCode = localStorage.getItem('referralCode') 
-      || localStorage.getItem('affiliateCode')
+    const storedCode = safeLocalStorageGet('referralCode') 
+      || safeLocalStorageGet('affiliateCode')
       || getCookie('affiliateCode')
     if (storedCode) {
       setAffiliateCode(storedCode)
       // Sync back to localStorage if it came from cookie
-      if (!localStorage.getItem('affiliateCode')) {
-        localStorage.setItem('affiliateCode', storedCode)
-        localStorage.setItem('referralCode', storedCode)
+      if (!safeLocalStorageGet('affiliateCode')) {
+        safeLocalStorageSet('affiliateCode', storedCode)
+        safeLocalStorageSet('referralCode', storedCode)
       }
     }
   }, [])
@@ -53,8 +54,8 @@ export default function PurchasePage() {
 
       if (data.success) {
         // Store purchase token for the payment flow
-        localStorage.setItem('purchaseToken', data.token)
-        localStorage.setItem('purchaseId', data.purchaseId)
+        safeLocalStorageSet('purchaseToken', data.token)
+        safeLocalStorageSet('purchaseId', data.purchaseId)
         
         // Redirect to payment method selection
         router.push('/purchase/payment-method')

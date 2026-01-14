@@ -1,14 +1,15 @@
 "use client"
 
 import { useEffect } from "react"
+import { safeLocalStorageRemove } from "@/lib/safe-storage"
 
 export default function ConfirmationPage() {
   useEffect(() => {
     // Clear purchase data from localStorage
     // Keep affiliate code in case they want to make another purchase
-    localStorage.removeItem('purchaseToken')
-    localStorage.removeItem('purchaseId')
-    localStorage.removeItem('paymentMethod')
+    safeLocalStorageRemove('purchaseToken')
+    safeLocalStorageRemove('purchaseId')
+    safeLocalStorageRemove('paymentMethod')
   }, [])
 
   return (

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { safeLocalStorageGet, safeLocalStorageRemove, safeLocalStorageSet } from "@/lib/safe-storage"
 
 interface Purchase {
   id: string
@@ -100,7 +101,7 @@ export default function AdminDashboard() {
       if (data.success) {
         setAdminKey(data.adminKey)
         setIsLoggedIn(true)
-        localStorage.setItem('adminKey', data.adminKey)
+        safeLocalStorageSet('adminKey', data.adminKey)
       } else {
         setLoginError('Invalid credentials')
       }
@@ -112,7 +113,7 @@ export default function AdminDashboard() {
   const logout = () => {
     setIsLoggedIn(false)
     setAdminKey("")
-    localStorage.removeItem('adminKey')
+    safeLocalStorageRemove('adminKey')
   }
 
   const fetchData = async () => {
@@ -235,7 +236,7 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    const savedKey = localStorage.getItem('adminKey')
+    const savedKey = safeLocalStorageGet('adminKey')
     if (savedKey) {
       setAdminKey(savedKey)
       setIsLoggedIn(true)

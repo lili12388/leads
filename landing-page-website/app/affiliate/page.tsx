@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { safeLocalStorageGet, safeLocalStorageRemove, safeLocalStorageSet } from "@/lib/safe-storage"
 
 interface Purchase {
   token: string
@@ -62,7 +63,7 @@ export default function AffiliateDashboard() {
         setData(result)
         setIsLoggedIn(true)
         setSavedCredentials({ email, password })
-        localStorage.setItem('affiliateAuth', JSON.stringify({ email, password }))
+        safeLocalStorageSet('affiliateAuth', JSON.stringify({ email, password }))
       }
     } catch {
       setLoginError('Login failed. Please try again.')
@@ -91,7 +92,7 @@ export default function AffiliateDashboard() {
     setIsLoggedIn(false)
     setData(null)
     setSavedCredentials(null)
-    localStorage.removeItem('affiliateAuth')
+    safeLocalStorageRemove('affiliateAuth')
   }
 
   const copyToClipboard = (text: string) => {
@@ -100,9 +101,19 @@ export default function AffiliateDashboard() {
   }
 
   useEffect(() => {
-    const saved = localStorage.getItem('affiliateAuth')
+    const saved = safeLocalStorageGet('affiliateAuth')
     if (saved) {
-      const creds = JSON.parse(saved)
+      let creds: { email: string; password: string } | null = null
+      try {
+        creds = JSON.parse(saved)
+      } catch {
+        safeLocalStorageRemove('affiliateAuth')
+      }
+
+      if (!creds?.email || !creds?.password) {
+        setCheckingAuth(false)
+        return
+      }
       setEmail(creds.email)
       setPassword(creds.password)
       setSavedCredentials(creds)
@@ -117,11 +128,11 @@ export default function AffiliateDashboard() {
           setData(result)
           setIsLoggedIn(true)
         } else {
-          localStorage.removeItem('affiliateAuth')
+          safeLocalStorageRemove('affiliateAuth')
         }
         setCheckingAuth(false)
       }).catch(() => {
-        localStorage.removeItem('affiliateAuth')
+        safeLocalStorageRemove('affiliateAuth')
         setCheckingAuth(false)
       })
     } else {

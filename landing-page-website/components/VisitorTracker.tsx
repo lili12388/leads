@@ -2,15 +2,16 @@
 
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import { safeSessionStorageGet, safeSessionStorageSet } from '@/lib/safe-storage'
 
 // Generate or get session ID
 function getSessionId(): string {
   if (typeof window === 'undefined') return 'server'
   
-  let sessionId = sessionStorage.getItem('mapsreach_session')
+  let sessionId = safeSessionStorageGet('mapsreach_session')
   if (!sessionId) {
     sessionId = 'sess_' + Math.random().toString(36).substring(2, 15)
-    sessionStorage.setItem('mapsreach_session', sessionId)
+    safeSessionStorageSet('mapsreach_session', sessionId)
   }
   return sessionId
 }

@@ -1,11 +1,16 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { safeLocalStorageGet, safeLocalStorageSet } from "@/lib/safe-storage"
 
 // Cookie helper functions for persistent affiliate tracking
 function setCookie(name: string, value: string, days: number) {
-  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`
+  try {
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`
+  } catch {
+    // Ignore cookie errors (blocked storage, privacy mode, etc.)
+  }
 }
 
 function getCookie(name: string): string | null {
@@ -104,9 +109,9 @@ export default function Home() {
     
     if (refCode) {
       // Store referral code in localStorage (use both keys for compatibility)
-      localStorage.setItem('affiliateCode', refCode.toUpperCase())
-      localStorage.setItem('referralCode', refCode.toUpperCase())
-      localStorage.setItem('referralTimestamp', new Date().toISOString())
+      safeLocalStorageSet('affiliateCode', refCode.toUpperCase())
+      safeLocalStorageSet('referralCode', refCode.toUpperCase())
+      safeLocalStorageSet('referralTimestamp', new Date().toISOString())
       
       // Also store in cookie for extra persistence (30 days)
       setCookie('affiliateCode', refCode.toUpperCase(), 30)
@@ -123,7 +128,11 @@ export default function Home() {
       
       // Clean URL without reload (removes ?ref=XXX)
       const cleanUrl = window.location.pathname
-      window.history.replaceState({}, '', cleanUrl)
+      try {
+        window.history.replaceState({}, '', cleanUrl)
+      } catch {
+        // Ignore history errors in restrictive contexts
+      }
       
       // Set Tawk.to visitor attribute (so admin sees which creator referred)
       setTimeout(() => {
@@ -137,7 +146,7 @@ export default function Home() {
       }, 2000)
     } else {
       // Check if we have a stored referral code to set in Tawk.to
-      const storedRef = localStorage.getItem('referralCode')
+      const storedRef = safeLocalStorageGet('referralCode')
       if (storedRef) {
         setTimeout(() => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

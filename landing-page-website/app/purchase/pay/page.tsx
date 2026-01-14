@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
+import { safeLocalStorageGet } from "@/lib/safe-storage"
 
 const paymentDetails: Record<string, {
   title: string
@@ -100,8 +101,8 @@ export default function PayPage() {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
 
   useEffect(() => {
-    const token = localStorage.getItem('purchaseToken')
-    const method = localStorage.getItem('paymentMethod')
+    const token = safeLocalStorageGet('purchaseToken')
+    const method = safeLocalStorageGet('paymentMethod')
     
     if (!token || !method) {
       router.push('/purchase')
