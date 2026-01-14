@@ -11,9 +11,9 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.mapsreach.com"),
-  title: "MapsReach - Best Free Google Maps Scraper Tool for Lead Generation 2026",
+  title: "MapsReach - Free Google Maps Lead Scraper",
   description:
-    "Best free Google Maps scraper tool for lead generation. Extract B2B leads, business info, emails & phones free. Better than Outscraper, Phantombuster & TexAu pricing. Best free lead generation tools 2026.",
+    "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses.",
   keywords: [
     "best free Google Maps scraper tool for lead generation",
     "free Google Maps scraper tools lead generation features",
@@ -30,14 +30,14 @@ export const metadata: Metadata = {
     "email extractor chrome extension"
   ],
   openGraph: {
-    title: "MapsReach - Best Free Google Maps Scraper & Lead Generation Tool 2026",
-    description: "Best free B2B lead generation tool that extracts leads from Google Maps. Better pricing than Outscraper, Phantombuster & TexAu. Free map scraper with unlimited leads.",
+    title: "MapsReach - Free Google Maps Lead Scraper",
+    description: "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "MapsReach - Best Free Google Maps Lead Extractor 2026",
-    description: "Best free Google Maps scraper for lead generation. Extract B2B business info free. Compare our pricing to Outscraper & Phantombuster.",
+    title: "MapsReach - Free Google Maps Lead Scraper",
+    description: "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses.",
   },
   icons: {
     icon: [
