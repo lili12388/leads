@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 400 })
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mapsreach.com'
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mapsreach.com'
 
     // Hash the password with bcrypt
     const passwordHash = await bcrypt.hash(password, 12)
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mapsreach.com'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mapsreach.com'
 
   const [affiliates, purchases, clicks] = await Promise.all([
     getAffiliates(),

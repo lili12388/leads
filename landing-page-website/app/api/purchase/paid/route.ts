@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
 ${paymentProof ? `📎 <b>Proof:</b> ${paymentProof.type === 'transaction_hash' ? 'TX Hash attached' : 'Screenshot attached'}` : '⚠️ No proof attached'}
 ${affiliate ? `🤝 <b>Affiliate:</b> ${affiliate.name} (${affiliate.code})` : '🎯 Direct sale'}
 
-🔗 <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://mapsreach.com'}/admin">Open Admin Panel</a>`
+🔗 <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mapsreach.com'}/admin">Open Admin Panel</a>`
     
     await sendTelegramNotification(telegramMessage)
 

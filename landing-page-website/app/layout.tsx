@@ -10,6 +10,7 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.mapsreach.com"),
   title: "MapsReach - Best Free Google Maps Scraper Tool for Lead Generation 2026",
   description:
     "Best free Google Maps scraper tool for lead generation. Extract B2B leads, business info, emails & phones free. Better than Outscraper, Phantombuster & TexAu pricing. Best free lead generation tools 2026.",
@@ -41,15 +42,17 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/favicon.png",
-        type: "image/png",
+        url: "/favicon.ico",
+        type: "image/x-icon",
       },
       {
         url: "/icon-light-32x32.png",
+        sizes: "48x48",
         media: "(prefers-color-scheme: light)",
       },
       {
         url: "/icon-dark-32x32.png",
+        sizes: "48x48",
         media: "(prefers-color-scheme: dark)",
       },
     ],
