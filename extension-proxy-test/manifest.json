@@ -5,8 +5,7 @@
   "description": "Extract business leads from Google Maps with one click. Export to CSV or Google Sheets instantly.",
   "permissions": [
     "activeTab",
-    "storage",
-    "scripting"
+    "storage"
   ],
   "host_permissions": [
     "https://www.google.com/maps/*",
@@ -47,3 +46,5 @@
     }
   ]
 }
+
+
