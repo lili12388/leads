@@ -419,11 +419,11 @@ export default function Home() {
             </div>
 
             {/* Right Column - Floating Data Pills */}
-            <div className="relative hidden lg:block h-[350px]">
+            <div className="relative hidden lg:block h-[420px]">
               <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 absolute inset-0" style={{ transitionDelay: "400ms" }}>
                 
                 {/* Row 1 */}
-                <div className="absolute top-[0%] right-[15%] animate-float" style={{ animationDelay: "0s" }}>
+                <div className="absolute top-[0%] right-[10%] animate-float" style={{ animationDelay: "0s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">🔍</span>
                     <span className="text-foreground font-medium text-sm">Freelancers</span>
@@ -438,21 +438,21 @@ export default function Home() {
                 </div>
 
                 {/* Row 2 */}
-                <div className="absolute top-[18%] right-[5%] animate-float" style={{ animationDelay: "1s" }}>
+                <div className="absolute top-[16%] right-[0%] animate-float" style={{ animationDelay: "1s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
                     <span className="text-xl">🏢</span>
                     <span className="text-foreground font-medium text-sm">Sales Teams</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[18%] right-[40%] animate-float" style={{ animationDelay: "1.5s" }}>
+                <div className="absolute top-[16%] right-[35%] animate-float" style={{ animationDelay: "1.5s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">⭐</span>
                     <span className="text-foreground font-medium text-sm">Real Estate Pros</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[18%] right-[65%] animate-float" style={{ animationDelay: "2s" }}>
+                <div className="absolute top-[16%] right-[70%] animate-float" style={{ animationDelay: "2s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
                     <span className="text-xl">👤</span>
                     <span className="text-foreground font-medium text-sm">Local Consultants</span>
@@ -460,14 +460,14 @@ export default function Home() {
                 </div>
 
                 {/* Row 3 */}
-                <div className="absolute top-[36%] right-[10%] animate-float" style={{ animationDelay: "0.3s" }}>
+                <div className="absolute top-[32%] right-[15%] animate-float" style={{ animationDelay: "0.3s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">🗺️</span>
                     <span className="text-foreground font-medium text-sm">Business Leads</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[36%] right-[50%] animate-float" style={{ animationDelay: "0.8s" }}>
+                <div className="absolute top-[32%] right-[58%] animate-float" style={{ animationDelay: "0.8s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
                     <span className="text-xl">📦</span>
                     <span className="text-foreground font-medium text-sm">B2B Outreach</span>
@@ -475,21 +475,21 @@ export default function Home() {
                 </div>
 
                 {/* Row 4 */}
-                <div className="absolute top-[54%] right-[0%] animate-float" style={{ animationDelay: "1.2s" }}>
+                <div className="absolute top-[48%] right-[5%] animate-float" style={{ animationDelay: "1.2s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
                     <span className="text-xl">📞</span>
                     <span className="text-foreground font-medium text-sm">One-Click Extract</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[54%] right-[35%] animate-float" style={{ animationDelay: "1.7s" }}>
+                <div className="absolute top-[48%] right-[40%] animate-float" style={{ animationDelay: "1.7s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">📈</span>
                     <span className="text-foreground font-medium text-sm">Export to Sheets</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[54%] right-[70%] animate-float" style={{ animationDelay: "2.2s" }}>
+                <div className="absolute top-[48%] right-[75%] animate-float" style={{ animationDelay: "2.2s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
                     <span className="text-xl">📧</span>
                     <span className="text-foreground font-medium text-sm">Export to CSV</span>
@@ -497,14 +497,14 @@ export default function Home() {
                 </div>
 
                 {/* Row 5 */}
-                <div className="absolute top-[72%] right-[12%] animate-float" style={{ animationDelay: "0.6s" }}>
+                <div className="absolute top-[64%] right-[18%] animate-float" style={{ animationDelay: "0.6s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
                     <span className="text-xl">🛒</span>
                     <span className="text-foreground font-medium text-sm">Unlimited Leads</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[72%] right-[50%] animate-float" style={{ animationDelay: "1.1s" }}>
+                <div className="absolute top-[64%] right-[60%] animate-float" style={{ animationDelay: "1.1s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
                     <span className="text-xl">📱</span>
                     <span className="text-foreground font-medium text-sm">Auto-Scroll</span>
@@ -512,16 +512,16 @@ export default function Home() {
                 </div>
 
                 {/* Row 6 */}
-                <div className="absolute top-[90%] right-[25%] animate-float" style={{ animationDelay: "1.4s" }}>
+                <div className="absolute top-[80%] right-[28%] animate-float" style={{ animationDelay: "1.4s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">💼</span>
                     <span className="text-foreground font-medium text-sm">Duplicate Check</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[90%] right-[60%] animate-float" style={{ animationDelay: "1.9s" }}>
+                <div className="absolute top-[80%] right-[64%] animate-float" style={{ animationDelay: "1.9s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 backdrop-blur-sm border border-border rounded-full shadow-lg cursor-default">
-                    <span className="text-foreground font-medium text-sm">Dark/Light Mode</span>
+                    <span className="text-foreground font-medium text-sm">+ more</span>
                   </div>
                 </div>
                 
