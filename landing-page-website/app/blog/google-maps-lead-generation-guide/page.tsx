@@ -8,8 +8,16 @@ export default function GoogleMapsLeadGenerationGuidePage() {
       {/* Header */}
       <header className="border-b border-border">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition-opacity">
             <img src="/logo.png" alt="MapsReach" className="h-28 w-auto" />
+            {/* Slogan right next to logo */}
+            <div className="hidden sm:flex items-center gap-2 -ml-1">
+              <span className="text-[#3b82f6] font-semibold text-base tracking-wide">Extract</span>
+              <span className="text-[#60a5fa] text-sm">•</span>
+              <span className="text-[#2563eb] font-semibold text-base tracking-wide">Export</span>
+              <span className="text-[#60a5fa] text-sm">•</span>
+              <span className="text-[#1d4ed8] font-semibold text-base tracking-wide">Excel</span>
+            </div>
           </Link>
           <nav className="flex items-center gap-6">
             <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
