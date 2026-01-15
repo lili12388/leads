@@ -42,8 +42,8 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="py-0 px-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition-opacity">
             <img src="/logo.png" alt="MapsReach" className="h-28 w-auto" />
             {/* Slogan right next to logo */}
@@ -55,11 +55,17 @@ export default function BlogPage() {
               <span className="text-[#1d4ed8] font-semibold text-base tracking-wide">Excel</span>
             </div>
           </Link>
-          <nav className="flex items-center gap-6">
-            <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
-            <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-            <Link href="/blog" className="text-primary font-medium">Blog</Link>
-          </nav>
+          <div className="hidden md:flex items-center gap-4">
+            <Link href="/pricing" className="text-accent hover:text-foreground transition-all duration-300 text-base font-semibold px-4 py-2 rounded-lg border border-accent/30 hover:border-accent/60 hover:bg-accent/10">💰 Pricing</Link>
+            <Link href="/" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10">Home</Link>
+            <Link href="/blog" className="text-primary font-semibold transition-all duration-300 text-base px-4 py-2 rounded-lg">Blog</Link>
+          </div>
+          <Link
+            href="/coming-soon"
+            className="px-6 py-3 bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] text-white font-semibold rounded-full text-base hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200"
+          >
+            Try for Free
+          </Link>
         </div>
       </header>
 
