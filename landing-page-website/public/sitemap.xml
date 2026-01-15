@@ -61,6 +61,36 @@
     <priority>0.4</priority>
   </url>
   <url>
+    <loc>https://www.mapsreach.com/blog</loc>
+    <lastmod>2026-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.mapsreach.com/blog/mapsreach-vs-outscraper</loc>
+    <lastmod>2026-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.mapsreach.com/blog/mapsreach-vs-phantombuster</loc>
+    <lastmod>2026-01-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.mapsreach.com/blog/mapsreach-vs-texau</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.mapsreach.com/blog/google-maps-lead-generation-guide</loc>
+    <lastmod>2026-01-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://www.mapsreach.com/12admin19</loc>
     <lastmod>2026-01-13</lastmod>
     <changefreq>monthly</changefreq>
