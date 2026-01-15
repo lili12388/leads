@@ -9,10 +9,7 @@ export default function GoogleMapsLeadGenerationGuidePage() {
       <header className="border-b border-border">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <span className="text-white font-bold text-sm">M</span>
-            </div>
-            <span className="font-bold text-xl">MapsReach</span>
+            <img src="/logo.png" alt="MapsReach" className="h-12 w-auto" />
           </Link>
           <nav className="flex items-center gap-6">
             <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
