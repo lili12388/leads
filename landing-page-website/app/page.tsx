@@ -260,6 +260,7 @@ export default function Home() {
             <button onClick={() => scrollToSection("how-it-works")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">How it Works</button>
             <button onClick={() => scrollToSection("features")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Features</button>
             <button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">FAQ</button>
+            <a href="/blog" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Blog</a>
           </div>
           
           <a
@@ -379,8 +380,6 @@ export default function Home() {
                   <br />
                   <span className="gradient-text">Lead Generation Tool 2026</span>
                 </h1>
-                {/* SEO: Hidden but crawlable text for search engines */}
-                <span className="sr-only">Best B2B lead generation tool extracts business info from Google Maps. Compare to Outscraper, Phantombuster, TexAu Google Maps scraper pricing.</span>
               </div>
               
               <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "100ms" }}>
@@ -419,40 +418,40 @@ export default function Home() {
             </div>
 
             {/* Right Column - Floating Data Pills */}
-            <div className="relative hidden lg:block h-[420px]">
+            <div className="relative hidden lg:block h-[400px]">
               <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 absolute inset-0" style={{ transitionDelay: "400ms" }}>
                 
-                {/* Row 1 */}
-                <div className="absolute top-[0%] right-[10%] animate-float" style={{ animationDelay: "0s" }}>
+                {/* Row 1 - Who it's for */}
+                <div className="absolute top-[0%] right-[5%] animate-float" style={{ animationDelay: "0s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
+                    <span className="text-xl">🏢</span>
+                    <span className="text-foreground font-medium text-sm">Marketing Agencies</span>
+                  </div>
+                </div>
+                
+                <div className="absolute top-[0%] right-[52%] animate-float" style={{ animationDelay: "0.5s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
                     <span className="text-xl">🔍</span>
                     <span className="text-foreground font-medium text-sm">Freelancers</span>
                   </div>
                 </div>
-                
-                <div className="absolute top-[0%] right-[55%] animate-float" style={{ animationDelay: "0.5s" }}>
-                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
-                    <span className="text-xl">📊</span>
-                    <span className="text-foreground font-medium text-sm">Marketing Agencies</span>
-                  </div>
-                </div>
 
                 {/* Row 2 */}
-                <div className="absolute top-[16%] right-[0%] animate-float" style={{ animationDelay: "1s" }}>
+                <div className="absolute top-[14%] right-[0%] animate-float" style={{ animationDelay: "1s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
-                    <span className="text-xl">🏢</span>
+                    <span className="text-xl">🏛️</span>
                     <span className="text-foreground font-medium text-sm">Sales Teams</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[16%] right-[35%] animate-float" style={{ animationDelay: "1.5s" }}>
+                <div className="absolute top-[14%] right-[30%] animate-float" style={{ animationDelay: "1.5s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
                     <span className="text-xl">⭐</span>
                     <span className="text-foreground font-medium text-sm">Real Estate Pros</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[16%] right-[70%] animate-float" style={{ animationDelay: "2s" }}>
+                <div className="absolute top-[14%] right-[65%] animate-float" style={{ animationDelay: "2s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
                     <span className="text-xl">👤</span>
                     <span className="text-foreground font-medium text-sm">Local Consultants</span>
@@ -460,36 +459,36 @@ export default function Home() {
                 </div>
 
                 {/* Row 3 */}
-                <div className="absolute top-[32%] right-[15%] animate-float" style={{ animationDelay: "0.3s" }}>
+                <div className="absolute top-[28%] right-[15%] animate-float" style={{ animationDelay: "0.3s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
-                    <span className="text-xl">🗺️</span>
-                    <span className="text-foreground font-medium text-sm">Business Leads</span>
-                  </div>
-                </div>
-                
-                <div className="absolute top-[32%] right-[58%] animate-float" style={{ animationDelay: "0.8s" }}>
-                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
-                    <span className="text-xl">📦</span>
+                    <span className="text-xl">💼</span>
                     <span className="text-foreground font-medium text-sm">B2B Outreach</span>
                   </div>
                 </div>
+                
+                <div className="absolute top-[28%] right-[52%] animate-float" style={{ animationDelay: "0.8s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
+                    <span className="text-xl">🏢</span>
+                    <span className="text-foreground font-medium text-sm">Business Leads</span>
+                  </div>
+                </div>
 
-                {/* Row 4 */}
-                <div className="absolute top-[48%] right-[5%] animate-float" style={{ animationDelay: "1.2s" }}>
+                {/* Row 4 - Features */}
+                <div className="absolute top-[42%] right-[0%] animate-float" style={{ animationDelay: "1.2s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
                     <span className="text-xl">📞</span>
                     <span className="text-foreground font-medium text-sm">One-Click Extract</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[48%] right-[40%] animate-float" style={{ animationDelay: "1.7s" }}>
+                <div className="absolute top-[42%] right-[35%] animate-float" style={{ animationDelay: "1.7s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
-                    <span className="text-xl">📈</span>
+                    <span className="text-xl">📊</span>
                     <span className="text-foreground font-medium text-sm">Export to Sheets</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[48%] right-[75%] animate-float" style={{ animationDelay: "2.2s" }}>
+                <div className="absolute top-[42%] right-[72%] animate-float" style={{ animationDelay: "2.2s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
                     <span className="text-xl">📧</span>
                     <span className="text-foreground font-medium text-sm">Export to CSV</span>
@@ -497,31 +496,32 @@ export default function Home() {
                 </div>
 
                 {/* Row 5 */}
-                <div className="absolute top-[64%] right-[18%] animate-float" style={{ animationDelay: "0.6s" }}>
+                <div className="absolute top-[56%] right-[8%] animate-float" style={{ animationDelay: "0.6s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
-                    <span className="text-xl">🛒</span>
-                    <span className="text-foreground font-medium text-sm">Unlimited Leads</span>
+                    <span className="text-xl">🔄</span>
+                    <span className="text-foreground font-medium text-sm">Auto-Scroll</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[64%] right-[60%] animate-float" style={{ animationDelay: "1.1s" }}>
+                <div className="absolute top-[56%] right-[42%] animate-float" style={{ animationDelay: "1.1s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-secondary/50 transition-colors cursor-default">
-                    <span className="text-xl">📱</span>
-                    <span className="text-foreground font-medium text-sm">Auto-Scroll</span>
+                    <span className="text-xl">🏢</span>
+                    <span className="text-foreground font-medium text-sm">Unlimited Leads</span>
                   </div>
                 </div>
 
                 {/* Row 6 */}
-                <div className="absolute top-[80%] right-[28%] animate-float" style={{ animationDelay: "1.4s" }}>
+                <div className="absolute top-[70%] right-[20%] animate-float" style={{ animationDelay: "1.4s" }}>
                   <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors cursor-default">
-                    <span className="text-xl">💼</span>
-                    <span className="text-foreground font-medium text-sm">Duplicate Check</span>
+                    <span className="text-xl">🌓</span>
+                    <span className="text-foreground font-medium text-sm">Dark/Light Mode</span>
                   </div>
                 </div>
                 
-                <div className="absolute top-[80%] right-[64%] animate-float" style={{ animationDelay: "1.9s" }}>
-                  <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 backdrop-blur-sm border border-border rounded-full shadow-lg cursor-default">
-                    <span className="text-foreground font-medium text-sm">+ more</span>
+                <div className="absolute top-[70%] right-[58%] animate-float" style={{ animationDelay: "1.9s" }}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full shadow-lg hover:border-accent/50 transition-colors cursor-default">
+                    <span className="text-xl">🔍</span>
+                    <span className="text-foreground font-medium text-sm">Duplicate Check</span>
                   </div>
                 </div>
                 
@@ -589,8 +589,8 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-6">
             <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Benefits</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Best Free B2B Lead Generation Tool Features</h2>
-            <p className="text-muted-foreground text-lg">Free Google Maps scraping tool with features that beat paid alternatives like Outscraper & Phantombuster</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Why Choose MapsReach?</h2>
+            <p className="text-muted-foreground text-lg">Powerful Google Maps scraping tool with features designed for lead generation</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -650,7 +650,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-6">
             <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">Pricing Comparison</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Better Than Outscraper, Phantombuster & TexAu Pricing</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Pay Once, Extract Forever</h2>
             <p className="text-muted-foreground text-lg">Best paid Google Maps scraper with one-time pricing vs expensive monthly subscriptions</p>
           </div>
 
@@ -818,7 +818,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-muted-foreground text-sm max-w-md">
-                The best free Google Maps scraper tool for lead generation in 2026. Extract B2B business leads, emails, and phones free. Better pricing than Outscraper, Phantombuster, and TexAu.
+                Google Maps scraper tool for lead generation. Extract B2B business leads, emails, and phones. One-time payment, unlimited extractions.
               </p>
             </div>
             <div>
@@ -827,6 +827,7 @@ export default function Home() {
                 <li><button onClick={() => scrollToSection("how-it-works")} className="text-muted-foreground hover:text-foreground transition-colors">How it Works</button></li>
                 <li><button onClick={() => scrollToSection("features")} className="text-muted-foreground hover:text-foreground transition-colors">Features</button></li>
                 <li><a href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
                 <li><button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-colors">FAQ</button></li>
               </ul>
             </div>

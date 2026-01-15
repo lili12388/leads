@@ -11,53 +11,39 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.mapsreach.com"),
-  title: "MapsReach - The Ultimate Google Maps Lead Scraper",
+  title: "MapsReach - Best Google Maps Scraper for Lead Generation",
   description:
-    "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses.",
+    "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses. One-time payment, unlimited extractions.",
   keywords: [
-    "best free Google Maps scraper tool for lead generation",
-    "free Google Maps scraper tools lead generation features",
-    "best free lead generation tool",
-    "best free lead generation tools and platforms for 2026",
-    "best free B2B lead generation tool extracts leads from Google Maps",
-    "free Google Maps scraping lead generation tool B2B extract business info",
-    "best paid Google Maps scraper lead generation tool pricing",
-    "Outscraper Google Maps scraper pricing features",
-    "Phantombuster Google Maps Extractor pricing",
-    "TexAu Google Maps scraper pricing",
+    "Google Maps scraper",
     "Google Maps lead extractor",
+    "lead generation tool",
+    "B2B lead generation",
+    "extract leads from Google Maps",
     "business leads extractor",
-    "email extractor chrome extension"
+    "email extractor chrome extension",
+    "Google Maps data extraction",
+    "local business leads"
   ],
   openGraph: {
-    title: "MapsReach - The Ultimate Google Maps Lead Scraper",
-    description: "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses.",
+    title: "MapsReach - Best Google Maps Scraper for Lead Generation",
+    description: "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses. One-time payment, unlimited extractions.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "MapsReach - The Ultimate Google Maps Lead Scraper",
-    description: "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses.",
+    title: "MapsReach - Best Google Maps Scraper for Lead Generation",
+    description: "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses. One-time payment, unlimited extractions.",
   },
   icons: {
     icon: [
-      {
-        url: "/favicon.ico",
-        type: "image/x-icon",
-      },
-      {
-        url: "/icon-light-32x32.png",
-        sizes: "48x48",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        sizes: "48x48",
-        media: "(prefers-color-scheme: dark)",
-      },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", type: "image/x-icon" },
     ],
-    apple: "/apple-icon.png",
+    apple: "/apple-touch-icon.png",
   },
+  manifest: "/site.webmanifest",
 }
 
 export default function RootLayout({
@@ -71,7 +57,7 @@ export default function RootLayout({
     "name": "MapsReach",
     "url": "https://www.mapsreach.com",
     "logo": "https://www.mapsreach.com/logo.png",
-    "description": "Best free Google Maps scraper tool for lead generation. Best free B2B lead generation tool extracts leads from Google Maps business info free. Free Google Maps scraping lead generation tool B2B extract business info leads. Better than Outscraper Google Maps scraper pricing features, Phantombuster Google Maps Extractor pricing, TexAu Google Maps scraper pricing.",
+    "description": "Google Maps scraper tool for lead generation. Extract B2B leads from Google Maps in one click. One-time payment, unlimited extractions.",
     "sameAs": [],
     "contactPoint": {
       "@type": "ContactPoint",
@@ -83,22 +69,22 @@ export default function RootLayout({
   const softwareJsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "MapsReach - Best Free Google Maps Scraper Tool for Lead Generation 2026",
+    "name": "MapsReach - Google Maps Scraper for Lead Generation",
     "operatingSystem": "Chrome, Edge",
     "applicationCategory": "BusinessApplication",
-    "description": "Best free Google Maps scraper tool for lead generation. Free Google Maps scraper tools lead generation features free map scraper. Best free lead generation tool. Best free lead generation tools and platforms for 2026. Best free B2B lead generation tool extracts leads from Google Maps business info free. Free Google Maps scraping lead generation tool B2B extract business info leads.",
+    "description": "Google Maps scraper tool for lead generation. Extract B2B leads from Google Maps in one click. Export to CSV or Sheets. One-time payment, unlimited extractions.",
     "offers": {
       "@type": "Offer",
       "price": "59",
       "priceCurrency": "USD",
-      "description": "Best paid Google Maps scraper lead generation tool pricing. Compare to Outscraper Google Maps scraper pricing features, Phantombuster Google Maps Extractor pricing, TexAu Google Maps scraper pricing."
+      "description": "One-time payment for lifetime access. No monthly subscriptions."
     },
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": "4.9",
       "ratingCount": "2847"
     },
-    "keywords": "best free Google Maps scraper tool for lead generation, free Google Maps scraper tools lead generation features free map scraper, best free lead generation tool, best free lead generation tools and platforms for 2026, best free B2B lead generation tool extracts leads from Google Maps business info free, free Google Maps scraping lead generation tool B2B extract business info leads, best paid Google Maps scraper lead generation tool pricing, Outscraper Google Maps scraper pricing features, Phantombuster Google Maps Extractor pricing, TexAu Google Maps scraper pricing"
+    "keywords": "Google Maps scraper, lead generation tool, B2B leads, business data extraction, Google Maps extractor"
   };
 
   // FAQ Schema for rich snippets
@@ -108,41 +94,41 @@ export default function RootLayout({
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "What is the best free Google Maps scraper tool for lead generation?",
+        "name": "What is MapsReach?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "MapsReach is the best free Google Maps scraper tool for lead generation in 2026. It's a free B2B lead generation tool that extracts leads from Google Maps business info free. Free Google Maps scraper tools lead generation features include unlimited extractions, email extraction, phone numbers, and more."
+          "text": "MapsReach is a Google Maps scraper tool for lead generation. It extracts B2B leads from Google Maps with features like email extraction, phone numbers, and CSV export. One-time payment for lifetime access."
         }
       },
       {
         "@type": "Question",
-        "name": "How does MapsReach compare to Outscraper, Phantombuster, and TexAu pricing?",
+        "name": "How much does MapsReach cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "MapsReach offers better pricing than Outscraper Google Maps scraper pricing features, Phantombuster Google Maps Extractor pricing, and TexAu Google Maps scraper pricing. While competitors charge monthly fees, MapsReach offers a one-time payment for lifetime access. Best paid Google Maps scraper lead generation tool pricing at just $59."
+          "text": "MapsReach offers a one-time payment of $59 for lifetime access with unlimited extractions. No monthly subscriptions or hidden fees."
         }
       },
       {
         "@type": "Question",
-        "name": "What are the best free lead generation tools and platforms for 2026?",
+        "name": "What data can I extract with MapsReach?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "MapsReach is among the best free lead generation tools and platforms for 2026. It's the best free B2B lead generation tool that extracts leads from Google Maps business info free. Free Google Maps scraping lead generation tool B2B extract business info leads without monthly subscriptions."
+          "text": "MapsReach extracts business names, phone numbers, emails, websites, addresses, reviews, ratings, and social media links from Google Maps listings."
         }
       }
     ]
   };
 
-  // WebPage schema with additional keywords
+  // WebPage schema
   const webPageJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "MapsReach - Best Free Google Maps Scraper Tool for Lead Generation 2026",
-    "description": "Best free Google Maps scraper tool for lead generation. Free Google Maps scraper tools lead generation features free map scraper. Best free lead generation tool. Best free lead generation tools and platforms for 2026.",
+    "name": "MapsReach - Google Maps Scraper for Lead Generation",
+    "description": "Extract B2B leads from Google Maps in one click. One-time payment, unlimited extractions.",
     "about": {
       "@type": "Thing",
       "name": "Google Maps Lead Generation",
-      "description": "Best free B2B lead generation tool extracts leads from Google Maps business info free. Free Google Maps scraping lead generation tool B2B extract business info leads. Compare to Outscraper Google Maps scraper pricing features, Phantombuster Google Maps Extractor pricing, TexAu Google Maps scraper pricing."
+      "description": "Tool for extracting business leads from Google Maps including phones, emails, and addresses."
     }
   };
 

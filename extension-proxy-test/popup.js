@@ -803,8 +803,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         fullAddress,
         lead.instagram || '',
         lead.facebook || '',
-        lead.review_count || '',
-        lead.rating || '',
+        lead.reviewCount || '',
+        lead.averageRating || '',
         lead.category || ''
       ];
     });

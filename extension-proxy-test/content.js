@@ -144,8 +144,8 @@
       instagram: lead.instagram || '',
       facebook: lead.facebook || '',
       category: lead.category || '',
-      reviewCount: lead.review_count || '',
-      averageRating: lead.rating || ''
+      reviewCount: lead.reviewCount || '',
+      averageRating: lead.averageRating || ''
     });
     
     sentLeadKeys.add(key);
@@ -1677,8 +1677,8 @@
           `"${(lead.linkedin || '').replace(/"/g, '""')}"`,
           `"${(lead.youtube || '').replace(/"/g, '""')}"`,
           `"${(lead.tiktok || '').replace(/"/g, '""')}"`,
-          `"${lead.review_count || ''}"`,
-          `"${lead.rating || ''}"`,
+          `"${lead.reviewCount || ''}"`,
+          `"${lead.averageRating || ''}"`,
           `"${(lead.category || '').replace(/"/g, '""')}"`,
           `"${(lead.googleMapsLink || '').replace(/"/g, '""')}"`
         ].join(',');
