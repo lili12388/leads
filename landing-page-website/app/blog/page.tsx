@@ -6,32 +6,32 @@ import Link from "next/link"
 const blogPosts = [
   {
     slug: "mapsreach-vs-outscraper",
-    title: "MapsReach vs Outscraper: Honest Comparison for 2026",
-    description: "A transparent comparison of features, pricing, and use cases. We acknowledge where Outscraper excels and where MapsReach offers advantages.",
+    title: "MapsReach vs Outscraper: Best Google Maps Scraper Chrome Extension 2026",
+    description: "Looking for the best extension to scrape leads from Google Maps? A transparent comparison of the top Google Maps business data extractor extensions.",
     date: "January 15, 2026",
     category: "Comparison",
     readTime: "5 min read"
   },
   {
     slug: "mapsreach-vs-phantombuster",
-    title: "MapsReach vs Phantombuster: Which is Right for You?",
-    description: "Honest breakdown of both tools. Phantombuster offers more automation options, while MapsReach focuses on simplicity and one-time pricing.",
+    title: "MapsReach vs Phantombuster: Best Google Maps Lead Scraper 2026-2027",
+    description: "Searching for the best Google Maps business email extractor chrome extension? An honest breakdown comparing the top tools to scrape Google Maps leads.",
     date: "January 14, 2026",
     category: "Comparison",
     readTime: "6 min read"
   },
   {
     slug: "mapsreach-vs-texau",
-    title: "MapsReach vs TexAu: A Fair Comparison",
-    description: "TexAu is a powerful automation platform. Here's how MapsReach compares for Google Maps lead extraction specifically.",
+    title: "MapsReach vs TexAu: Best Chrome Extension to Scrape Google Maps Leads 2026",
+    description: "TexAu is a powerful automation platform. Looking for the best Google Maps scraper chrome extension? Here's how MapsReach compares.",
     date: "January 13, 2026",
     category: "Comparison",
     readTime: "5 min read"
   },
   {
     slug: "google-maps-lead-generation-guide",
-    title: "Complete Guide to Google Maps Lead Generation in 2026",
-    description: "Learn how to effectively use Google Maps for B2B lead generation. Tips, strategies, and best practices.",
+    title: "Complete Guide: How to Extract Leads from Google Maps in 2026-2027",
+    description: "Learn how to use the best Google Maps scraper chrome extension for B2B lead generation. Step-by-step guide to scrape Google Maps leads.",
     date: "January 10, 2026",
     category: "Guide",
     readTime: "8 min read"
@@ -73,11 +73,10 @@ export default function BlogPage() {
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="gradient-text">Blog & Comparisons</span>
+            <span className="gradient-text">Best Google Maps Scraper Chrome Extension Guide 2026</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Honest, transparent comparisons and guides to help you choose the right tool for your needs. 
-            We believe in providing real value, not marketing fluff.
+            Looking for the best extension to scrape leads from Google Maps? Honest comparisons of Google Maps business data extractor extensions and guides to help you choose the right tool.
           </p>
         </div>
       </section>

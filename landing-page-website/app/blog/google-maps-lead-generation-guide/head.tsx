@@ -1,8 +1,15 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Complete Guide to Google Maps Lead Generation in 2026 - MapsReach Blog",
-  description: "Learn how to effectively use Google Maps for B2B lead generation. Tips, strategies, and best practices for extracting quality business leads.",
+  title: "How to Extract Leads from Google Maps 2026-2027 Guide | MapsReach",
+  description: "Complete guide to using the best Google Maps scraper chrome extension. Learn how to scrape Google Maps leads with a business data extractor extension.",
+  keywords: [
+    "extract leads from Google Maps",
+    "Google Maps scraper chrome extension",
+    "Google Maps business data extractor extension",
+    "scrape Google Maps leads",
+    "Google Maps lead generation 2026 2027"
+  ]
 }
 
 export default function Head() {

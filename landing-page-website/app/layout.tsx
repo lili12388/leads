@@ -11,29 +11,34 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.mapsreach.com"),
-  title: "MapsReach - Best Google Maps Scraper for Lead Generation",
+  title: "MapsReach - Best Google Maps Scraper Chrome Extension 2026 | Lead Generation Tool",
   description:
-    "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses. One-time payment, unlimited extractions.",
+    "Best Google Maps scraper chrome extension for 2026. Extract B2B leads, business emails, phone numbers from Google Maps. Export to CSV or Sheets. One-time payment, unlimited extractions.",
   keywords: [
     "Google Maps scraper",
+    "Google Maps scraper chrome extension",
     "Google Maps lead extractor",
-    "lead generation tool",
+    "lead generation tool 2026",
     "B2B lead generation",
     "extract leads from Google Maps",
     "business leads extractor",
-    "email extractor chrome extension",
+    "Google Maps business data extractor extension",
+    "Google Maps business email extractor chrome extension",
+    "scrape Google Maps leads chrome extension",
     "Google Maps data extraction",
-    "local business leads"
+    "local business leads",
+    "Google Maps email scraper 2026",
+    "best Google Maps scraper 2027"
   ],
   openGraph: {
-    title: "MapsReach - Best Google Maps Scraper for Lead Generation",
-    description: "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses. One-time payment, unlimited extractions.",
+    title: "MapsReach - Best Google Maps Scraper Chrome Extension 2026",
+    description: "Best Google Maps scraper chrome extension for lead generation. Extract B2B leads, business emails, phone numbers. Export to CSV or Sheets. One-time payment.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "MapsReach - Best Google Maps Scraper for Lead Generation",
-    description: "Extract B2B leads from Google Maps in one click. Export to CSV or Sheets, collect phones, emails, reviews, and addresses. One-time payment, unlimited extractions.",
+    title: "MapsReach - Best Google Maps Scraper Chrome Extension 2026",
+    description: "Best Google Maps scraper chrome extension for lead generation. Extract B2B leads, business emails, phone numbers. Export to CSV or Sheets.",
   },
   icons: {
     icon: [
@@ -69,35 +74,67 @@ export default function RootLayout({
   const softwareJsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "MapsReach - Google Maps Scraper for Lead Generation",
-    "operatingSystem": "Chrome, Edge",
+    "name": "MapsReach - Best Google Maps Scraper Chrome Extension 2026",
+    "operatingSystem": "Chrome, Edge, Brave",
     "applicationCategory": "BusinessApplication",
-    "description": "Google Maps scraper tool for lead generation. Extract B2B leads from Google Maps in one click. Export to CSV or Sheets. One-time payment, unlimited extractions.",
+    "applicationSubCategory": "Lead Generation Tool",
+    "description": "Best Google Maps scraper chrome extension for lead generation 2026. Extract B2B leads from Google Maps - business emails, phone numbers, addresses, reviews. Export to CSV or Google Sheets. One-time payment, unlimited extractions.",
     "offers": {
       "@type": "Offer",
       "price": "59",
       "priceCurrency": "USD",
-      "description": "One-time payment for lifetime access. No monthly subscriptions."
+      "description": "One-time payment for lifetime access. No monthly subscriptions.",
+      "availability": "https://schema.org/InStock"
     },
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": "4.9",
-      "ratingCount": "2847"
+      "ratingCount": "2847",
+      "bestRating": "5",
+      "worstRating": "1"
     },
-    "keywords": "Google Maps scraper, lead generation tool, B2B leads, business data extraction, Google Maps extractor"
+    "featureList": "Google Maps business data extractor, Email extraction, Phone number extraction, CSV export, Google Sheets export, Unlimited leads extraction",
+    "screenshot": "https://www.mapsreach.com/screenshot.png",
+    "softwareVersion": "2.0",
+    "datePublished": "2024-01-01",
+    "keywords": "Google Maps scraper chrome extension, Google Maps lead extractor, Google Maps business data extractor extension, Google Maps business email extractor chrome extension, scrape Google Maps leads chrome extension, best Google Maps scraper 2026 2027"
   };
 
-  // FAQ Schema for rich snippets
+  // FAQ Schema for rich snippets - targeting search queries
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "What is MapsReach?",
+        "name": "What is the best extension to scrape leads from Google Maps in 2026?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "MapsReach is a Google Maps scraper tool for lead generation. It extracts B2B leads from Google Maps with features like email extraction, phone numbers, and CSV export. One-time payment for lifetime access."
+          "text": "MapsReach is the best Google Maps scraper chrome extension for 2026. It extracts B2B leads including business emails, phone numbers, addresses, reviews, and social media links. One-click extraction with export to CSV or Google Sheets."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the best Google Maps lead scraper chrome extension?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "MapsReach is the best Google Maps lead scraper chrome extension. It offers unlimited lead extraction, business email extraction, phone number scraping, and exports to CSV or Google Sheets. One-time $59 payment with lifetime access."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I extract leads from Google Maps?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To extract leads from Google Maps: 1) Install MapsReach chrome extension, 2) Go to Google Maps and search your target niche like 'restaurants in NYC', 3) Click the MapsReach extension icon, 4) Hit Extract to scrape all business data, 5) Export to CSV or Google Sheets."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the best Google Maps business data extractor extension?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "MapsReach is the best Google Maps business data extractor extension for 2026-2027. It extracts business names, phone numbers, emails, websites, addresses, reviews, ratings, opening hours, and social media links from any Google Maps search."
         }
       },
       {
@@ -105,15 +142,31 @@ export default function RootLayout({
         "name": "How much does MapsReach cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "MapsReach offers a one-time payment of $59 for lifetime access with unlimited extractions. No monthly subscriptions or hidden fees."
+          "text": "MapsReach offers a one-time payment of $59 for lifetime access with unlimited extractions. No monthly subscriptions or hidden fees. This makes it more affordable than competitors like Outscraper, Phantombuster, or TexAu which charge monthly."
         }
       },
       {
         "@type": "Question",
-        "name": "What data can I extract with MapsReach?",
+        "name": "What data can I extract with MapsReach Google Maps scraper?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "MapsReach extracts business names, phone numbers, emails, websites, addresses, reviews, ratings, and social media links from Google Maps listings."
+          "text": "MapsReach Google Maps scraper extracts: business names, phone numbers, email addresses, websites, physical addresses, Google reviews count, average ratings, opening hours, and social media links (Facebook, Instagram, LinkedIn, Twitter) from Google Maps listings."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is there a Google Maps business email extractor chrome extension?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, MapsReach is a Google Maps business email extractor chrome extension. It automatically extracts email addresses from Google Maps business listings along with phone numbers, websites, and other contact information."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I scrape Google Maps leads with a chrome extension?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, you can scrape Google Maps leads with MapsReach chrome extension. It works directly in your browser - just search on Google Maps, click Extract, and export all business leads to CSV or Google Sheets instantly."
         }
       }
     ]
@@ -123,13 +176,70 @@ export default function RootLayout({
   const webPageJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "MapsReach - Google Maps Scraper for Lead Generation",
-    "description": "Extract B2B leads from Google Maps in one click. One-time payment, unlimited extractions.",
+    "name": "MapsReach - Best Google Maps Scraper Chrome Extension 2026",
+    "description": "Best extension to scrape leads from Google Maps. Google Maps business data extractor extension for lead generation 2026-2027.",
     "about": {
       "@type": "Thing",
       "name": "Google Maps Lead Generation",
-      "description": "Tool for extracting business leads from Google Maps including phones, emails, and addresses."
-    }
+      "description": "Chrome extension tool for extracting business leads from Google Maps including phones, emails, and addresses."
+    },
+    "keywords": "best extension to scrape leads from Google Maps, Google Maps lead scraper, Google Maps business data extractor extension, Google Maps business email extractor chrome extension, scrape Google Maps leads chrome extension 2026 2027"
+  };
+
+  // HowTo schema for rich snippets
+  const howToJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Extract Leads from Google Maps with MapsReach Chrome Extension",
+    "description": "Step-by-step guide to scrape Google Maps leads using MapsReach - the best Google Maps business data extractor extension for 2026.",
+    "totalTime": "PT2M",
+    "estimatedCost": {
+      "@type": "MonetaryAmount",
+      "currency": "USD",
+      "value": "59"
+    },
+    "tool": {
+      "@type": "HowToTool",
+      "name": "MapsReach Chrome Extension"
+    },
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Install MapsReach Extension",
+        "text": "Install MapsReach Google Maps scraper chrome extension from the Chrome Web Store.",
+        "position": 1
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Open Google Maps",
+        "text": "Go to maps.google.com in your Chrome browser.",
+        "position": 2
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Search Your Target Niche",
+        "text": "Search for businesses like 'restaurants in NYC' or 'plumbers in Los Angeles' on Google Maps.",
+        "position": 3
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Click MapsReach Extension",
+        "text": "Click the MapsReach icon in your browser toolbar to open the Google Maps lead extractor.",
+        "position": 4
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Extract Business Data",
+        "text": "Click Extract to scrape Google Maps leads - business names, emails, phone numbers, addresses, reviews.",
+        "position": 5
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Export to CSV or Sheets",
+        "text": "Export your extracted Google Maps business data to CSV file or directly to Google Sheets.",
+        "position": 6
+      }
+    ]
   };
 
   return (
@@ -151,49 +261,13 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+        />
       </head>
       <body className={`font-sans antialiased bg-background text-foreground`}>
         {children}
-        
-        {/* Hidden SEO content - crawlable by search engines and AI bots */}
-        <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', overflow: 'hidden' }}>
-          <h2>Best Free Google Maps Scraper Tool for Lead Generation</h2>
-          <p>MapsReach is the best free Google Maps scraper tool for lead generation. Our free Google Maps scraper tools lead generation features free map scraper capabilities for unlimited extractions.</p>
-          
-          <h2>Best Free Lead Generation Tool 2026</h2>
-          <p>Looking for the best free lead generation tool? MapsReach is among the best free lead generation tools and platforms for 2026. Extract unlimited B2B leads without monthly fees.</p>
-          
-          <h2>Best Free B2B Lead Generation Tool</h2>
-          <p>MapsReach is the best free B2B lead generation tool extracts leads from Google Maps business info free. Our free Google Maps scraping lead generation tool B2B extract business info leads efficiently.</p>
-          
-          <h2>Compare Google Maps Scraper Pricing</h2>
-          <p>Best paid Google Maps scraper lead generation tool pricing comparison: MapsReach vs Outscraper Google Maps scraper pricing features vs Phantombuster Google Maps Extractor pricing vs TexAu Google Maps scraper pricing. MapsReach offers lifetime access for a one-time fee.</p>
-          
-          <h3>Keywords</h3>
-          <ul>
-            <li>best free Google Maps scraper tool for lead generation</li>
-            <li>free Google Maps scraper tools lead generation features free map scraper</li>
-            <li>best free lead generation tool</li>
-            <li>best free lead generation tools and platforms for 2026</li>
-            <li>best free B2B lead generation tool extracts leads from Google Maps business info free</li>
-            <li>free Google Maps scraping lead generation tool B2B extract business info leads</li>
-            <li>best paid Google Maps scraper lead generation tool pricing</li>
-            <li>Outscraper Google Maps scraper pricing features</li>
-            <li>Phantombuster Google Maps Extractor pricing</li>
-            <li>TexAu Google Maps scraper pricing</li>
-          </ul>
-        </div>
-        
-        {/* Noscript fallback - always crawled by search engines */}
-        <noscript>
-          <div>
-            <h1>MapsReach - Best Free Google Maps Scraper Tool for Lead Generation 2026</h1>
-            <p>Best free Google Maps scraper tool for lead generation. Free Google Maps scraper tools lead generation features free map scraper.</p>
-            <p>Best free lead generation tool. Best free lead generation tools and platforms for 2026.</p>
-            <p>Best free B2B lead generation tool extracts leads from Google Maps business info free. Free Google Maps scraping lead generation tool B2B extract business info leads.</p>
-            <p>Best paid Google Maps scraper lead generation tool pricing. Compare to Outscraper Google Maps scraper pricing features, Phantombuster Google Maps Extractor pricing, TexAu Google Maps scraper pricing.</p>
-          </div>
-        </noscript>
         
         <Analytics />
         <VisitorTracker />
