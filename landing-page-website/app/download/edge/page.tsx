@@ -95,9 +95,6 @@ export default function EdgeDownloadPage() {
             Download for Edge
           </a>
         </div>
-      </section></span>
-          </div>
-        </div>
       </section>
 
       {/* Installation Steps */}
