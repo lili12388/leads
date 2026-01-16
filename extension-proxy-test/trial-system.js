@@ -337,8 +337,11 @@ const TrialSystem = (function() {
   
   /**
    * Show export limit modal (when user tries to export more than 100)
+   * @param {number} totalCollected - Total leads collected
+   * @param {number} exportLimit - Max leads in free version
+   * @param {function} onContinue - Callback to execute CSV download when user clicks continue
    */
-  function showExportLimitModal(totalCollected, exportLimit) {
+  function showExportLimitModal(totalCollected, exportLimit, onContinue) {
     // Remove existing modal if any
     const existing = document.getElementById('mapsreach-upgrade-modal');
     if (existing) existing.remove();
@@ -386,9 +389,19 @@ const TrialSystem = (function() {
           }
         }
         
-        .mapsreach-modal-icon {
-          font-size: 64px;
-          margin-bottom: 20px;
+        .mapsreach-modal-logo {
+          width: 80px;
+          height: 80px;
+          margin: 0 auto 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .mapsreach-modal-logo img {
+          width: 80px;
+          height: 80px;
+          border-radius: 16px;
         }
         
         .mapsreach-modal-title {
@@ -404,6 +417,10 @@ const TrialSystem = (function() {
           font-size: 16px;
           margin-bottom: 24px;
           line-height: 1.6;
+        }
+        
+        .mapsreach-modal-subtitle strong {
+          color: #f8fafc;
         }
         
         .mapsreach-export-stats {
@@ -448,17 +465,18 @@ const TrialSystem = (function() {
           font-size: 13px;
         }
         
-        .mapsreach-locked-message {
-          background: rgba(239, 68, 68, 0.1);
-          border: 1px solid rgba(239, 68, 68, 0.2);
+        .mapsreach-unlock-banner {
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(147, 51, 234, 0.15) 100%);
+          border: 1px solid rgba(59, 130, 246, 0.3);
           border-radius: 12px;
           padding: 16px;
           margin-bottom: 24px;
         }
         
-        .mapsreach-locked-message p {
-          color: #fca5a5;
-          font-size: 14px;
+        .mapsreach-unlock-banner p {
+          color: #93c5fd;
+          font-size: 15px;
+          font-weight: 500;
           margin: 0;
           display: flex;
           align-items: center;
@@ -535,48 +553,66 @@ const TrialSystem = (function() {
       </style>
       
       <div class="mapsreach-modal-content" style="position: relative;">
-        <button class="mapsreach-modal-close" onclick="document.getElementById('mapsreach-upgrade-modal').remove()">×</button>
+        <button class="mapsreach-modal-close" id="mapsreach-close-btn">×</button>
         
-        <div class="mapsreach-modal-icon">🔒</div>
+        <div class="mapsreach-modal-logo">
+          <img src="${chrome.runtime.getURL('icons/logo.png')}" alt="MapsReach" style="width: 48px; height: 48px; border-radius: 8px;">
+        </div>
         
-        <h2 class="mapsreach-modal-title">You Collected ${totalCollected} Leads!<br>But Can Only Export ${exportLimit}...</h2>
+        <h2 class="mapsreach-modal-title">🎉 Amazing! You Found ${totalCollected} Leads!</h2>
         
         <p class="mapsreach-modal-subtitle">
-          Your free license limits exports to ${exportLimit} leads per session. Upgrade to unlock unlimited exports!
+          Your <strong>free version</strong> includes a one-time export of <strong>${exportLimit} leads</strong>.<br>
+          Upgrade now to unlock all ${totalCollected} leads + unlimited future exports!
         </p>
         
         <div class="mapsreach-export-stats">
           <div class="mapsreach-export-stat exported">
             <div class="mapsreach-export-stat-value">✓ ${exportLimit}</div>
-            <div class="mapsreach-export-stat-label">Exported to CSV</div>
+            <div class="mapsreach-export-stat-label">Available Now</div>
           </div>
           <div class="mapsreach-export-stat locked">
             <div class="mapsreach-export-stat-value">🔒 ${lockedLeads}</div>
-            <div class="mapsreach-export-stat-label">Locked Leads</div>
+            <div class="mapsreach-export-stat-label">Needs Upgrade</div>
           </div>
         </div>
         
-        <div class="mapsreach-locked-message">
-          <p>🔐 ${lockedLeads} leads are waiting for you! Upgrade to export them all.</p>
+        <div class="mapsreach-unlock-banner">
+          <p>✨ Unlock unlimited exports forever — one payment, lifetime access!</p>
         </div>
         
         <button class="mapsreach-modal-cta" onclick="window.open('https://mapsreach.com/pricing', '_blank')">
-          🚀 Unlock Unlimited Exports - $59
+          Upgrade Now - Only $59
         </button>
         
-        <button class="mapsreach-modal-secondary" onclick="document.getElementById('mapsreach-upgrade-modal').remove()">
-          Continue with ${exportLimit} leads
+        <button class="mapsreach-modal-secondary" id="mapsreach-continue-btn">
+          Download ${exportLimit} leads only
         </button>
         
         <p class="mapsreach-modal-price">
-          One-time payment • <span>Lifetime access</span> • No subscriptions
+          One-time payment • <span>Lifetime access</span> • No subscriptions ever
         </p>
       </div>
     `;
     
     document.body.appendChild(modal);
     
-    // Close on backdrop click
+    // Handle Continue button - download CSV and close
+    const continueBtn = modal.querySelector('#mapsreach-continue-btn');
+    continueBtn.addEventListener('click', () => {
+      modal.remove();
+      if (typeof onContinue === 'function') {
+        onContinue();
+      }
+    });
+    
+    // Handle close button - just close, no download
+    const closeBtn = modal.querySelector('#mapsreach-close-btn');
+    closeBtn.addEventListener('click', () => {
+      modal.remove();
+    });
+    
+    // Close on backdrop click - just close, no download
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         modal.remove();

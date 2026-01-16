@@ -263,12 +263,28 @@ export default function Home() {
             <a href="/blog" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Blog</a>
           </div>
           
-          <a
-            href="/coming-soon"
-            className="px-6 py-3 bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] text-white font-semibold rounded-full text-base hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200"
-          >
-            Try for Free
-          </a>
+          <div className="flex items-center">
+            <a
+              href="/download/chrome"
+              className="px-5 py-3 bg-gradient-to-r from-[#4285F4] to-[#1a73e8] text-white font-semibold rounded-l-full text-sm hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200 flex items-center gap-2 border-r border-white/20"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="18" fill="white" fillOpacity="0.2"/>
+                <circle cx="24" cy="24" r="7" fill="white"/>
+              </svg>
+              Chrome
+            </a>
+            <a
+              href="/download/edge"
+              className="px-5 py-3 bg-gradient-to-r from-[#0078D4] to-[#1CA3EC] text-white font-semibold rounded-r-full text-sm hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-200 flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="18" fill="white" fillOpacity="0.2"/>
+                <circle cx="24" cy="24" r="7" fill="white"/>
+              </svg>
+              Edge
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -402,18 +418,41 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* CTA Button */}
+              {/* CTA Buttons - Split Chrome/Edge */}
               <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000" style={{ transitionDelay: "300ms" }}>
-                <a
-                  href="/coming-soon"
-                  className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-full text-lg hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 mb-3"
-                >
-                  <span>Add to Chrome</span>
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </a>
-                <p className="text-sm text-muted-foreground mt-3">→ Available in the Chrome Web Store</p>
+                <p className="text-sm text-muted-foreground mb-3">Choose your browser to get started:</p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <a
+                    href="/download/chrome"
+                    className="group inline-flex items-center justify-center gap-3 px-7 py-4 bg-gradient-to-r from-[#4285F4] to-[#1a73e8] text-white font-semibold rounded-xl text-lg hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105"
+                  >
+                    <svg className="w-6 h-6" viewBox="0 0 48 48">
+                      <circle cx="24" cy="24" r="20" fill="#fff" fillOpacity="0.15"/>
+                      <circle cx="24" cy="24" r="8" fill="white"/>
+                      <path d="M24 4a20 20 0 0116.97 9.39l-9.49 5.48a8 8 0 00-7.48-5.14V4z" fill="#fff" fillOpacity="0.6"/>
+                      <path d="M40.97 13.39A20 20 0 0144 24a20 20 0 01-7.03 15.18l-9.49-16.44a8 8 0 00.52-6.87l12.97-2.48z" fill="#fff" fillOpacity="0.4"/>
+                      <path d="M36.97 39.18A20 20 0 014 24a20 20 0 013.03-10.61l9.49 16.44a8 8 0 007.48 2.74l12.97 6.61z" fill="#fff" fillOpacity="0.5"/>
+                    </svg>
+                    <span>Add to Chrome</span>
+                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </a>
+                  <a
+                    href="/download/edge"
+                    className="group inline-flex items-center justify-center gap-3 px-7 py-4 bg-gradient-to-r from-[#0078D4] to-[#1CA3EC] text-white font-semibold rounded-xl text-lg hover:shadow-xl hover:shadow-cyan-500/40 transition-all duration-300 hover:scale-105"
+                  >
+                    <svg className="w-6 h-6" viewBox="0 0 48 48">
+                      <circle cx="24" cy="24" r="20" fill="#fff" fillOpacity="0.15"/>
+                      <path d="M24 8c-8.837 0-16 7.163-16 16 0 4.418 1.791 8.418 4.686 11.314C15.58 32.418 19.58 30 24 30c8.837 0 16-7.163 16-16 0-3.313-1.005-6.392-2.729-8.951C34.392 9.005 29.313 8 24 8z" fill="#fff" fillOpacity="0.5"/>
+                    </svg>
+                    <span>Add to Edge</span>
+                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </a>
+                </div>
+                <p className="text-sm text-muted-foreground mt-4">🎁 100 Free Leads — No Credit Card Required</p>
               </div>
             </div>
 

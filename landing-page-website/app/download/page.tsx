@@ -1,53 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
 
 export default function DownloadPage() {
-  const [currentStep, setCurrentStep] = useState(1)
-
-  const steps = [
-    {
-      number: 1,
-      title: "Download the Extension",
-      description: "Click the download button below to get the MapsReach extension folder.",
-      gif: "/download-gifs/step1-download.gif",
-      placeholder: "📥 Downloading extension folder..."
-    },
-    {
-      number: 2,
-      title: "Unzip the Folder",
-      description: "Extract the downloaded ZIP file to a folder on your computer. Remember where you save it!",
-      gif: "/download-gifs/step2-unzip.gif",
-      placeholder: "📁 Extracting files..."
-    },
-    {
-      number: 3,
-      title: "Open Chrome Extensions",
-      description: "Open Chrome and go to chrome://extensions or click Menu → More Tools → Extensions.",
-      gif: "/download-gifs/step3-extensions.gif",
-      placeholder: "🔧 Opening extensions page..."
-    },
-    {
-      number: 4,
-      title: "Enable Developer Mode",
-      description: "Toggle ON the 'Developer mode' switch in the top-right corner of the extensions page.",
-      gif: "/download-gifs/step4-devmode.gif",
-      placeholder: "👨‍💻 Enabling developer mode..."
-    },
-    {
-      number: 5,
-      title: "Load the Extension",
-      description: "Click 'Load unpacked' and select the folder you extracted in step 2.",
-      gif: "/download-gifs/step5-load.gif",
-      placeholder: "🚀 Loading MapsReach..."
-    }
-  ]
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-[#020a18] via-[#041225] to-[#020510]">
       {/* Header */}
-      <header className="py-0 px-8 border-b border-border">
+      <header className="py-0 px-8 border-b border-border/30">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition-opacity">
             <img src="/logo.png" alt="MapsReach" className="h-28 w-auto" />
@@ -62,191 +21,105 @@ export default function DownloadPage() {
           <div className="hidden md:flex items-center gap-4">
             <Link href="/pricing" className="text-accent hover:text-foreground transition-all duration-300 text-base font-semibold px-4 py-2 rounded-lg border border-accent/30 hover:border-accent/60 hover:bg-accent/10">💰 Pricing</Link>
             <Link href="/" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10">Home</Link>
-            <Link href="/blog" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10">Blog</Link>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="py-12 px-4">
+      <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/30 rounded-full mb-6">
-            <span className="text-2xl">🎉</span>
-            <span className="text-primary font-medium">Get 100 Free Leads to Start!</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-full mb-6">
+            <span className="text-2xl">🎁</span>
+            <span className="text-green-400 font-medium">100 Free Leads Included — No Credit Card Required!</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Download <span className="text-primary">MapsReach</span> Extension
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+            Choose Your <span className="text-primary">Browser</span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Follow these simple steps to install MapsReach and start extracting leads from Google Maps in minutes.
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+            Select your browser below to get started with MapsReach. Installation takes less than 2 minutes!
           </p>
-          
-          {/* Download Button */}
-          <a
-            href="/downloads/mapsreach-extension.zip"
-            download
-            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] text-white font-bold rounded-xl text-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200 mb-4"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download MapsReach Extension
-          </a>
-          <p className="text-sm text-muted-foreground">Version 1.0 • Works with Chrome, Edge, Brave</p>
-        </div>
-      </section>
 
-      {/* Steps Section */}
-      <section className="py-8 px-4 pb-20">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">Installation Guide</h2>
-          
-          {/* Step Navigation */}
-          <div className="flex justify-center gap-2 mb-8 flex-wrap">
-            {steps.map((step) => (
-              <button
-                key={step.number}
-                onClick={() => setCurrentStep(step.number)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  currentStep === step.number
-                    ? "bg-primary text-white"
-                    : "bg-card border border-border hover:border-primary/50"
-                }`}
-              >
-                Step {step.number}
-              </button>
-            ))}
-          </div>
-
-          {/* Current Step Display */}
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            <div className="p-6 border-b border-border">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
-                  <span className="text-primary font-bold text-xl">{currentStep}</span>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">{steps[currentStep - 1].title}</h3>
-                  <p className="text-muted-foreground">{steps[currentStep - 1].description}</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* GIF Display Area */}
-            <div className="aspect-video bg-muted/20 flex items-center justify-center">
-              {/* Placeholder for GIF - replace with actual GIFs later */}
-              <div className="text-center p-8">
-                <div className="w-24 h-24 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <span className="text-5xl">
-                    {currentStep === 1 && "📥"}
-                    {currentStep === 2 && "📁"}
-                    {currentStep === 3 && "🔧"}
-                    {currentStep === 4 && "👨‍💻"}
-                    {currentStep === 5 && "🚀"}
-                  </span>
-                </div>
-                <p className="text-muted-foreground text-lg">{steps[currentStep - 1].placeholder}</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  (Tutorial GIF will appear here)
-                </p>
-              </div>
-            </div>
-
-            {/* Navigation Buttons */}
-            <div className="p-6 flex justify-between items-center border-t border-border">
-              <button
-                onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-                disabled={currentStep === 1}
-                className={`px-6 py-2 rounded-lg font-medium flex items-center gap-2 ${
-                  currentStep === 1
-                    ? "text-muted-foreground cursor-not-allowed"
-                    : "bg-muted hover:bg-muted/80"
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          {/* Browser Selection Cards */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            {/* Chrome Card */}
+            <Link
+              href="/download/chrome"
+              className="group p-8 rounded-2xl border-2 border-border/50 bg-card/30 hover:border-[#4285F4] hover:bg-[#4285F4]/5 transition-all duration-300"
+            >
+              <div className="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <svg className="w-12 h-12" viewBox="0 0 48 48">
+                  <circle cx="24" cy="24" r="20" fill="#4285F4"/>
+                  <circle cx="24" cy="24" r="8" fill="white"/>
+                  <path d="M24 4a20 20 0 0116.97 9.39l-9.49 5.48a8 8 0 00-7.48-5.14V4z" fill="#EA4335"/>
+                  <path d="M40.97 13.39A20 20 0 0144 24a20 20 0 01-7.03 15.18l-9.49-16.44a8 8 0 00.52-6.87l12.97-2.48z" fill="#FBBC05"/>
+                  <path d="M36.97 39.18A20 20 0 014 24a20 20 0 013.03-10.61l9.49 16.44a8 8 0 007.48 2.74l12.97 6.61z" fill="#34A853"/>
                 </svg>
-                Previous
-              </button>
-              
-              {currentStep < 5 ? (
-                <button
-                  onClick={() => setCurrentStep(Math.min(5, currentStep + 1))}
-                  className="px-6 py-2 bg-primary text-white rounded-lg font-medium flex items-center gap-2 hover:bg-primary/90"
-                >
-                  Next Step
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              ) : (
-                <div className="flex items-center gap-2 text-accent font-medium">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  You're all set!
-                </div>
-              )}
-            </div>
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Google Chrome</h2>
+              <p className="text-muted-foreground mb-6">Most popular browser worldwide</p>
+              <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#4285F4] to-[#1a73e8] text-white font-semibold rounded-xl group-hover:shadow-lg group-hover:shadow-blue-500/30 transition-all">
+                <span>Get for Chrome</span>
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
+            </Link>
+
+            {/* Edge Card */}
+            <Link
+              href="/download/edge"
+              className="group p-8 rounded-2xl border-2 border-border/50 bg-card/30 hover:border-[#0078D4] hover:bg-[#0078D4]/5 transition-all duration-300"
+            >
+              <div className="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <svg className="w-12 h-12" viewBox="0 0 48 48">
+                  <defs>
+                    <linearGradient id="edge1" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#0078D4"/>
+                      <stop offset="100%" stopColor="#1CA3EC"/>
+                    </linearGradient>
+                    <linearGradient id="edge2" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#50E6FF"/>
+                      <stop offset="100%" stopColor="#32BEDD"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="24" cy="24" r="20" fill="url(#edge1)"/>
+                  <path d="M24 8c-8.837 0-16 7.163-16 16 0 4.418 1.791 8.418 4.686 11.314C15.58 32.418 19.58 30 24 30c8.837 0 16-7.163 16-16 0-3.313-1.005-6.392-2.729-8.951C34.392 9.005 29.313 8 24 8z" fill="url(#edge2)" opacity="0.8"/>
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Microsoft Edge</h2>
+              <p className="text-muted-foreground mb-6">Windows default browser</p>
+              <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#0078D4] to-[#1CA3EC] text-white font-semibold rounded-xl group-hover:shadow-lg group-hover:shadow-cyan-500/30 transition-all">
+                <span>Get for Edge</span>
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
+            </Link>
           </div>
 
-          {/* All Steps Quick Reference */}
-          <div className="mt-12">
-            <h3 className="text-xl font-bold text-center mb-6">Quick Reference</h3>
-            <div className="grid md:grid-cols-5 gap-4">
-              {steps.map((step) => (
-                <div
-                  key={step.number}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                    currentStep === step.number
-                      ? "bg-primary/10 border-primary"
-                      : "bg-card border-border hover:border-primary/50"
-                  }`}
-                  onClick={() => setCurrentStep(step.number)}
-                >
-                  <div className="text-3xl mb-2">
-                    {step.number === 1 && "📥"}
-                    {step.number === 2 && "📁"}
-                    {step.number === 3 && "🔧"}
-                    {step.number === 4 && "👨‍💻"}
-                    {step.number === 5 && "🚀"}
-                  </div>
-                  <p className="font-medium text-sm">{step.title}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Help Section */}
-      <section className="py-12 px-4 bg-card border-t border-border">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-4">Need Help?</h2>
-          <p className="text-muted-foreground mb-6">
-            Having trouble installing? Our support team is here to help.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              href="/contact"
-              className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              Contact Support
-            </Link>
-            <Link
-              href="/blog/google-maps-lead-generation-guide"
-              className="px-6 py-3 bg-muted hover:bg-muted/80 font-medium rounded-lg transition-colors"
-            >
-              Read Our Guide
-            </Link>
+          {/* Also Works With */}
+          <div className="mt-12 p-6 bg-card/30 rounded-xl border border-border/50 max-w-2xl mx-auto">
+            <p className="text-muted-foreground">
+              <span className="text-foreground font-semibold">Also works with:</span> Brave, Opera, Vivaldi, and any Chromium-based browser
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Use the Chrome instructions for other Chromium browsers
+            </p>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 px-4">
+      <footer className="py-8 px-4 border-t border-border/30 mt-auto">
         <div className="max-w-6xl mx-auto text-center text-muted-foreground text-sm">
           <p>© 2026 MapsReach. All rights reserved.</p>
+          <div className="mt-2 flex items-center justify-center gap-4">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <span>•</span>
+            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+            <span>•</span>
+            <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+          </div>
         </div>
       </footer>
     </div>

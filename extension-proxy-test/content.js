@@ -42,6 +42,7 @@
   let isWaitingForSearchRefresh = false;
   let hasReceivedSearchData = false;
   let userClickedStart = false;  // Track if user has clicked Start button
+  let hasUsedFreeExport = false;  // Track if user has used their one-time free export
   
   // Trial system state
   let trialStatus = null;
@@ -103,21 +104,12 @@
   }
   
   function updateTrialUI() {
-    // Trial badge no longer needed since we allow unlimited collection
-    // Just show "Free License" indicator
-    const trialBadge = document.getElementById('gme-trial-badge');
-    if (trialBadge) {
-      if (isLicenseValid) {
-        trialBadge.innerHTML = `<span style="color: #22c55e;">✓ Pro License</span>`;
-      } else {
-        trialBadge.innerHTML = `<span style="color: #60a5fa;">Free (100 export limit)</span>`;
-      }
-    }
+    // Badge removed - users shouldn't know about the limit until export
   }
   
-  function showExportLimitModal(totalLeads, exportLimit) {
+  function showExportLimitModal(totalLeads, exportLimit, onContinue) {
     if (typeof TrialSystem !== 'undefined') {
-      TrialSystem.showExportLimitModal(totalLeads, exportLimit);
+      TrialSystem.showExportLimitModal(totalLeads, exportLimit, onContinue);
     }
   }
   
@@ -532,6 +524,8 @@
           // License just activated - create panel if not exists
           createFloatingPanel();
           setupSearchListeners();
+          // Remove upgrade prompts since user is now licensed
+          removeUpgradePrompts();
         } else {
           // License deactivated - remove panel
           const panel = document.getElementById('gme-floating-panel');
@@ -666,14 +660,8 @@
     isCreatingPanel = true;
     
     try {
-      // Check license status first
-      const hasLicense = await checkLicenseStatus();
-      
-      // DON'T SHOW PANEL AT ALL if no license
-      if (!hasLicense) {
-        isCreatingPanel = false;
-        return;
-      }
+      // FREE MODE: Skip license check - panel always shows
+      // License only checked when exporting > 100 leads
       
       // Double-check panel doesn't exist (race condition)
       if (document.getElementById('gme-floating-panel')) {
@@ -697,7 +685,6 @@
         <div class="gme-header-content">
           <img src="${chrome.runtime.getURL('icons/logo.png')}" class="gme-logo-img" alt="MapsReach" style="width: 24px; height: 24px; border-radius: 4px;">
           <h3>MapsReach</h3>
-          <span id="gme-trial-badge" class="gme-trial-badge" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(34, 197, 94, 0.1); margin-left: 8px;">Loading...</span>
         </div>
         <div class="gme-header-actions">
           <button class="gme-theme-toggle" id="gme-theme-toggle" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
@@ -930,16 +917,8 @@
           return;
         }
         
-        // CRITICAL FIX: If we're waiting for search data and we receive ANY search-related data, trigger extraction
-        // This ensures "Search this area" click always works, even if data parsing fails
-        const wasWaiting = isWaitingForSearchRefresh;
-        
+        // Process the data - extraction and trigger logic handled inside
         processInterceptedData(payload.data);
-        
-        // Backup: If we were waiting and still waiting after processing, force trigger
-        if (wasWaiting && isWaitingForSearchRefresh && userClickedStart) {
-          onSearchDataReceived();
-        }
       }
       return;
     }
@@ -1035,9 +1014,8 @@
         }
       }
       
-      if (businessesFound > 0 || isWaitingForSearchRefresh) {
-        // CRITICAL: If waiting for search refresh, ALWAYS trigger even if no new businesses
-        // This handles the case where user clicks "Search this area" but all businesses were already captured
+      if (businessesFound > 0) {
+        // Found businesses - trigger extraction if waiting
         if (isWaitingForSearchRefresh && userClickedStart) {
           onSearchDataReceived();
         } else if (hasReceivedSearchData && isAlwaysCapture && userClickedStart) {
@@ -1046,10 +1024,10 @@
         }
       } else {
         // Recursive search as fallback
-        searchForBusinesses(results);
+        const recursiveFound = searchForBusinesses(results);
         
-        // Even if recursive search found nothing, if we're waiting, trigger extraction
-        if (isWaitingForSearchRefresh && userClickedStart) {
+        // Only trigger if we actually found businesses via recursive search
+        if (recursiveFound > 0 && isWaitingForSearchRefresh && userClickedStart) {
           onSearchDataReceived();
         }
       }
@@ -1283,24 +1261,28 @@
   
   // Recursive search for business data
   function searchForBusinesses(obj, depth = 0) {
-    if (depth > 15 || !obj) return;
+    if (depth > 15 || !obj) return 0;
+    
+    let found = 0;
     
     if (Array.isArray(obj)) {
       // Check if this looks like a business item (has name at index 11)
       if (obj.length > 11 && typeof obj[11] === 'string' && obj[11].length > 0) {
-        extractBusinessFromArray(obj);
-        return;
+        const extracted = extractBusinessFromArray(obj);
+        return extracted ? 1 : 0;
       }
       
       // Recursively search arrays
       for (const item of obj) {
-        searchForBusinesses(item, depth + 1);
+        found += searchForBusinesses(item, depth + 1);
       }
     } else if (typeof obj === 'object' && obj !== null) {
       for (const key in obj) {
-        searchForBusinesses(obj[key], depth + 1);
+        found += searchForBusinesses(obj[key], depth + 1);
       }
     }
+    
+    return found;
   }
   
   // ============================================
@@ -1705,54 +1687,121 @@
       return;
     }
     
+    // Helper function to perform the actual CSV download
+    const performDownload = (leadsToExport) => {
+      const headers = ['Name', 'Phone', 'Email', 'Website', 'Address', 'Instagram', 'Facebook', 'Twitter', 'LinkedIn', 'YouTube', 'TikTok', 'ReviewCount', 'AverageRating', 'Category', 'GoogleMapsLink'];
+      
+      const csvContent = [
+        headers.join(','),
+        ...leadsToExport.map(lead => {
+          let email = lead.email || '';
+          if (email === 'Fetching...') email = '';
+          
+          return [
+            `"${(lead.name || '').replace(/"/g, '""')}"`,
+            `"${(lead.phone || '').replace(/"/g, '""')}"`,
+            `"${email.replace(/"/g, '""')}"`,
+            `"${(lead.website || '').replace(/"/g, '""')}"`,
+            `"${(lead.address || '').replace(/"/g, '""')}"`,
+            `"${(lead.instagram || '').replace(/"/g, '""')}"`,
+            `"${(lead.facebook || '').replace(/"/g, '""')}"`,
+            `"${(lead.twitter || '').replace(/"/g, '""')}"`,
+            `"${(lead.linkedin || '').replace(/"/g, '""')}"`,
+            `"${(lead.youtube || '').replace(/"/g, '""')}"`,
+            `"${(lead.tiktok || '').replace(/"/g, '""')}"`,
+            `"${lead.reviewCount || ''}"`,
+            `"${lead.averageRating || ''}"`,
+            `"${(lead.category || '').replace(/"/g, '""')}"`,
+            `"${(lead.googleMapsLink || '').replace(/"/g, '""')}"`
+          ].join(',');
+        })
+      ].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `google_maps_leads_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      showToast('✅ Exported ' + leadsToExport.length + ' leads to CSV', 3000, 'success');
+    };
+    
     // FREE LICENSE LIMIT: Only export first 100 leads
     const FREE_EXPORT_LIMIT = 100;
     const totalLeads = leads.length;
     const isLimited = totalLeads > FREE_EXPORT_LIMIT && !isLicenseValid;
     
     if (isLimited) {
-      // Show the upgrade modal with export limit info
-      showExportLimitModal(totalLeads, FREE_EXPORT_LIMIT);
-      leads = leads.slice(0, FREE_EXPORT_LIMIT);
+      // Show the upgrade modal - CSV will only download when user clicks "Continue"
+      const limitedLeads = leads.slice(0, FREE_EXPORT_LIMIT);
+      showExportLimitModal(totalLeads, FREE_EXPORT_LIMIT, () => {
+        performDownload(limitedLeads);
+        // Mark that user has used their free export and show upgrade prompts
+        hasUsedFreeExport = true;
+        chrome.storage.local.set({ hasUsedFreeExport: true });
+        showUpgradePrompts();
+      });
+      return; // Don't download automatically - wait for user to click continue
     }
     
-    const headers = ['Name', 'Phone', 'Email', 'Website', 'Address', 'Instagram', 'Facebook', 'Twitter', 'LinkedIn', 'YouTube', 'TikTok', 'ReviewCount', 'AverageRating', 'Category', 'GoogleMapsLink'];
+    // No limit - download all leads directly
+    performDownload(leads);
+  }
+  
+  // Show upgrade prompts after free export is used
+  function showUpgradePrompts() {
+    if (isLicenseValid) return; // Don't show if licensed
     
-    const csvContent = [
-      headers.join(','),
-      ...leads.map(lead => {
-        let email = lead.email || '';
-        if (email === 'Fetching...') email = '';
-        
-        return [
-          `"${(lead.name || '').replace(/"/g, '""')}"`,
-          `"${(lead.phone || '').replace(/"/g, '""')}"`,
-          `"${email.replace(/"/g, '""')}"`,
-          `"${(lead.website || '').replace(/"/g, '""')}"`,
-          `"${(lead.address || '').replace(/"/g, '""')}"`,
-          `"${(lead.instagram || '').replace(/"/g, '""')}"`,
-          `"${(lead.facebook || '').replace(/"/g, '""')}"`,
-          `"${(lead.twitter || '').replace(/"/g, '""')}"`,
-          `"${(lead.linkedin || '').replace(/"/g, '""')}"`,
-          `"${(lead.youtube || '').replace(/"/g, '""')}"`,
-          `"${(lead.tiktok || '').replace(/"/g, '""')}"`,
-          `"${lead.reviewCount || ''}"`,
-          `"${lead.averageRating || ''}"`,
-          `"${(lead.category || '').replace(/"/g, '""')}"`,
-          `"${(lead.googleMapsLink || '').replace(/"/g, '""')}"`
-        ].join(',');
-      })
-    ].join('\n');
+    // Add upgrade badge to export button
+    const exportBtn = document.getElementById('gme-export-btn');
+    if (exportBtn && !exportBtn.querySelector('.upgrade-badge')) {
+      exportBtn.innerHTML = '📊 Export <span class="upgrade-badge" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 600;">UPGRADE</span>';
+      exportBtn.title = '🔒 Free export used! Upgrade to export unlimited leads';
+    }
     
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `google_maps_leads_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    // Add subtle upgrade banner below stats
+    const statsSection = document.querySelector('.gme-stats');
+    if (statsSection && !document.getElementById('gme-upgrade-banner')) {
+      const banner = document.createElement('div');
+      banner.id = 'gme-upgrade-banner';
+      banner.innerHTML = `
+        <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(147, 51, 234, 0.15)); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 10px; margin: 10px 0; text-align: center; cursor: pointer;" onclick="window.open('https://mapsreach.com/pricing', '_blank')">
+          <span style="color: #93c5fd; font-size: 12px;">✨ Free export used! <strong style="color: white;">Upgrade for unlimited exports</strong></span>
+        </div>
+      `;
+      statsSection.after(banner);
+    }
+  }
+  
+  // Check and restore upgrade prompts on load
+  function checkFreeExportStatus() {
+    chrome.storage.local.get(['hasUsedFreeExport'], (result) => {
+      if (result.hasUsedFreeExport && !isLicenseValid) {
+        hasUsedFreeExport = true;
+        setTimeout(showUpgradePrompts, 1000); // Wait for panel to be ready
+      }
+    });
+  }
+  
+  // Remove upgrade prompts when user gets a license
+  function removeUpgradePrompts() {
+    // Reset export button
+    const exportBtn = document.getElementById('gme-export-btn');
+    if (exportBtn) {
+      exportBtn.innerHTML = '📊 Export';
+      exportBtn.title = 'Export leads to CSV';
+    }
     
-    showToast('✅ Exported ' + leads.length + ' leads to CSV', 3000, 'success');
+    // Remove upgrade banner
+    const banner = document.getElementById('gme-upgrade-banner');
+    if (banner) banner.remove();
+    
+    // Clear the hasUsedFreeExport flag since they're now licensed
+    hasUsedFreeExport = false;
+    
+    showToast('🎉 License activated! Unlimited exports unlocked!', 3000, 'success');
   }
   
   function clearData() {
@@ -1840,21 +1889,16 @@
       return;
     }
     
-    const licenseStatus = await checkLicenseStatus();
-    
-    // Only create panel if licensed
+    // FREE MODE: Always show panel - no license check
+    // Limit is on export only (100 leads max)
     createFloatingPanel();
-    
-    if (isLicenseValid) {
-      setupSearchListeners();
-    }
+    setupSearchListeners();
+    checkFreeExportStatus(); // Check if user has used free export
     
     const observer = new MutationObserver(async () => {
       if (!document.getElementById('gme-floating-panel')) {
         createFloatingPanel();
-        if (isLicenseValid) {
-          setupSearchListeners();
-        }
+        setupSearchListeners();
       }
     });
     
