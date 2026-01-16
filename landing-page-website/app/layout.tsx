@@ -60,14 +60,36 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "MapsReach",
+    "alternateName": ["MapsReach Lead Extractor", "MapsReach Chrome Extension", "MapsReach Google Maps Scraper"],
     "url": "https://www.mapsreach.com",
     "logo": "https://www.mapsreach.com/logo.png",
-    "description": "Google Maps scraper tool for lead generation. Extract B2B leads from Google Maps in one click. One-time payment, unlimited extractions.",
+    "image": "https://www.mapsreach.com/logo.png",
+    "description": "MapsReach is a Google Maps scraper chrome extension for lead generation. Extract B2B leads from Google Maps in one click. One-time payment, unlimited extractions.",
+    "foundingDate": "2024",
     "sameAs": [],
     "contactPoint": {
       "@type": "ContactPoint",
-      "email": "laithou123@gmail.com",
-      "contactType": "customer support"
+      "email": "support@mapsreach.com",
+      "contactType": "customer support",
+      "availableLanguage": "English"
+    },
+    "brand": {
+      "@type": "Brand",
+      "name": "MapsReach"
+    }
+  };
+
+  // WebSite schema for sitelinks search box
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "MapsReach",
+    "alternateName": "MapsReach Google Maps Scraper",
+    "url": "https://www.mapsreach.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.mapsreach.com/blog?q={search_term_string}",
+      "query-input": "required name=search_term_string"
     }
   };
 
@@ -248,6 +270,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         <script
           type="application/ld+json"

@@ -43,6 +43,10 @@
   let hasReceivedSearchData = false;
   let userClickedStart = false;  // Track if user has clicked Start button
   
+  // Trial system state
+  let trialStatus = null;
+  let isTrialLocked = false;
+  
   // Email enrichment state
   let enrichmentQueue = [];
   let enrichmentInProgress = 0;
@@ -78,6 +82,46 @@
       console.log('[GME Content]', ...args);
     }
   }
+  
+  // ============================================
+  // TRIAL SYSTEM INTEGRATION
+  // ============================================
+  
+  async function initializeTrialSystem() {
+    try {
+      if (typeof TrialSystem !== 'undefined') {
+        trialStatus = await TrialSystem.initTrial();
+        isTrialLocked = trialStatus.isLocked;
+        log('[Trial] Initialized:', trialStatus);
+        
+        // Update UI if panel exists
+        updateTrialUI();
+      }
+    } catch (e) {
+      log('[Trial] Init error:', e);
+    }
+  }
+  
+  function updateTrialUI() {
+    // Trial badge no longer needed since we allow unlimited collection
+    // Just show "Free License" indicator
+    const trialBadge = document.getElementById('gme-trial-badge');
+    if (trialBadge) {
+      if (isLicenseValid) {
+        trialBadge.innerHTML = `<span style="color: #22c55e;">✓ Pro License</span>`;
+      } else {
+        trialBadge.innerHTML = `<span style="color: #60a5fa;">Free (100 export limit)</span>`;
+      }
+    }
+  }
+  
+  function showExportLimitModal(totalLeads, exportLimit) {
+    if (typeof TrialSystem !== 'undefined') {
+      TrialSystem.showExportLimitModal(totalLeads, exportLimit);
+    }
+  }
+  
+  // Removed checkAndConsumeTrialLead - we now allow unlimited collection
   
   // ============================================
   // GOOGLE SHEETS LIVE SYNC
@@ -653,6 +697,7 @@
         <div class="gme-header-content">
           <img src="${chrome.runtime.getURL('icons/logo.png')}" class="gme-logo-img" alt="MapsReach" style="width: 24px; height: 24px; border-radius: 4px;">
           <h3>MapsReach</h3>
+          <span id="gme-trial-badge" class="gme-trial-badge" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(34, 197, 94, 0.1); margin-left: 8px;">Loading...</span>
         </div>
         <div class="gme-header-actions">
           <button class="gme-theme-toggle" id="gme-theme-toggle" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
@@ -767,6 +812,9 @@
     panel.querySelector('#gme-start-btn').addEventListener('click', toggleExtraction);
     panel.querySelector('#gme-export-btn').addEventListener('click', exportCSV);
     panel.querySelector('#gme-clear-btn').addEventListener('click', clearData);
+    
+    // Initialize trial system and update badge
+    initializeTrialSystem();
     
     loadSheetsConfig().then(() => {
       if (sheetsSyncEnabled && sheetsConfig.sheetId) {
@@ -998,7 +1046,7 @@
         }
       } else {
         // Recursive search as fallback
-        const foundInRecursive = searchForBusinesses(results);
+        searchForBusinesses(results);
         
         // Even if recursive search found nothing, if we're waiting, trigger extraction
         if (isWaitingForSearchRefresh && userClickedStart) {
@@ -1655,6 +1703,17 @@
     if (leads.length === 0) {
       showToast('No leads to export' + (onlyNoWebsite && onlyNoWebsite.checked ? ' (filtered)' : ''), 3000, 'warning');
       return;
+    }
+    
+    // FREE LICENSE LIMIT: Only export first 100 leads
+    const FREE_EXPORT_LIMIT = 100;
+    const totalLeads = leads.length;
+    const isLimited = totalLeads > FREE_EXPORT_LIMIT && !isLicenseValid;
+    
+    if (isLimited) {
+      // Show the upgrade modal with export limit info
+      showExportLimitModal(totalLeads, FREE_EXPORT_LIMIT);
+      leads = leads.slice(0, FREE_EXPORT_LIMIT);
     }
     
     const headers = ['Name', 'Phone', 'Email', 'Website', 'Address', 'Instagram', 'Facebook', 'Twitter', 'LinkedIn', 'YouTube', 'TikTok', 'ReviewCount', 'AverageRating', 'Category', 'GoogleMapsLink'];

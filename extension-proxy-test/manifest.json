@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "MapsReach - Extract • Export • Excel",
-  "version": "2.0.0",
-  "description": "Extract business leads from Google Maps with one click. Export to CSV or Google Sheets instantly.",
+  "version": "2.1.0",
+  "description": "Extract business leads from Google Maps with one click. Export to CSV or Google Sheets instantly. 100 free leads included!",
   "permissions": [
     "activeTab",
     "storage"
@@ -10,7 +10,8 @@
   "host_permissions": [
     "https://www.google.com/maps/*",
     "https://maps.google.com/*",
-    "https://gle3-git-main-rimenehmaid-3753s-projects.vercel.app/*"
+    "https://gle3-git-main-rimenehmaid-3753s-projects.vercel.app/*",
+    "https://mapsreach.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -21,7 +22,7 @@
         "https://www.google.com/maps/*",
         "https://maps.google.com/*"
       ],
-      "js": ["content.js"],
+      "js": ["trial-system.js", "content.js"],
       "css": ["content.css"],
       "run_at": "document_start"
     }
