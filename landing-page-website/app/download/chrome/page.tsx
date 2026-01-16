@@ -57,18 +57,6 @@ export default function ChromeDownloadPage() {
       {/* Hero Section */}
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Chrome Badge */}
-          <div className="inline-flex items-center gap-3 px-5 py-3 bg-[#4285F4]/10 border border-[#4285F4]/30 rounded-full mb-8">
-            <svg className="w-8 h-8" viewBox="0 0 48 48">
-              <circle cx="24" cy="24" r="20" fill="#4285F4"/>
-              <circle cx="24" cy="24" r="8" fill="white"/>
-              <path d="M24 4a20 20 0 0116.97 9.39l-9.49 5.48a8 8 0 00-7.48-5.14V4z" fill="#EA4335"/>
-              <path d="M40.97 13.39A20 20 0 0144 24a20 20 0 01-7.03 15.18l-9.49-16.44a8 8 0 00.52-6.87l12.97-2.48z" fill="#FBBC05"/>
-              <path d="M36.97 39.18A20 20 0 014 24a20 20 0 013.03-10.61l9.49 16.44a8 8 0 007.48 2.74l12.97 6.61z" fill="#34A853"/>
-            </svg>
-            <span className="text-[#4285F4] font-semibold text-lg">Google Chrome</span>
-          </div>
-
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
             Download <span className="text-[#4285F4]">MapsReach</span> for Chrome
           </h1>
@@ -152,24 +140,6 @@ export default function ChromeDownloadPage() {
               <span className="text-muted-foreground">No Credit Card Required</span>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Need Help */}
-      <section className="py-12 px-4 pb-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-muted-foreground mb-4">
-            Need help with installation? We&apos;re here for you!
-          </p>
-          <a
-            href="mailto:support@mapsreach.com"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-border rounded-xl transition-all"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <span className="font-medium">Contact Support</span>
-          </a>
         </div>
       </section>
 

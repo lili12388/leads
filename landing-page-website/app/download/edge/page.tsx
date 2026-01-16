@@ -57,25 +57,6 @@ export default function EdgeDownloadPage() {
       {/* Hero Section */}
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Edge Badge */}
-          <div className="inline-flex items-center gap-3 px-5 py-3 bg-[#0078D4]/10 border border-[#0078D4]/30 rounded-full mb-8">
-            <svg className="w-8 h-8" viewBox="0 0 48 48">
-              <defs>
-                <linearGradient id="edge1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#0078D4"/>
-                  <stop offset="100%" stopColor="#1CA3EC"/>
-                </linearGradient>
-                <linearGradient id="edge2" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#50E6FF"/>
-                  <stop offset="100%" stopColor="#32BEDD"/>
-                </linearGradient>
-              </defs>
-              <circle cx="24" cy="24" r="20" fill="url(#edge1)"/>
-              <path d="M24 8c-8.837 0-16 7.163-16 16 0 4.418 1.791 8.418 4.686 11.314C15.58 32.418 19.58 30 24 30c8.837 0 16-7.163 16-16 0-3.313-1.005-6.392-2.729-8.951C34.392 9.005 29.313 8 24 8z" fill="url(#edge2)" opacity="0.8"/>
-            </svg>
-            <span className="text-[#0078D4] font-semibold text-lg">Microsoft Edge</span>
-          </div>
-
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
             Download <span className="text-[#0078D4]">MapsReach</span> for Edge
           </h1>
@@ -152,24 +133,6 @@ export default function EdgeDownloadPage() {
               <span className="text-muted-foreground">No Credit Card Required</span>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Need Help */}
-      <section className="py-12 px-4 pb-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-muted-foreground mb-4">
-            Need help with installation? We&apos;re here for you!
-          </p>
-          <a
-            href="mailto:support@mapsreach.com"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-border rounded-xl transition-all"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <span className="font-medium">Contact Support</span>
-          </a>
         </div>
       </section>
 
