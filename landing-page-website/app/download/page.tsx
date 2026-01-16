@@ -15,11 +15,9 @@ export default function DownloadPage() {
   ]
 
   const edgeSteps = [
-    { number: 1, title: "Download", description: "Click the download button to get the ZIP file" },
-    { number: 2, title: "Unzip", description: "Extract to a folder you'll remember" },
-    { number: 3, title: "Open Extensions", description: "Go to edge://extensions" },
-    { number: 4, title: "Developer Mode", description: "Toggle ON in the bottom-left corner" },
-    { number: 5, title: "Load Extension", description: "Click 'Load unpacked' and select folder" },
+    { number: 1, title: "Open Store", description: "Click the button to open Edge Add-ons store" },
+    { number: 2, title: "Add to Edge", description: "Click 'Get' to install MapsReach" },
+    { number: 3, title: "Start Extracting", description: "Go to Google Maps and click MapsReach icon" },
   ]
 
   const steps = activeTab === 'chrome' ? chromeSteps : edgeSteps
@@ -149,7 +147,7 @@ export default function DownloadPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">Microsoft Edge</h2>
-                  <p className="text-muted-foreground text-sm">Windows default</p>
+                  <p className="text-muted-foreground text-sm">Official Add-on</p>
                 </div>
                 {activeTab === 'edge' && (
                   <div className="ml-auto">
@@ -164,15 +162,16 @@ export default function DownloadPage() {
 
               {activeTab === 'edge' && (
                 <a
-                  href="/MapsReach-Extension.zip"
-                  download="MapsReach-Extension.zip"
+                  href="https://microsoftedge.microsoft.com/addons/detail/mapsreach-extract-%E2%80%A2-exp/pmkplljigfkoeefhpbbobmbgojmmphof"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
                   className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#0078D4] to-[#1CA3EC] text-white font-bold rounded-xl text-lg hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-200 hover:scale-[1.02]"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  Download for Edge
+                  Get from Edge Store
                 </a>
               )}
             </div>

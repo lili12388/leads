@@ -671,7 +671,20 @@ export default function AdminDashboard() {
                         <td className="py-3 pr-4 text-gray-300">{visitor.browser} / {visitor.os}</td>
                         <td className="py-3 pr-4 text-purple-400">{visitor.page}</td>
                         <td className="py-3 text-gray-400 truncate max-w-[200px]" title={visitor.referrer}>
-                          {visitor.referrer === 'Direct' ? '🔗 Direct' : visitor.referrer}
+                          {visitor.referrer === 'Direct' ? (
+                            '🔗 Direct'
+                          ) : visitor.referrer.startsWith('http') ? (
+                            <a 
+                              href={visitor.referrer} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:text-blue-300 hover:underline"
+                            >
+                              {visitor.referrer}
+                            </a>
+                          ) : (
+                            visitor.referrer
+                          )}
                         </td>
                       </tr>
                     ))}

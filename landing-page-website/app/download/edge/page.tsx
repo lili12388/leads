@@ -6,28 +6,18 @@ export default function EdgeDownloadPage() {
   const steps = [
     {
       number: 1,
-      title: "Download the Extension",
-      description: "Click the download button above to get the MapsReach extension ZIP file.",
+      title: "Click 'Get' Button",
+      description: "Click the button above to open the Edge Add-ons store page for MapsReach.",
     },
     {
       number: 2,
-      title: "Unzip the Folder",
-      description: "Extract the downloaded ZIP file to a folder on your computer. Remember where you save it!",
+      title: "Add to Edge",
+      description: "Click 'Get' on the Edge Add-ons page to install MapsReach instantly.",
     },
     {
       number: 3,
-      title: "Open Edge Extensions",
-      description: "Open Edge and type edge://extensions in the address bar, then press Enter.",
-    },
-    {
-      number: 4,
-      title: "Enable Developer Mode",
-      description: "Toggle ON the 'Developer mode' switch in the bottom-left corner of the page.",
-    },
-    {
-      number: 5,
-      title: "Load the Extension",
-      description: "Click 'Load unpacked' and select the folder you extracted in step 2. Done!",
+      title: "Start Extracting",
+      description: "Go to Google Maps, search for businesses, and click the MapsReach icon. That's it!",
     }
   ]
 
@@ -57,31 +47,44 @@ export default function EdgeDownloadPage() {
       {/* Hero Section */}
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
+          {/* Official Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0078D4]/20 border border-[#0078D4]/40 mb-6">
+            <svg className="w-5 h-5 text-[#0078D4]" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <span className="text-[#0078D4] font-medium text-sm">Official Edge Add-on</span>
+          </div>
+
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
-            Download <span className="text-[#0078D4]">MapsReach</span> for Edge
+            Get <span className="text-[#0078D4]">MapsReach</span> for Edge
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Installation takes less than 2 minutes!
+            Now available on the official Microsoft Edge Add-ons store!
           </p>
 
-          {/* Download Button */}
+          {/* Install Button */}
           <a
-            href="/MapsReach-Extension.zip"
-            download="MapsReach-Extension.zip"
+            href="https://microsoftedge.microsoft.com/addons/detail/mapsreach-extract-%E2%80%A2-exp/pmkplljigfkoeefhpbbobmbgojmmphof"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-[#0078D4] to-[#1CA3EC] text-white font-bold rounded-2xl text-xl hover:shadow-xl hover:shadow-cyan-500/40 transition-all duration-200 hover:scale-105"
           >
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21.86 17.86q.14 0 .25.12.1.13.1.25t-.11.33l-.32.46-.43.53-.44.5q-.21.25-.38.42l-.22.23q-.58.53-1.34 1.04-.76.51-1.6.91-.86.4-1.74.64t-1.67.24q-.9 0-1.69-.28-.79-.28-1.48-.78-.68-.5-1.22-1.17-.53-.66-.89-1.42-.52-1.1-.7-2.03-.18-.92-.18-1.78 0-.85.23-1.74.24-.9.69-1.76.45-.87 1.1-1.68.66-.8 1.51-1.46.85-.67 1.88-1.13 1.04-.45 2.18-.65v2.05q-.96.21-1.83.6-.88.4-1.62.94-.74.55-1.32 1.23-.57.68-.96 1.44-.4.76-.6 1.56-.21.81-.21 1.65 0 .94.13 1.63.13.7.37 1.28.24.57.57 1.06.34.48.75.93.42.44.9.84.49.4 1.02.75.54.34 1.1.62.56.27 1.14.48.58.2 1.16.34.58.13 1.15.19v-4.39H12v-2.05h9.86z"/>
             </svg>
-            Download for Edge
+            Get from Edge Add-ons
           </a>
+
+          <p className="text-sm text-muted-foreground mt-4">
+            One-click install • No manual setup required
+          </p>
         </div>
       </section>
 
       {/* Installation Steps */}
       <section className="py-12 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8 text-foreground">Installation Steps</h2>
+          <h2 className="text-2xl font-bold text-center mb-8 text-foreground">Simple 3-Step Installation</h2>
           
           {/* Video Placeholder */}
           <div className="aspect-video bg-black/30 rounded-2xl mb-10 flex items-center justify-center border border-[#0078D4]/30 max-w-3xl mx-auto">
@@ -92,7 +95,7 @@ export default function EdgeDownloadPage() {
           </div>
 
           {/* Steps Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             {steps.map((step) => (
               <div key={step.number} className="p-5 rounded-xl bg-card/50 border border-border/50 hover:border-[#0078D4]/50 transition-colors">
                 <div className="flex items-start gap-4">
