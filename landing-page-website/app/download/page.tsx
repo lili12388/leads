@@ -162,7 +162,7 @@ export default function DownloadPage() {
 
               {activeTab === 'edge' && (
                 <a
-                  href="https://microsoftedge.microsoft.com/addons/detail/mapsreach-extract-%E2%80%A2-exp/pmkplljigfkoeefhpbbobmbgojmmphof"
+                  href="https://microsoftedge.microsoft.com/addons/detail/mapsreach-extract-%E2%80%A2-exp/emifecdjjaekekfjpcbocgihccnafefp"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}

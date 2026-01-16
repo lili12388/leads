@@ -64,7 +64,7 @@ export default function EdgeDownloadPage() {
 
           {/* Install Button */}
           <a
-            href="https://microsoftedge.microsoft.com/addons/detail/mapsreach-extract-%E2%80%A2-exp/pmkplljigfkoeefhpbbobmbgojmmphof"
+            href="https://microsoftedge.microsoft.com/addons/detail/mapsreach-extract-%E2%80%A2-exp/emifecdjjaekekfjpcbocgihccnafefp"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-[#0078D4] to-[#1CA3EC] text-white font-bold rounded-2xl text-xl hover:shadow-xl hover:shadow-cyan-500/40 transition-all duration-200 hover:scale-105"
