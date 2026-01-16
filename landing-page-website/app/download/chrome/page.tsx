@@ -73,7 +73,7 @@ export default function ChromeDownloadPage() {
             Download <span className="text-[#4285F4]">MapsReach</span> for Chrome
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Get started with 100 free leads. Installation takes less than 2 minutes!
+            Installation takes less than 2 minutes!
           </p>
 
           {/* Download Button */}
@@ -87,11 +87,6 @@ export default function ChromeDownloadPage() {
             </svg>
             Download for Chrome
           </a>
-
-          <div className="mt-4 inline-flex items-center gap-2 text-green-400">
-            <span className="text-xl">🎁</span>
-            <span className="font-medium">100 Free Leads Included — No Credit Card Required!</span>
-          </div>
         </div>
       </section>
 

@@ -80,7 +80,7 @@ export default function EdgeDownloadPage() {
             Download <span className="text-[#0078D4]">MapsReach</span> for Edge
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Get started with 100 free leads. Installation takes less than 2 minutes!
+            Installation takes less than 2 minutes!
           </p>
 
           {/* Download Button */}
@@ -94,10 +94,8 @@ export default function EdgeDownloadPage() {
             </svg>
             Download for Edge
           </a>
-
-          <div className="mt-4 inline-flex items-center gap-2 text-green-400">
-            <span className="text-xl">🎁</span>
-            <span className="font-medium">100 Free Leads Included — No Credit Card Required!</span>
+        </div>
+      </section></span>
           </div>
         </div>
       </section>
