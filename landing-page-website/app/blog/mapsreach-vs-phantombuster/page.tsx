@@ -11,12 +11,12 @@ export default function MapsReachVsPhantombusterPage() {
           <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition-opacity">
             <img src="/logo.png" alt="MapsReach" className="h-28 w-auto" />
             {/* Slogan right next to logo */}
-            <div className="hidden sm:flex items-center gap-2 -ml-1">
-              <span className="text-[#3b82f6] font-semibold text-base tracking-wide">Extract</span>
-              <span className="text-[#60a5fa] text-sm">•</span>
-              <span className="text-[#2563eb] font-semibold text-base tracking-wide">Export</span>
-              <span className="text-[#60a5fa] text-sm">•</span>
-              <span className="text-[#1d4ed8] font-semibold text-base tracking-wide">Excel</span>
+            <div className="hidden sm:flex items-center gap-1.5 -ml-1">
+              <span className="text-muted-foreground font-medium text-base">Extract</span>
+              <span className="text-primary font-bold text-base border-b-2 border-primary">Emails</span>
+              <span className="text-muted-foreground">,</span>
+              <span className="text-secondary font-bold text-base border-b-2 border-secondary">Phones</span>
+              <span className="text-muted-foreground font-medium text-base">& More</span>
             </div>
           </Link>
           <div className="hidden md:flex items-center gap-4">

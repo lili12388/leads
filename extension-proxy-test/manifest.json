@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "MapsReach - Extract • Export • Excel",
-  "version": "2.1.0",
+  "name": "MapsReach - Extract Emails, Phones & More",
+  "version": "2.1.1",
   "description": "Extract business leads from Google Maps with one click. Export to CSV or Google Sheets instantly. 100 free leads included!",
   "permissions": [
     "activeTab",

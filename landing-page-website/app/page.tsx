@@ -245,12 +245,12 @@ export default function Home() {
           >
             <img src="/logo.png" alt="MapsReach" className="h-28 w-auto" />
             {/* Slogan right next to logo */}
-            <div className="hidden sm:flex items-center gap-2 -ml-1">
-              <span className="text-[#3b82f6] font-semibold text-base tracking-wide">Extract</span>
-              <span className="text-[#60a5fa] text-sm">•</span>
-              <span className="text-[#2563eb] font-semibold text-base tracking-wide">Export</span>
-              <span className="text-[#60a5fa] text-sm">•</span>
-              <span className="text-[#1d4ed8] font-semibold text-base tracking-wide">Excel</span>
+            <div className="hidden sm:flex items-center gap-1.5 -ml-1">
+              <span className="text-muted-foreground font-medium text-base">Extract</span>
+              <span className="text-primary font-bold text-base border-b-2 border-primary">Emails</span>
+              <span className="text-muted-foreground">,</span>
+              <span className="text-secondary font-bold text-base border-b-2 border-secondary">Phones</span>
+              <span className="text-muted-foreground font-medium text-base">& More</span>
             </div>
           </button>
           
@@ -830,12 +830,12 @@ export default function Home() {
                 <img src="/logo.png" alt="MapsReach" className="h-12 w-auto" />
                 {/* Slogan */}
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[#3b82f6] font-bold text-sm">Extract</span>
-                    <span className="text-[#60a5fa]">•</span>
-                    <span className="text-[#2563eb] font-bold text-sm">Export</span>
-                    <span className="text-[#60a5fa]">•</span>
-                    <span className="text-[#1d4ed8] font-bold text-sm">Excel</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground font-medium text-sm">Extract</span>
+                    <span className="text-primary font-bold text-sm border-b border-primary">Emails</span>
+                    <span className="text-muted-foreground">,</span>
+                    <span className="text-secondary font-bold text-sm border-b border-secondary">Phones</span>
+                    <span className="text-muted-foreground font-medium text-sm">& More</span>
                   </div>
                 </div>
               </div>
