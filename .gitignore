@@ -1,0 +1,44 @@
+# Competitor extensions (for analysis only, do not commit)
+G-Maps-Leads-Finder/
+G-Maps-Scraper-Leads-Data-Extractor/
+Maps-Scraper-Maps-Lead-Finder-Extracteur-de-Leads-sur-les-Cartes-Chrome-Web-Store/
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+*.pem
+.vercel/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
