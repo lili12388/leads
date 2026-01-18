@@ -1,6 +1,7 @@
 import React from 'react';
 import { db, initDatabase } from '@/lib/db';
 import AdminTableClient from '@/components/AdminTableClient';
+import WhatsAppAdminClient from '@/components/WhatsAppAdminClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,13 +49,17 @@ export default async function AdminPage({ searchParams }: { searchParams?: { tok
       <head>
         <title>License Admin</title>
       </head>
-      <body style={{ fontFamily: 'system-ui, sans-serif', padding: 20 }}>
-        <h1>License Admin</h1>
-        <p>Logged in as admin. Use with care.</p>
-        {/* Render client-side table component for interactivity */}
-        <div>
+      <body style={{ fontFamily: 'system-ui, sans-serif', padding: 20, maxWidth: 1400, margin: '0 auto' }}>
+        <h1 style={{ marginBottom: 8 }}>🔐 License Admin Dashboard</h1>
+        <p style={{ marginTop: 0, color: '#6b7280' }}>Logged in as admin. Use with care.</p>
+        
+        {/* Chrome Extension Licenses */}
+        <div style={{ marginTop: 24 }}>
           <AdminTableClient initialLicenses={licenses} token={token} />
         </div>
+        
+        {/* WhatsApp Sender Licenses */}
+        <WhatsAppAdminClient token={token} />
       </body>
     </html>
   );

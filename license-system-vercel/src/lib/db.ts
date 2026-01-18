@@ -84,6 +84,58 @@ export async function initDatabase() {
     `CREATE INDEX IF NOT EXISTS idx_licenses_hash ON licenses(license_key_hash)`,
     `CREATE INDEX IF NOT EXISTS idx_activations_license ON activations(license_id)`,
     `CREATE INDEX IF NOT EXISTS idx_audit_license ON audit_logs(license_id)`,
+    
+    // WhatsApp Sender Trial table - tracks trial usage by hardware ID
+    `CREATE TABLE IF NOT EXISTS whatsapp_trials (
+      id TEXT PRIMARY KEY,
+      hardware_id TEXT UNIQUE NOT NULL,
+      messages_sent INTEGER DEFAULT 0,
+      max_messages INTEGER DEFAULT 10,
+      is_locked INTEGER DEFAULT 0,
+      license_id TEXT,
+      license_activated_at TEXT,
+      first_seen_at TEXT DEFAULT (datetime('now')),
+      last_seen_at TEXT DEFAULT (datetime('now')),
+      last_ip TEXT,
+      machine_name TEXT,
+      os_info TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`,
+    
+    // WhatsApp Sender Licenses table - separate from extension licenses
+    `CREATE TABLE IF NOT EXISTS whatsapp_licenses (
+      id TEXT PRIMARY KEY,
+      license_key_hash TEXT UNIQUE NOT NULL,
+      license_key_plaintext TEXT,
+      status TEXT DEFAULT 'active' CHECK(status IN ('active', 'expired', 'revoked')),
+      max_activations INTEGER DEFAULT 2,
+      expires_at TEXT,
+      customer_email TEXT,
+      customer_name TEXT,
+      notes TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`,
+    
+    // WhatsApp activations - tracks which hardware IDs activated which license
+    `CREATE TABLE IF NOT EXISTS whatsapp_activations (
+      id TEXT PRIMARY KEY,
+      license_id TEXT NOT NULL,
+      hardware_id TEXT NOT NULL,
+      is_active INTEGER DEFAULT 1,
+      last_validated_at TEXT,
+      last_ip TEXT,
+      machine_name TEXT,
+      os_info TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (license_id) REFERENCES whatsapp_licenses(id) ON DELETE CASCADE
+    )`,
+    
+    // Index for WhatsApp tables
+    `CREATE INDEX IF NOT EXISTS idx_whatsapp_trials_hwid ON whatsapp_trials(hardware_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_whatsapp_licenses_hash ON whatsapp_licenses(license_key_hash)`,
+    `CREATE INDEX IF NOT EXISTS idx_whatsapp_activations_license ON whatsapp_activations(license_id)`,
   ]);
 
   // Migration: Add license_key_plaintext column if it doesn't exist
@@ -98,6 +150,9 @@ export async function initDatabase() {
 export function generateId(): string {
   return crypto.randomUUID();
 }
+
+export { db };
+export default db;
 
 // Expose legacy-friendly alias to reduce changes
 export const db = {
