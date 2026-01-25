@@ -12,6 +12,9 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 200, headers: corsHeaders });
 }
 
+// Simple API key for demo (you can change this)
+const API_KEY = process.env.SHEETS_API_KEY || 'demo-sheets-key-2025';
+
 // Google Service Account credentials from environment
 function getServiceAccountCredentials() {
   const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
@@ -136,6 +139,15 @@ async function ensureHeaderRow(sheets: any, spreadsheetId: string, tabName: stri
 
 export async function POST(request: NextRequest) {
   try {
+    // Check API key
+    const apiKey = request.headers.get('X-API-Key');
+    if (apiKey !== API_KEY) {
+      return NextResponse.json(
+        { ok: false, error: 'Invalid API key' },
+        { status: 401, headers: corsHeaders }
+      );
+    }
+    
     const body = await request.json();
     const { sheetId, tabName = 'Leads', leads } = body;
     
