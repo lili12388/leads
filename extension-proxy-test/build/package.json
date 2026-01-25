@@ -1,0 +1,12 @@
+{
+  "name": "mapsreach-extension-build",
+  "version": "1.0.0",
+  "description": "Build and obfuscate MapsReach extension",
+  "scripts": {
+    "build": "node obfuscate.js",
+    "clean": "rmdir /s /q dist 2>nul || true"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "^4.1.1"
+  }
+}

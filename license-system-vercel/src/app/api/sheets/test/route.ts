@@ -12,8 +12,6 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 200, headers: corsHeaders });
 }
 
-const API_KEY = process.env.SHEETS_API_KEY || 'demo-sheets-key-2025';
-
 function getServiceAccountCredentials() {
   const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
   const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
@@ -41,14 +39,6 @@ async function getSheetsClient() {
 
 export async function POST(request: NextRequest) {
   try {
-    const apiKey = request.headers.get('X-API-Key');
-    if (apiKey !== API_KEY) {
-      return NextResponse.json(
-        { ok: false, error: 'Invalid API key' },
-        { status: 401, headers: corsHeaders }
-      );
-    }
-    
     const body = await request.json();
     const { sheetId, tabName = 'Leads' } = body;
     
