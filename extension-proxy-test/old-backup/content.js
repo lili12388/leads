@@ -1,0 +1,2406 @@
+/**
+ * G-Maps Extractor - Content Script (Proxy + Fetch Version)
+ * 
+ * Based on extension-backup (readable source)
+ * Uses new Proxy+Fetch interception method for data capture
+ */
+
+(function() {
+  'use strict';
+  
+  // ============================================
+  // CONFIGURATION
+  // ============================================
+  const CONFIG = {
+    messageType: 'gme_data_capture',
+    debug: false,
+    apiBase: 'https://gle3-git-main-rimenehmaid-3753s-projects.vercel.app',
+    apiKey: ''
+  };
+  
+  // API URLs
+  const API_BASE_URL = CONFIG.apiBase;
+  const SHEETS_API_URL = API_BASE_URL + '/api/sheets/append';
+  const SHEETS_TEST_URL = API_BASE_URL + '/api/sheets/test';
+  const ENRICH_API_URL = API_BASE_URL + '/api/enrich';
+  const LICENSE_VALIDATE_URL = API_BASE_URL + '/api/v1/license/validate';
+  const SHEETS_API_KEY_FALLBACK = ''; // intentionally empty to avoid shipping a usable key
+  
+  // ============================================
+  // STATE
+  // ============================================
+  let extractedLeads = new Map();
+  let leads_lnglat = new Set();
+  let leads_phones = new Set();
+  let isAlwaysCapture = false;  // Button state - user clicked Start
+  let isExtracting = false;
+  let isCreatingPanel = false;  // Prevent duplicate panel creation
+  let isLicenseRevoked = false; // Prevent panel recreation after revocation
+  let panelObserver = null;     // Mutation observer reference
+  let scrollCount = 0;
+  let totalScrollCount = 0;
+  let autoScrollInterval = null;
+  let isLicenseValid = false;
+  let isWaitingForSearchRefresh = false;
+  let hasReceivedSearchData = false;
+  let userClickedStart = false;  // Track if user has clicked Start button
+  let hasUsedFreeExport = false;  // Track if user has used their one-time free export
+  let enrichmentConsent = false;  // User opt-in for remote enrichment
+  let sheetsApiKey = '';          // User-provided Sheets API key
+  
+  // Trial system state
+  let trialStatus = null;
+  let isTrialLocked = false;
+  
+  // Email enrichment state
+  let enrichmentQueue = [];
+  let enrichmentInProgress = 0;
+  let enrichmentTotal = 0;
+  let enrichmentCompleted = 0;
+  let isStoppingWithEnrichment = false;
+  const MAX_CONCURRENT_ENRICHMENTS = 3;
+  const EMAIL_FETCH_TIMEOUT = 4000; // 4 second hard timeout per email
+  
+  // Google Sheets live sync state
+  let sheetsQueue = [];
+  let sheetsSyncEnabled = false;
+  let sheetsSyncNoWebsiteOnly = false;
+  let sheetsDemoMode = false;
+  let sheetsSyncInterval = null;
+  let demoModeActive = false;
+  let demoRateLimited = false;
+  let sheetsConfig = { sheetId: '', tabName: 'Sheet1' };
+  let sheetsStats = {
+    totalSent: 0,
+    duplicatesSkipped: 0,
+    lastSyncTime: null,
+    lastError: null,
+    isConnected: false
+  };
+  let sentLeadKeys = new Set();
+  
+  // ============================================
+  // DEBUG LOGGING
+  // ============================================
+  function log(...args) {
+    if (CONFIG.debug) {
+      console.log('[GME Content]', ...args);
+    }
+  }
+  
+  // ============================================
+  // TRIAL SYSTEM INTEGRATION
+  // ============================================
+  
+  async function initializeTrialSystem() {
+    try {
+      if (typeof TrialSystem !== 'undefined') {
+        trialStatus = await TrialSystem.initTrial();
+        isTrialLocked = trialStatus.isLocked;
+        log('[Trial] Initialized:', trialStatus);
+        
+        // Update UI if panel exists
+        updateTrialUI();
+      }
+    } catch (e) {
+      log('[Trial] Init error:', e);
+    }
+  }
+  
+  function updateTrialUI() {
+    // Badge removed - users shouldn't know about the limit until export
+  }
+  
+  function showExportLimitModal(totalLeads, exportLimit, onContinue) {
+    if (typeof TrialSystem !== 'undefined') {
+      TrialSystem.showExportLimitModal(totalLeads, exportLimit, onContinue);
+    }
+  }
+  
+  // Removed checkAndConsumeTrialLead - we now allow unlimited collection
+  
+  // ============================================
+  // GOOGLE SHEETS LIVE SYNC
+  // ============================================
+  
+  async function loadSheetsConfig() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get([
+        'sheetsConfig',
+        'sheetsSyncEnabled',
+        'sheetsSyncNoWebsiteOnly',
+        'sheetsDemoMode',
+        'sheetsApiKey',
+        'gmeEnrichmentConsent'
+      ], (result) => {
+        if (result.sheetsConfig) {
+          sheetsConfig = result.sheetsConfig;
+        }
+        sheetsSyncEnabled = result.sheetsSyncEnabled === true;
+        sheetsSyncNoWebsiteOnly = result.sheetsSyncNoWebsiteOnly === true;
+        sheetsDemoMode = result.sheetsDemoMode === true;
+        sheetsApiKey = result.sheetsApiKey || '';
+        enrichmentConsent = result.gmeEnrichmentConsent === true;
+        const enrichmentToggle = document.getElementById('gme-allow-enrichment');
+        if (enrichmentToggle) enrichmentToggle.checked = enrichmentConsent;
+        resolve();
+      });
+    });
+  }
+  
+  async function saveSheetsConfig() {
+    await chrome.storage.local.set({ 
+      sheetsConfig: sheetsConfig,
+      sheetsSyncEnabled: sheetsSyncEnabled
+    });
+  }
+  
+  function parseSheetId(input) {
+    if (!input) return '';
+    const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (match) return match[1];
+    return input.trim();
+  }
+  
+  function createLeadDedupKey(lead) {
+    const website = (lead.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').split('/')[0];
+    const invalidWebsites = ['not found', 'no website found', '', 'no website'];
+    if (website && !invalidWebsites.includes(website)) return `web:${website}`;
+    
+    const phone = (lead.phone || '').replace(/\D/g, '');
+    if (phone) return `phone:${phone}`;
+    
+    return `name:${(lead.name || '').toLowerCase()}|${(lead.address || '').toLowerCase()}`;
+  }
+  
+  function queueLeadForSync(lead) {
+    if (!sheetsSyncEnabled || !sheetsConfig.sheetId) return;
+    
+    if (sheetsSyncNoWebsiteOnly) {
+      const website = (lead.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').trim();
+      const invalidWebsites = ['not found', 'no website found', 'n/a', '', 'no website'];
+      const hasValidWebsite = website && !invalidWebsites.includes(website);
+      if (hasValidWebsite) return;
+    }
+    
+    const key = createLeadDedupKey(lead);
+    if (sentLeadKeys.has(key)) return;
+    
+    sheetsQueue.push({
+      name: lead.name || '',
+      phone: lead.phone || '',
+      email: (lead.email && lead.email !== 'Fetching...') ? lead.email : '',
+      website: lead.website || '',
+      address: lead.address || '',
+      instagram: lead.instagram || '',
+      facebook: lead.facebook || '',
+      category: lead.category || '',
+      reviewCount: lead.reviewCount || '',
+      averageRating: lead.averageRating || ''
+    });
+    
+    sentLeadKeys.add(key);
+    updateSheetsStatusUI();
+  }
+  
+  async function sendBatchToSheets() {
+    if (sheetsQueue.length === 0) return;
+    if (!sheetsApiKey) {
+      sheetsStats.lastError = 'Sheets API key missing';
+      sheetsStats.isConnected = false;
+      updateSheetsStatusUI();
+      return;
+    }
+    
+    // Always use fast streaming mode first
+    if (!demoRateLimited) {
+      startFastStreaming();
+      return;
+    }
+    
+    // Fallback: batch mode when rate limited
+    const batch = sheetsQueue.splice(0, 10);
+    
+    try {
+      const response = await fetch(SHEETS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': sheetsApiKey || SHEETS_API_KEY_FALLBACK
+        },
+        body: JSON.stringify({
+          sheetId: sheetsConfig.sheetId,
+          tabName: sheetsConfig.tabName || 'Sheet1',
+          leads: batch
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.ok) {
+        sheetsStats.totalSent += data.appended;
+        sheetsStats.duplicatesSkipped += data.skipped_duplicates || 0;
+        sheetsStats.lastSyncTime = new Date();
+        sheetsStats.lastError = null;
+        sheetsStats.isConnected = true;
+        
+        // Reset rate limit flag after successful batch - try fast again
+        demoRateLimited = false;
+      } else {
+        sheetsQueue.unshift(...batch);
+        sheetsStats.lastError = data.error || 'Unknown error';
+      }
+    } catch (error) {
+      sheetsQueue.unshift(...batch);
+      sheetsStats.lastError = 'Network error: ' + error.message;
+    }
+    
+    updateSheetsStatusUI();
+  }
+  
+  // Fast streaming - send leads as fast as possible
+  async function startFastStreaming() {
+    if (demoModeActive) return;
+    demoModeActive = true;
+    
+    while (sheetsQueue.length > 0 && !demoRateLimited) {
+      const result = await sendSingleLead();
+      
+      if (result.rateLimited) {
+        demoRateLimited = true;
+        sheetsStats.lastError = '⚠️ Rate limit hit - slowing down';
+        updateSheetsStatusUI();
+        break;
+      }
+      
+      if (!result.success && !result.empty) {
+        await new Promise(r => setTimeout(r, 300));
+      } else {
+        // Minimum delay between requests (50ms)
+        await new Promise(r => setTimeout(r, 50));
+      }
+    }
+    
+    demoModeActive = false;
+  }
+  
+  // Send a single lead (or small batch) for fast streaming
+  async function sendSingleLead() {
+    if (sheetsQueue.length === 0) return { success: true, empty: true };
+    if (!sheetsApiKey) {
+      sheetsStats.lastError = 'Sheets API key missing';
+      sheetsStats.isConnected = false;
+      updateSheetsStatusUI();
+      return { success: false };
+    }
+    
+    // Send 1-3 leads at a time for speed
+    const batchSize = Math.min(sheetsQueue.length, 3);
+    const batch = sheetsQueue.splice(0, batchSize);
+    
+    try {
+      const response = await fetch(SHEETS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': sheetsApiKey || SHEETS_API_KEY_FALLBACK
+        },
+        body: JSON.stringify({
+          sheetId: sheetsConfig.sheetId,
+          tabName: sheetsConfig.tabName || 'Sheet1',
+          leads: batch
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.ok) {
+        sheetsStats.totalSent += data.appended;
+        sheetsStats.lastSyncTime = new Date();
+        sheetsStats.lastError = null;
+        sheetsStats.isConnected = true;
+        updateSheetsStatusUI();
+        return { success: true };
+      } else {
+        if (response.status === 429 || data.error?.includes('rate') || data.error?.includes('quota')) {
+          sheetsQueue.unshift(...batch);
+          return { success: false, rateLimited: true };
+        }
+        sheetsQueue.unshift(...batch);
+        sheetsStats.lastError = data.error || 'Unknown error';
+        updateSheetsStatusUI();
+        return { success: false };
+      }
+    } catch (error) {
+      sheetsQueue.unshift(...batch);
+      sheetsStats.lastError = 'Network error';
+      updateSheetsStatusUI();
+      return { success: false };
+    }
+  }
+  
+  function startSheetsSync() {
+    if (sheetsSyncInterval) return;
+    // Fast interval - 300ms to check queue frequently
+    sheetsSyncInterval = setInterval(sendBatchToSheets, 300);
+  }
+  
+  function stopSheetsSync() {
+    if (sheetsSyncInterval) {
+      clearInterval(sheetsSyncInterval);
+      sheetsSyncInterval = null;
+    }
+    demoModeActive = false;
+  }
+  
+  async function testSheetsConnection() {
+    const statusEl = document.getElementById('gme-sheets-status');
+    if (statusEl) statusEl.textContent = '⏳ Testing...';
+    if (!sheetsApiKey) {
+      if (statusEl) statusEl.textContent = '❌ Add API key in popup';
+      sheetsStats.isConnected = false;
+      updateSheetsStatusUI();
+      return false;
+    }
+    
+    try {
+      const response = await fetch(SHEETS_TEST_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': sheetsApiKey || SHEETS_API_KEY_FALLBACK
+        },
+        body: JSON.stringify({
+          sheetId: sheetsConfig.sheetId,
+          tabName: sheetsConfig.tabName || 'Sheet1'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.ok) {
+        sheetsStats.isConnected = true;
+        sheetsStats.lastError = null;
+        if (statusEl) statusEl.textContent = '✅ Connected to: ' + (data.sheetTitle || 'Sheet');
+        return true;
+      } else {
+        sheetsStats.isConnected = false;
+        sheetsStats.lastError = data.error;
+        if (statusEl) statusEl.textContent = '❌ ' + data.error;
+        return false;
+      }
+    } catch (error) {
+      sheetsStats.isConnected = false;
+      sheetsStats.lastError = error.message;
+      if (statusEl) statusEl.textContent = '❌ Network error';
+      return false;
+    }
+  }
+  
+  function updateSheetsStatusUI() {
+    // Status shown in popup
+  }
+  
+  // ============================================
+  // LICENSE CHECK
+  // ============================================
+  
+  // Generate device fingerprint for license validation
+  async function generateDeviceFingerprint() {
+    const components = {
+      cores: navigator.hardwareConcurrency || 0,
+      memory: navigator.deviceMemory || 0,
+      platform: navigator.platform,
+      screen: `${screen.width}x${screen.height}`,
+      colorDepth: screen.colorDepth,
+      touchPoints: navigator.maxTouchPoints || 0,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
+      language: (navigator.language || 'en').split('-')[0],
+    };
+    
+    // Get GPU info
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (gl) {
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (debugInfo) {
+          const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+          const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+          components.gpu = btoa(vendor + renderer).slice(0, 16);
+        }
+      }
+    } catch(e) { components.gpu = '0'; }
+    
+    // Generate hash
+    const coreString = Object.values(components).join('|');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(coreString));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    return { hash, components };
+  }
+  
+  // Get extension ID
+  function getExtensionId() {
+    try {
+      return chrome.runtime.id || 'unknown';
+    } catch(e) {
+      return 'unknown';
+    }
+  }
+  
+  // Check license with server - called on every page load
+  async function verifyLicenseWithServer() {
+    try {
+      // Get stored token
+      const stored = await new Promise(resolve => {
+        chrome.storage.local.get(['__maps_ext_token__', 'licenseActivated'], resolve);
+      });
+      
+      // No token = no license
+      if (!stored.__maps_ext_token__) {
+        log('No license token found');
+        return false;
+      }
+      
+      // Generate fingerprint
+      const fingerprint = await generateDeviceFingerprint();
+      
+      // Validate with server
+      const response = await fetch(LICENSE_VALIDATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: stored.__maps_ext_token__,
+          extension_id: getExtensionId(),
+          fingerprint_hash: fingerprint.hash,
+          fingerprint_components: fingerprint.components,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        const errorCode = data.code || data.error;
+        // Critical errors that should lock out the user
+        const criticalErrors = ['LICENSE_REVOKED', 'ACTIVATION_INVALID', 'LICENSE_EXPIRED'];
+        
+        if (criticalErrors.includes(errorCode)) {
+          log('License invalid:', errorCode);
+          // Clear license data
+          await chrome.storage.local.set({ licenseActivated: false });
+          await chrome.storage.local.remove(['__maps_ext_token__', '__maps_ext_cache__']);
+          return false;
+        }
+        
+        // For other errors (network, fingerprint mismatch during travel), 
+        // keep user logged in if they were previously activated
+        return stored.licenseActivated === true;
+      }
+      
+      // License is valid
+      log('License validated successfully');
+      await chrome.storage.local.set({ licenseActivated: true });
+      return true;
+      
+    } catch(e) {
+      // Network error - check if previously activated
+      log('License validation network error:', e.message);
+      const stored = await new Promise(resolve => {
+        chrome.storage.local.get(['licenseActivated'], resolve);
+      });
+      return stored.licenseActivated === true;
+    }
+  }
+  
+  // Quick local check (for UI responsiveness)
+  async function checkLicenseLocal() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['licenseActivated'], (result) => {
+        isLicenseValid = result.licenseActivated === true;
+        resolve(isLicenseValid);
+      });
+    });
+  }
+  
+  // Full license check - verifies with server
+  async function checkLicenseStatus() {
+    // First do quick local check for UI
+    const localValid = await checkLicenseLocal();
+    
+    // If no local license, don't bother checking server
+    if (!localValid) {
+      isLicenseValid = false;
+      return false;
+    }
+    
+    // Verify with server (async, but wait for result)
+    const serverValid = await verifyLicenseWithServer();
+    isLicenseValid = serverValid;
+    
+    // If server says invalid, remove panel
+    if (!serverValid) {
+      const panel = document.getElementById('gme-floating-panel');
+      if (panel) panel.remove();
+    }
+    
+    return serverValid;
+  }
+  
+  // Listen for license and sheets config changes from popup
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local') {
+      if (changes.licenseActivated) {
+        isLicenseValid = changes.licenseActivated.newValue === true;
+        if (isLicenseValid) {
+          // License just activated - create panel if not exists
+          createFloatingPanel();
+          setupSearchListeners();
+          // Remove upgrade prompts since user is now licensed
+          removeUpgradePrompts();
+        } else {
+          // License deactivated - remove panel
+          const panel = document.getElementById('gme-floating-panel');
+          if (panel) panel.remove();
+        }
+      }
+      
+      if (changes.sheetsSyncEnabled !== undefined) {
+        sheetsSyncEnabled = changes.sheetsSyncEnabled.newValue === true;
+        if (sheetsSyncEnabled) {
+          loadSheetsConfig().then(() => {
+            if (sheetsConfig.sheetId) {
+              testSheetsConnection().then(connected => {
+                if (connected) startSheetsSync();
+              });
+            }
+          });
+        } else {
+          stopSheetsSync();
+        }
+      }
+      
+      if (changes.sheetsConfig) {
+        sheetsConfig = changes.sheetsConfig.newValue || { sheetId: '', tabName: 'Sheet1' };
+      }
+      
+      if (changes.sheetsSyncNoWebsiteOnly !== undefined) {
+        sheetsSyncNoWebsiteOnly = changes.sheetsSyncNoWebsiteOnly.newValue === true;
+      }
+      
+      if (changes.sheetsDemoMode !== undefined) {
+        sheetsDemoMode = changes.sheetsDemoMode.newValue === true;
+        demoRateLimited = false;
+        if (sheetsSyncEnabled && sheetsConfig.sheetId) {
+          stopSheetsSync();
+          startSheetsSync();
+        }
+      }
+    }
+  });
+  
+  // ============================================
+  // TOAST NOTIFICATIONS
+  // ============================================
+  
+  function showToast(message, duration = 3000, type = 'info') {
+    const existingToast = document.getElementById('gme-toast');
+    if (existingToast) existingToast.remove();
+    
+    const toast = document.createElement('div');
+    toast.id = 'gme-toast';
+    toast.className = type;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+      toast.classList.add('show');
+    });
+    
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  }
+  
+  function showSearchAreaReminder() {
+    const statusEl = document.getElementById('gme-status');
+    const statusText = document.getElementById('gme-status-text');
+    
+    if (statusEl) {
+      statusEl.className = 'gme-status waiting';
+    }
+    if (statusText) {
+      statusText.innerHTML = '⚠️ Click <strong>"Search this area"</strong> to start';
+    }
+    
+    showToast('🔄 Click "Search this area" button to avoid missing leads! ↘↘↘', 5000, 'warning');
+  }
+  
+  function onSearchDataReceived() {
+    // Always process - the caller already verified we should trigger this
+    isWaitingForSearchRefresh = false;
+    hasReceivedSearchData = true;
+    
+    // Reset the prominent area-done style
+    resetStatusStyle();
+    
+    // Remove toast
+    const toast = document.getElementById('gme-toast');
+    if (toast) toast.remove();
+    
+    showToast('✅ Search refreshed! Now extracting leads...', 2000);
+    
+    // Update status text immediately
+    updateStatus('extracting', '🔄 Extracting... ' + extractedLeads.size + ' leads');
+    
+    // Start auto-scrolling
+    const autoScrollEnabled = document.getElementById('gme-auto-scroll');
+    if (autoScrollEnabled && autoScrollEnabled.checked) {
+      isExtracting = true;
+      setTimeout(autoScroll, 500);
+    } else {
+      isExtracting = true;
+      updateStatus('extracting', '🔄 Extracting... scroll manually for more');
+    }
+  }
+  
+  // ============================================
+  // INJECT THE INTERCEPTOR SCRIPT (NEW METHOD)
+  // ============================================
+  
+  function injectInterceptor() {
+    const script = document.createElement('script');
+    script.src = chrome.runtime.getURL('injected.js');
+    script.onload = function() { this.remove(); };
+    (document.head || document.documentElement).appendChild(script);
+  }
+  
+  // Inject immediately
+  injectInterceptor();
+  
+  // ============================================
+  // CREATE FLOATING PANEL
+  // ============================================
+  
+  async function createFloatingPanel() {
+    // Prevent duplicate creation
+    if (document.getElementById('gme-floating-panel')) return;
+    if (isCreatingPanel) return;
+    if (isLicenseRevoked) return; // do not recreate after revocation
+    
+    isCreatingPanel = true;
+    
+    try {
+      // FREE MODE: Skip license check - panel always shows
+      // License only checked when exporting > 100 leads
+      
+      // Double-check panel doesn't exist (race condition)
+      if (document.getElementById('gme-floating-panel')) {
+        isCreatingPanel = false;
+        return;
+      }
+    
+    const panel = document.createElement('div');
+    panel.id = 'gme-floating-panel';
+    
+    // Dark mode is default - only switch to light if explicitly saved
+    panel.classList.add('dark-mode');  // Default to dark mode
+    chrome.storage.local.get(['gmeTheme'], (result) => {
+      if (result.gmeTheme === 'light') {
+        panel.classList.remove('dark-mode');
+      }
+    });
+    
+    panel.innerHTML = `
+      <div class="gme-header">
+        <div class="gme-header-content">
+          <img src="${chrome.runtime.getURL('icons/logo.png')}" class="gme-logo-img" alt="MapsReach" style="width: 24px; height: 24px; border-radius: 4px;">
+          <h3>MapsReach</h3>
+        </div>
+        <div class="gme-header-actions">
+          <button class="gme-theme-toggle" id="gme-theme-toggle" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+            <span class="toggle-slider"></span>
+          </button>
+          <span class="gme-mini-stats" id="gme-mini-stats">0</span>
+          <button class="gme-minimize" title="Minimize" aria-label="Minimize panel">−</button>
+        </div>
+      </div>
+      
+      <div class="gme-stats">
+        <div class="gme-stat">
+          <div class="gme-stat-value" id="gme-total">0</div>
+          <div class="gme-stat-label">Total</div>
+        </div>
+        <div class="gme-stat">
+          <div class="gme-stat-value green" id="gme-no-website">0</div>
+          <div class="gme-stat-label">No Site</div>
+        </div>
+        <div class="gme-stat">
+          <div class="gme-stat-value" id="gme-with-phone">0</div>
+          <div class="gme-stat-label">Phone</div>
+        </div>
+        <div class="gme-stat">
+          <div class="gme-stat-value green" id="gme-with-email">0</div>
+          <div class="gme-stat-label">Email</div>
+        </div>
+      </div>
+      
+      <div class="gme-status-panel">
+        <div class="gme-status" id="gme-status">
+          <span class="gme-status-dot"></span>
+          <div class="gme-status-content">
+            <span id="gme-status-text">Ready — Click Start to extract leads</span>
+            <div class="gme-progress-bar"><div class="gme-progress-fill"></div></div>
+          </div>
+        </div>
+        <div class="gme-enrich-status" id="gme-enrich-status">
+          <span class="gme-spinner"></span>
+          <span id="gme-enrich-text">Fetching emails...</span>
+        </div>
+      </div>
+      
+      <div class="gme-buttons">
+        <div class="gme-btn-row">
+          <button class="gme-btn gme-btn-primary gme-btn-full" id="gme-start-btn">Start Extraction</button>
+        </div>
+        
+        <div class="gme-btn-row-equal">
+          <button class="gme-btn gme-btn-success" id="gme-export-btn">Export</button>
+          <div class="gme-sheets-btn-wrapper">
+            <button class="gme-btn gme-btn-sheets" id="gme-sheets-btn">Export to Sheets</button>
+            <div class="gme-upgrade-text" style="display: none;">UPGRADE</div>
+          </div>
+        </div>
+        
+        <div class="gme-btn-row-secondary">
+          <button class="gme-btn gme-btn-secondary" id="gme-clear-btn">Clear All</button>
+          <button class="gme-btn gme-btn-options" id="gme-options-toggle">Options <span class="gme-options-arrow">→</span></button>
+        </div>
+        
+        <div class="gme-auto-scroll-row">
+          <label class="gme-checkbox-inline">
+            <input type="checkbox" id="gme-auto-scroll" checked>
+            <span>Enable auto-scroll</span>
+          </label>
+        </div>
+      </div>
+      
+      <!-- Options Panel (attached to right side of floating window) -->
+      <div class="gme-options-panel" id="gme-options-panel">
+        <div class="gme-options-header">
+          <h4>Extraction Options</h4>
+          <button class="gme-options-close" id="gme-options-close">✕</button>
+        </div>
+        <div class="gme-options-scroll">
+          <div class="gme-options-group">
+            <h5>Filter Options</h5>
+            <label class="gme-checkbox">
+              <input type="checkbox" id="gme-only-no-website">
+              <span>Only leads WITHOUT website <span class="gme-filter-count" id="gme-count-no-website">(0)</span></span>
+            </label>
+            <label class="gme-checkbox">
+              <input type="checkbox" id="gme-only-with-email">
+              <span>Only leads WITH email <span class="gme-filter-count" id="gme-count-with-email">(0)</span></span>
+            </label>
+            <label class="gme-checkbox">
+              <input type="checkbox" id="gme-only-with-phone">
+              <span>Only leads WITH phone <span class="gme-filter-count" id="gme-count-with-phone">(0)</span></span>
+            </label>
+            <div class="gme-export-summary" id="gme-export-summary">
+              <span id="gme-export-count">0</span> leads to be exported
+            </div>
+          </div>
+          
+          <div class="gme-options-group">
+            <h5>Sort By</h5>
+            <label class="gme-radio">
+              <input type="radio" name="sort" value="none" id="gme-sort-none" checked>
+              <span>Original order</span>
+            </label>
+            <label class="gme-radio">
+              <input type="radio" name="sort" value="rating" id="gme-sort-rating">
+              <span>Highest rating</span>
+            </label>
+            <div class="gme-sub-options" id="gme-rating-sub" style="display: none;">
+              <label class="gme-radio-sub">
+                <input type="radio" name="rating-order" value="high-low" checked>
+                <span>High → Low</span>
+              </label>
+              <label class="gme-radio-sub">
+                <input type="radio" name="rating-order" value="low-high">
+                <span>Low → High</span>
+              </label>
+            </div>
+            <label class="gme-radio">
+              <input type="radio" name="sort" value="reviews" id="gme-sort-reviews">
+              <span>Most reviews</span>
+            </label>
+            <div class="gme-sub-options" id="gme-reviews-sub" style="display: none;">
+              <label class="gme-radio-sub">
+                <input type="radio" name="reviews-order" value="high-low" checked>
+                <span>High → Low</span>
+              </label>
+              <label class="gme-radio-sub">
+                <input type="radio" name="reviews-order" value="low-high">
+                <span>Low → High</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Sheets Setup Tutorial Modal -->
+      <div class="gme-sheets-tutorial-overlay" id="gme-sheets-tutorial" style="display: none;">
+        <div class="gme-sheets-tutorial-modal">
+          <div class="gme-sheets-tutorial-header">
+            <h3>Connect Your Google Sheet</h3>
+            <button class="gme-sheets-tutorial-close" id="gme-sheets-tutorial-close">✕</button>
+          </div>
+          <div class="gme-sheets-tutorial-intro">
+            <p>Set up automatic lead export to Google Sheets in just a few simple steps!</p>
+          </div>
+          <div class="gme-sheets-tutorial-content">
+            <div class="gme-sheets-tutorial-step">
+              <div class="gme-sheets-step-num">1</div>
+              <div class="gme-sheets-step-text">
+                <strong>Create or open</strong> a Google Sheet where you want your leads saved.
+              </div>
+            </div>
+            <div class="gme-sheets-tutorial-step">
+              <div class="gme-sheets-step-num">2</div>
+              <div class="gme-sheets-step-text">
+                Click the <strong>"Share"</strong> button (top right corner of Google Sheets).
+              </div>
+            </div>
+            <div class="gme-sheets-tutorial-step">
+              <div class="gme-sheets-step-num">3</div>
+              <div class="gme-sheets-step-text">
+                Add this email as an <strong>Editor</strong>:
+                <div class="gme-sheets-email">sheets-writer@ggl-maps-extractor.iam.gserviceaccount.com</div>
+                <button class="gme-copy-email" onclick="navigator.clipboard.writeText('sheets-writer@ggl-maps-extractor.iam.gserviceaccount.com').then(() => this.textContent = '✓ Copied!'); setTimeout(() => this.textContent = 'Copy Email', 2000)">Copy Email</button>
+              </div>
+            </div>
+            <div class="gme-sheets-tutorial-step">
+              <div class="gme-sheets-step-num">4</div>
+              <div class="gme-sheets-step-text">
+                Go to the <strong>extension popup</strong> (click the extension icon), paste your <strong>Sheet URL</strong>, click <strong>"Verify Connection"</strong>, then enable <strong>"Live Sync"</strong>.
+              </div>
+            </div>
+            <div class="gme-sheets-tutorial-step">
+              <div class="gme-sheets-step-num">5</div>
+              <div class="gme-sheets-step-text">
+                Click <strong>"Export to Sheets"</strong> again to send your leads.
+              </div>
+            </div>
+            <div class="gme-sheets-tutorial-tip">
+              💡 <strong>Tip:</strong> Each export creates a new tab in your sheet, so leads from different niches stay organized.
+            </div>
+          </div>
+          <div class="gme-sheets-tutorial-footer">
+            <label class="gme-tutorial-checkbox">
+              <input type="checkbox" id="gme-tutorial-never-show">
+              <span>I've got it, don't show this again</span>
+            </label>
+            <button class="gme-sheets-tutorial-btn" id="gme-sheets-tutorial-ok">Let's Go!</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(panel);
+    
+    // Create tutorial modal as separate overlay on body
+    const tutorialOverlay = document.createElement('div');
+    tutorialOverlay.className = 'gme-sheets-tutorial-overlay';
+    tutorialOverlay.id = 'gme-sheets-tutorial';
+    tutorialOverlay.style.display = 'none';
+    tutorialOverlay.innerHTML = `
+      <div class="gme-sheets-tutorial-modal">
+        <div class="gme-sheets-tutorial-header">
+          <h3>Connect Your Google Sheet</h3>
+          <button class="gme-sheets-tutorial-close" id="gme-sheets-tutorial-close">✕</button>
+        </div>
+        <div class="gme-sheets-tutorial-intro">
+          <p>Set up automatic lead export to Google Sheets in just a few simple steps!</p>
+        </div>
+        <div class="gme-sheets-tutorial-content">
+          <div class="gme-sheets-tutorial-step">
+            <div class="gme-sheets-step-num">1</div>
+            <div class="gme-sheets-step-text">
+              <strong>Create or open</strong> a Google Sheet where you want your leads saved.
+            </div>
+          </div>
+          <div class="gme-sheets-tutorial-step">
+            <div class="gme-sheets-step-num">2</div>
+            <div class="gme-sheets-step-text">
+              Click the <strong>"Share"</strong> button (top right corner of Google Sheets).
+            </div>
+          </div>
+          <div class="gme-sheets-tutorial-step">
+            <div class="gme-sheets-step-num">3</div>
+            <div class="gme-sheets-step-text">
+              Add this email as an <strong>Editor</strong>:
+              <div class="gme-sheets-email">sheets-writer@ggl-maps-extractor.iam.gserviceaccount.com</div>
+              <button class="gme-copy-email" onclick="navigator.clipboard.writeText('sheets-writer@ggl-maps-extractor.iam.gserviceaccount.com').then(() => this.textContent = '✓ Copied!'); setTimeout(() => this.textContent = 'Copy Email', 2000)">Copy Email</button>
+            </div>
+          </div>
+          <div class="gme-sheets-tutorial-step">
+            <div class="gme-sheets-step-num">4</div>
+            <div class="gme-sheets-step-text">
+              Go to the <strong>extension popup</strong> (click the extension icon), paste your <strong>Sheet URL</strong>, click <strong>"Verify Connection"</strong>, then enable <strong>"Live Sync"</strong>.
+            </div>
+          </div>
+          <div class="gme-sheets-tutorial-step">
+            <div class="gme-sheets-step-num">5</div>
+            <div class="gme-sheets-step-text">
+              Click <strong>"Export to Sheets"</strong> again to send your leads.
+            </div>
+          </div>
+          <div class="gme-sheets-tutorial-tip">
+            💡 <strong>Tip:</strong> Each export creates a new tab in your sheet, so leads from different niches stay organized.
+          </div>
+        </div>
+        <div class="gme-sheets-tutorial-footer">
+          <label class="gme-tutorial-checkbox">
+            <input type="checkbox" id="gme-tutorial-never-show">
+            <span>I've got it, don't show this again</span>
+          </label>
+          <button class="gme-sheets-tutorial-btn" id="gme-sheets-tutorial-ok">Let's Go!</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(tutorialOverlay);
+    
+    makeDraggable(panel);
+    
+    // Theme toggle with animation
+    const themeToggle = panel.querySelector('#gme-theme-toggle');
+    themeToggle.addEventListener('click', () => {
+      panel.classList.toggle('dark-mode');
+      const isDark = panel.classList.contains('dark-mode');
+      chrome.storage.local.set({ gmeTheme: isDark ? 'dark' : 'light' });
+    });
+    
+    // Minimize toggle
+    panel.querySelector('.gme-minimize').addEventListener('click', () => {
+      panel.classList.toggle('minimized');
+      const miniStats = document.getElementById('gme-mini-stats');
+      if (panel.classList.contains('minimized') && miniStats) {
+        miniStats.textContent = extractedLeads.size;
+      }
+    });
+    
+    // Options panel toggle (attached to floating window)
+    const optionsToggle = panel.querySelector('#gme-options-toggle');
+    const optionsPanel = panel.querySelector('#gme-options-panel');
+    const optionsClose = panel.querySelector('#gme-options-close');
+    const optionsArrow = panel.querySelector('.gme-options-arrow');
+    
+    optionsToggle.addEventListener('click', () => {
+      const isOpen = optionsPanel.classList.toggle('open');
+      if (optionsArrow) {
+        optionsArrow.textContent = isOpen ? '←' : '→';
+      }
+    });
+    
+    optionsClose.addEventListener('click', () => {
+      optionsPanel.classList.remove('open');
+      if (optionsArrow) {
+        optionsArrow.textContent = '→';
+      }
+    });
+    
+    // Sort sub-options toggle logic
+    const sortRating = panel.querySelector('#gme-sort-rating');
+    const sortReviews = panel.querySelector('#gme-sort-reviews');
+    const sortNone = panel.querySelector('#gme-sort-none');
+    const ratingSub = panel.querySelector('#gme-rating-sub');
+    const reviewsSub = panel.querySelector('#gme-reviews-sub');
+    
+    function updateSortSubOptions() {
+      if (ratingSub) ratingSub.style.display = sortRating.checked ? 'block' : 'none';
+      if (reviewsSub) reviewsSub.style.display = sortReviews.checked ? 'block' : 'none';
+    }
+    
+    if (sortRating) sortRating.addEventListener('change', updateSortSubOptions);
+    if (sortReviews) sortReviews.addEventListener('change', updateSortSubOptions);
+    if (sortNone) sortNone.addEventListener('change', updateSortSubOptions);
+    
+    // Add event listeners for filter checkboxes to update aggregate export count
+    const filterNoWebsite = document.getElementById('gme-only-no-website');
+    const filterWithEmail = document.getElementById('gme-only-with-email');
+    const filterWithPhone = document.getElementById('gme-only-with-phone');
+    
+    if (filterNoWebsite) filterNoWebsite.addEventListener('change', updateFilterCounts);
+    if (filterWithEmail) filterWithEmail.addEventListener('change', updateFilterCounts);
+    if (filterWithPhone) filterWithPhone.addEventListener('change', updateFilterCounts);
+    
+    panel.querySelector('#gme-start-btn').addEventListener('click', toggleExtraction);
+    panel.querySelector('#gme-export-btn').addEventListener('click', exportCSV);
+    panel.querySelector('#gme-sheets-btn').addEventListener('click', exportToSheets);
+    panel.querySelector('#gme-clear-btn').addEventListener('click', clearData);
+    
+    // Sheets tutorial modal handlers
+    const tutorialModal = document.getElementById('gme-sheets-tutorial');
+    const tutorialClose = document.getElementById('gme-sheets-tutorial-close');
+    const tutorialOk = document.getElementById('gme-sheets-tutorial-ok');
+    const tutorialNeverShow = document.getElementById('gme-tutorial-never-show');
+    
+    if (tutorialClose) {
+      tutorialClose.addEventListener('click', () => {
+        tutorialModal.style.display = 'none';
+        if (tutorialNeverShow && tutorialNeverShow.checked) {
+          chrome.storage.local.set({ sheetsNeverShowTutorial: true });
+        }
+      });
+    }
+    
+    if (tutorialOk) {
+      tutorialOk.addEventListener('click', () => {
+        tutorialModal.style.display = 'none';
+        if (tutorialNeverShow && tutorialNeverShow.checked) {
+          chrome.storage.local.set({ sheetsNeverShowTutorial: true });
+        }
+      });
+    }
+    
+    // Initialize trial system and update badge
+    initializeTrialSystem();
+    
+    loadSheetsConfig().then(() => {
+      if (sheetsSyncEnabled && sheetsConfig.sheetId) {
+        testSheetsConnection().then(connected => {
+          if (connected) startSheetsSync();
+        });
+      }
+    });
+    } finally {
+      isCreatingPanel = false;
+    }
+  }
+  
+  function makeDraggable(element) {
+    const header = element.querySelector('.gme-header');
+    let isDragging = false;
+    let offsetX, offsetY;
+    
+    header.addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('gme-minimize')) return;
+      isDragging = true;
+      offsetX = e.clientX - element.getBoundingClientRect().left;
+      offsetY = e.clientY - element.getBoundingClientRect().top;
+      element.style.transition = 'none';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      element.style.left = (e.clientX - offsetX) + 'px';
+      element.style.top = (e.clientY - offsetY) + 'px';
+      element.style.right = 'auto';
+    });
+    
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      element.style.transition = '';
+    });
+  }
+  
+  // ============================================
+  // EXTRACTION TOGGLE
+  // ============================================
+  
+  function toggleExtraction() {
+    const btn = document.getElementById('gme-start-btn');
+    
+    if (isAlwaysCapture) {
+      // Turn off - STOP EVERYTHING
+      isAlwaysCapture = false;
+      isExtracting = false;
+      isWaitingForSearchRefresh = false;
+      userClickedStart = false;  // Reset
+      
+      // Check if enrichment is still running
+      if (enrichmentInProgress > 0 || enrichmentQueue.length > 0) {
+        // Show "Please wait" state
+        isStoppingWithEnrichment = true;
+        btn.textContent = 'Please Wait...';
+        btn.disabled = true;
+        updateStatus('waiting', 'Finishing email enrichment...');
+        updateEnrichmentProgress();
+      } else {
+        // No enrichment running, stop immediately
+        btn.textContent = 'Start Extraction';
+        btn.classList.remove('active');
+        updateStatus('stopped', 'Stopped.. ' + extractedLeads.size + ' leads');
+        // Hide enrichment status
+        const enrichStatus = document.getElementById('gme-enrich-status');
+        if (enrichStatus) enrichStatus.classList.remove('active');
+      }
+    } else {
+      // Turn on persistent extraction
+      isAlwaysCapture = true;
+      isExtracting = false;  // Will be set true when we receive search data
+      userClickedStart = true;  // User clicked Start
+      btn.textContent = 'Stop Extraction';
+      btn.classList.add('active');
+      
+      // ALWAYS require "Search this area" click on first start after page load
+      // This ensures we capture ALL initial leads from a fresh search
+      if (!hasReceivedSearchData) {
+        // Haven't received any search data yet - wait for user to click Search this area
+        isWaitingForSearchRefresh = true;
+        showSearchAreaReminder();
+      } else {
+        // We have already received search data (user previously clicked Search this area)
+        // Start extracting immediately
+        isExtracting = true;
+        updateStatus('extracting', '🔄 Extracting... ' + extractedLeads.size + ' leads');
+        const feed = document.querySelector('[role="feed"]');
+        if (feed) {
+          const autoScrollEnabled = document.getElementById('gme-auto-scroll');
+          if (autoScrollEnabled && autoScrollEnabled.checked) {
+            autoScroll();
+          }
+        }
+      }
+    }
+  }
+  
+  // ============================================
+  // LISTEN FOR DATA FROM INJECTED SCRIPT (NEW METHOD)
+  // ============================================
+  
+  window.addEventListener('message', function(event) {
+    if (event.source !== window) return;
+    if (event.origin && event.origin !== 'https://www.google.com' && event.origin !== 'https://maps.google.com') return;
+    // Handle new Proxy+Fetch capture method
+    if (event.data && event.data.type === CONFIG.messageType) {
+      // Data comes in event.data.payload.data from injected.js
+      const payload = event.data.payload;
+      if (payload && payload.data) {
+        // Only process if user has clicked start - don't auto-extract on page load
+        if (!userClickedStart) {
+          return;
+        }
+        
+        // Process the data - extraction and trigger logic handled inside
+        processInterceptedData(payload.data);
+      }
+      return;
+    }
+    
+    // Handle legacy XHR intercept format (backward compat)
+    if (event.data && event.data.type === 'search' && event.data.data) {
+      // Only process if user has clicked start
+      if (!userClickedStart) {
+        return;
+      }
+      
+      const wasWaiting = isWaitingForSearchRefresh;
+      
+      try {
+        var rawData = JSON.parse(event.data.data.replace('/*""*/', ''));
+        var results = JSON.parse(rawData.d.slice(5));
+        var feed = results[64];
+        
+        if (feed && feed.length) {
+          // Extract businesses
+          tryExtractBusinesses(feed, 'legacy');
+        }
+        
+        // ALWAYS trigger if we were waiting - even if parsing found nothing
+        if (wasWaiting && userClickedStart) {
+          onSearchDataReceived();
+        } else if (hasReceivedSearchData && isAlwaysCapture && userClickedStart) {
+          updateStats();
+        }
+      } catch(err) {
+        log('Legacy parse error:', err);
+        // Even on error, if we were waiting, trigger extraction
+        if (wasWaiting && isWaitingForSearchRefresh && userClickedStart) {
+          onSearchDataReceived();
+        }
+      }
+    }
+  });
+  
+  // Process intercepted data from new Proxy+Fetch method
+  function processInterceptedData(body) {
+    try {
+      // Handle both string and already-parsed data
+      let rawData = typeof body === 'string' ? body : JSON.stringify(body);
+      
+      // Google Maps response format from console: {"c":0,"d":")]}'\n[[\"engineer\",...]]"}
+      let parsed;
+      let innerData;
+      
+      try {
+        parsed = JSON.parse(rawData.replace('/*""*/', ''));
+        innerData = parsed.d;
+      } catch(e) {
+        // Try direct parse - maybe it's raw data
+        innerData = rawData;
+      }
+      
+      if (!innerData || typeof innerData !== 'string') {
+        return;
+      }
+      
+      // Remove the prefix ")]}'" and newline
+      if (innerData.startsWith(")]}'")) {
+        innerData = innerData.substring(innerData.indexOf('\n') + 1);
+      }
+      
+      let results;
+      try {
+        results = JSON.parse(innerData);
+      } catch(e) {
+        return;
+      }
+      
+      // The response is an array, the first element contains search query and metadata
+      // Business data is typically in specific array indices
+      // From logs: [[\"engineer\", ...], ...metadata..., null, null, ..., businessArray]
+      
+      // Try to find business data - it's typically a nested array structure
+      let businessesFound = 0;
+      
+      // Method 1: Look for the main business array (usually at index that has arrays with business structure)
+      for (let i = 0; i < results.length; i++) {
+        const item = results[i];
+        if (!item) continue;
+        
+        // Check if this is the main array containing business results
+        if (Array.isArray(item)) {
+          // Business arrays typically have items that are arrays with specific structure
+          const extracted = tryExtractBusinesses(item, `results[${i}]`);
+          if (extracted > 0) {
+            businessesFound += extracted;
+          }
+        }
+      }
+      
+      if (businessesFound > 0) {
+        // Found businesses - trigger extraction if waiting
+        if (isWaitingForSearchRefresh && userClickedStart) {
+          onSearchDataReceived();
+        } else if (hasReceivedSearchData && isAlwaysCapture && userClickedStart) {
+          // Already capturing, just update stats
+          updateStats();
+        }
+      } else {
+        // Recursive search as fallback
+        const recursiveFound = searchForBusinesses(results);
+        
+        // Only trigger if we actually found businesses via recursive search
+        if (recursiveFound > 0 && isWaitingForSearchRefresh && userClickedStart) {
+          onSearchDataReceived();
+        }
+      }
+      
+    } catch (err) {
+      // Error processing intercepted data
+    }
+  }
+  
+  // Try to extract businesses from an array
+  function tryExtractBusinesses(arr, path) {
+    if (!Array.isArray(arr)) return 0;
+    let count = 0;
+    
+    for (let i = 0; i < arr.length; i++) {
+      const item = arr[i];
+      if (!Array.isArray(item)) continue;
+      
+      // Check if this looks like a business entry (has nested array with name at index 11)
+      // Business structure: [..., [nested data with name at index 11, ...], ...]
+      for (let j = 0; j < item.length; j++) {
+        const subItem = item[j];
+        if (Array.isArray(subItem) && subItem.length > 11 && typeof subItem[11] === 'string' && subItem[11].length > 0) {
+          // This looks like business data!
+          const extracted = extractBusinessFromArray(subItem);
+          if (extracted) {
+            count++;
+          }
+        }
+      }
+      
+      // Also check the item itself
+      if (item.length > 11 && typeof item[11] === 'string' && item[11].length > 0) {
+        const extracted = extractBusinessFromArray(item);
+        if (extracted) {
+          count++;
+        }
+      }
+      
+      // Check the last element of item (common pattern)
+      const lastEl = item[item.length - 1];
+      if (Array.isArray(lastEl) && lastEl.length > 11 && typeof lastEl[11] === 'string') {
+        const extracted = extractBusinessFromArray(lastEl);
+        if (extracted) {
+          count++;
+        }
+      }
+    }
+    
+    return count;
+  }
+  
+  // Extract business data from an array with known structure
+  function extractBusinessFromArray(e) {
+    try {
+      // GUARD: Only extract if user has clicked Start
+      // This prevents auto-capturing on page load/refresh
+      if (!userClickedStart && !isAlwaysCapture) {
+        return false;
+      }
+      
+      // Name (index 11)
+      const name = e[11];
+      if (!name || typeof name !== 'string') return false;
+      
+      // Website (index 7[0])
+      let website = '';
+      try { website = e[7]?.[0] || ''; } catch(err) {}
+      
+      // Phone (index 178[0][0])
+      let phone = '';
+      try { phone = e[178]?.[0]?.[0] || ''; } catch(err) {}
+      
+      // Review count (index 4[8])
+      let reviewCount = '';
+      try { reviewCount = e[4]?.[8] || ''; } catch(err) {}
+      
+      // Rating (index 4[7])
+      let averageRating = '';
+      try { averageRating = e[4]?.[7] || ''; } catch(err) {}
+      
+      // Category (index 13)
+      let category = '';
+      try {
+        const cats = e[13];
+        if (Array.isArray(cats)) {
+          category = cats.join(', ');
+        } else if (typeof cats === 'string') {
+          category = cats;
+        }
+      } catch(err) {}
+      
+      // Address (index 18)
+      let address = '';
+      try { address = e[18] || ''; } catch(err) {}
+      
+      // Coordinates (index 9)
+      let lat = '', lng = '';
+      try {
+        lat = e[9]?.[2] || '';
+        lng = e[9]?.[3] || '';
+      } catch(err) {}
+      
+      // Place ID (index 78)
+      let placeId = '';
+      try { placeId = e[78] || ''; } catch(err) {}
+      
+      // CID (index 25)
+      let cid = '';
+      try { cid = e[25]?.[3]?.[0] || e[25]?.[1] || ''; } catch(err) {}
+      
+      // Google Maps Link
+      const gmapsLink = placeId ? `https://www.google.com/maps/place/?q=place_id:${placeId}` : 
+                        (cid ? `https://www.google.com/maps?cid=${cid}` : '');
+      
+      // Create unique key
+      const key = name + '_' + (phone || website || lat + lng || address);
+      
+      // Duplicate check
+      if (extractedLeads.has(key)) return false;
+      if (phone && leads_phones.has(phone)) return false;
+      if (lat && lng) {
+        const lnglatKey = `${lng},${lat}`;
+        if (leads_lnglat.has(lnglatKey)) return false;
+        leads_lnglat.add(lnglatKey);
+      }
+      if (phone) leads_phones.add(phone);
+      
+      // Check if has valid website and separate social media links
+      let hasWebsite = false;
+      let facebook = '';
+      let instagram = '';
+      let twitter = '';
+      let linkedin = '';
+      let youtube = '';
+      let tiktok = '';
+      let actualWebsite = '';
+      
+      if (website) {
+        const lowerUrl = website.toLowerCase();
+        
+        // Facebook detection
+        if (lowerUrl.includes('facebook.com') || lowerUrl.includes('fb.com') || lowerUrl.includes('fb.me')) {
+          facebook = website;
+        }
+        // Instagram detection
+        else if (lowerUrl.includes('instagram.com') || lowerUrl.includes('instagr.am')) {
+          instagram = website;
+        }
+        // Twitter/X detection
+        else if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) {
+          twitter = website;
+        }
+        // LinkedIn detection
+        else if (lowerUrl.includes('linkedin.com')) {
+          linkedin = website;
+        }
+        // YouTube detection
+        else if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
+          youtube = website;
+        }
+        // TikTok detection
+        else if (lowerUrl.includes('tiktok.com')) {
+          tiktok = website;
+        }
+        // Skip Google/Maps links - not real websites
+        else if (lowerUrl.includes('google.com') || lowerUrl.includes('goo.gl') || lowerUrl.includes('maps.app.goo.gl')) {
+          actualWebsite = '';
+        }
+        // Skip other common non-website links
+        else if (lowerUrl.includes('wa.me') || lowerUrl.includes('whatsapp.com') || 
+                 lowerUrl.includes('t.me') || lowerUrl.includes('telegram.') ||
+                 lowerUrl.includes('pinterest.com') || lowerUrl.includes('yelp.com') ||
+                 lowerUrl.includes('tripadvisor.com') || lowerUrl.includes('booking.com')) {
+          // These are profile/listing links, not actual business websites
+          actualWebsite = '';
+        }
+        // Real website!
+        else {
+          actualWebsite = website;
+          hasWebsite = true;
+        }
+      }
+      
+      // Store lead
+      const lead = {
+        name,
+        website: actualWebsite,
+        phone,
+        reviewCount: String(reviewCount || ''),
+        averageRating: String(averageRating || ''),
+        category,
+        address,
+        lat: String(lat || ''),
+        lng: String(lng || ''),
+        placeId,
+        cid: String(cid || ''),
+        gmapsLink,
+        has_website: hasWebsite,
+        email: '',
+        facebook: facebook,
+        instagram: instagram,
+        twitter: twitter,
+        linkedin: linkedin,
+        youtube: youtube,
+        tiktok: tiktok
+      };
+      
+      extractedLeads.set(key, lead);
+      
+      // Add to enrichment queue only if user opted in
+      if (hasWebsite && actualWebsite && enrichmentConsent) {
+        enrichmentQueue.push({ lead, key });
+        enrichmentTotal++;
+        processEnrichmentQueue();
+      }
+      
+      // Queue for sheets sync
+      if (sheetsSyncEnabled) {
+        queueLeadForSheets(lead);
+      }
+      
+      // Update stats
+      updateStats();
+      
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+  
+  // Recursive search for business data
+  function searchForBusinesses(obj, depth = 0) {
+    if (depth > 15 || !obj) return 0;
+    
+    let found = 0;
+    
+    if (Array.isArray(obj)) {
+      // Check if this looks like a business item (has name at index 11)
+      if (obj.length > 11 && typeof obj[11] === 'string' && obj[11].length > 0) {
+        const extracted = extractBusinessFromArray(obj);
+        return extracted ? 1 : 0;
+      }
+      
+      // Recursively search arrays
+      for (const item of obj) {
+        found += searchForBusinesses(item, depth + 1);
+      }
+    } else if (typeof obj === 'object' && obj !== null) {
+      for (const key in obj) {
+        found += searchForBusinesses(obj[key], depth + 1);
+      }
+    }
+    
+    return found;
+  }
+  
+  // ============================================
+  // EMAIL ENRICHMENT (with 4s timeout)
+  // ============================================
+  
+  async function processEnrichmentQueue() {
+    if (!enrichmentConsent) {
+      enrichmentQueue = [];
+      enrichmentInProgress = 0;
+      return;
+    }
+    while (enrichmentQueue.length > 0 && enrichmentInProgress < MAX_CONCURRENT_ENRICHMENTS) {
+      const item = enrichmentQueue.shift();
+      enrichmentInProgress++;
+      
+      enrichLeadWithEmail(item.lead, item.key)
+        .finally(() => {
+          enrichmentInProgress--;
+          enrichmentCompleted++;
+          updateEnrichmentProgress();
+          processEnrichmentQueue();
+        });
+    }
+  }
+  
+  async function enrichLeadWithEmail(lead, key) {
+    try {
+      const websiteUrl = lead.website.startsWith('http') ? lead.website : 'https://' + lead.website;
+      
+      // Create abort controller for 4 second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), EMAIL_FETCH_TIMEOUT);
+      
+      try {
+        const response = await fetch(ENRICH_API_URL + '?url=' + encodeURIComponent(websiteUrl), {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.emails && data.emails.length > 0) {
+            lead.email = data.emails.join(', ');
+          } else {
+            lead.email = '';
+          }
+          
+          // Add social media
+          if (!lead.facebook && data.social?.facebook) {
+            lead.facebook = 'facebook.com/' + data.social.facebook;
+          }
+          if (!lead.instagram && data.social?.instagram) {
+            lead.instagram = 'instagram.com/' + data.social.instagram;
+          }
+          if (data.social?.linkedin) {
+            lead.linkedin = 'linkedin.com/in/' + data.social.linkedin;
+          }
+          if (data.social?.twitter) {
+            lead.twitter = 'x.com/' + data.social.twitter;
+          }
+          if (data.social?.youtube) {
+            lead.youtube = 'youtube.com/' + data.social.youtube;
+          }
+          if (data.social?.tiktok) {
+            lead.tiktok = 'tiktok.com/@' + data.social.tiktok;
+          }
+          
+          extractedLeads.set(key, lead);
+          queueLeadForSync(lead);
+          updateStats();
+        } else {
+          lead.email = '';
+          extractedLeads.set(key, lead);
+          queueLeadForSync(lead);
+          updateStats();
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        lead.email = '';
+        extractedLeads.set(key, lead);
+        queueLeadForSync(lead);
+        updateStats();
+      }
+      
+    } catch (err) {
+      lead.email = '';
+      extractedLeads.set(key, lead);
+      queueLeadForSync(lead);
+      updateStats();
+    }
+  }
+  
+  function updateEnrichmentProgress() {
+    const enrichStatus = document.getElementById('gme-enrich-status');
+    const enrichText = document.getElementById('gme-enrich-text');
+    const exportBtn = document.getElementById('gme-export-btn');
+    
+    if (exportBtn) {
+      if (enrichmentInProgress > 0 || enrichmentQueue.length > 0) {
+        exportBtn.disabled = true;
+        exportBtn.classList.add('loading');
+      } else {
+        exportBtn.disabled = false;
+        exportBtn.classList.remove('loading');
+      }
+    }
+    
+    if (enrichStatus) {
+      if (enrichmentInProgress > 0 || enrichmentQueue.length > 0) {
+        if (isStoppingWithEnrichment) {
+          const remaining = enrichmentQueue.length + enrichmentInProgress;
+          if (enrichText) enrichText.textContent = 'Please wait... finishing ' + remaining + ' enrichment(s)';
+        } else if (isExtracting || isAlwaysCapture) {
+          if (enrichText) enrichText.textContent = '📜 Scrolls: ' + totalScrollCount;
+        }
+        enrichStatus.classList.add('active');
+      } else if (isStoppingWithEnrichment) {
+        // Enrichment finished while stopping - call finishStopping
+        isStoppingWithEnrichment = false;
+        if (enrichText) enrichText.textContent = '✅ Done - Scrolls: ' + totalScrollCount;
+        finishStopping();
+        enrichStatus.classList.remove('active');
+      } else if ((enrichmentCompleted > 0 || totalScrollCount > 0) && (isExtracting || isAlwaysCapture)) {
+        if (enrichText) enrichText.textContent = '📜 Scrolls: ' + totalScrollCount;
+        enrichStatus.classList.add('active');
+      } else {
+        enrichStatus.classList.remove('active');
+      }
+    }
+  }
+  
+  function finishStopping() {
+    const btn = document.getElementById('gme-start-btn');
+    const exportBtn = document.getElementById('gme-export-btn');
+    const enrichStatus = document.getElementById('gme-enrich-status');
+    
+    if (btn) {
+      btn.textContent = 'Start Extraction';
+      btn.classList.remove('active');
+      btn.disabled = false;
+    }
+    
+    if (exportBtn) {
+      exportBtn.disabled = false;
+      exportBtn.classList.remove('loading');
+    }
+    
+    // Hide enrichment status
+    if (enrichStatus) {
+      enrichStatus.classList.remove('active');
+    }
+    
+    updateStatus('stopped', 'Stopped.. ' + extractedLeads.size + ' leads');
+  }
+  
+  // ============================================
+  // AUTO-SCROLL
+  // ============================================
+  
+  function startExtraction() {
+    if (isExtracting) return;
+    scrollCount = 0;
+    
+    const feed = document.querySelector('[role="feed"]');
+    if (feed && !hasReceivedSearchData) {
+      isExtracting = true;
+      isWaitingForSearchRefresh = true;
+      showSearchAreaReminder();
+      return;
+    }
+    
+    isExtracting = true;
+    continueExtraction();
+  }
+  
+  function continueExtraction() {
+    const autoScrollEnabled = document.getElementById('gme-auto-scroll');
+    const shouldAutoScroll = autoScrollEnabled && autoScrollEnabled.checked;
+    
+    if (shouldAutoScroll) {
+      updateStatus('extracting', '🔄 Extracting with auto-scroll...');
+      updateStats();
+      setTimeout(autoScroll, 500);
+    } else {
+      updateStatus('extracting', '🔄 Extracting... scroll manually for more');
+      updateStats();
+    }
+  }
+  
+  async function autoScroll() {
+    if (!isExtracting && !isAlwaysCapture) return;
+    if (!isExtracting) return;
+    
+    const autoScrollEnabled = document.getElementById('gme-auto-scroll');
+    if (!autoScrollEnabled || !autoScrollEnabled.checked) {
+      updateStatus('extracting', '🔄 Auto-scroll disabled, scroll manually');
+      return;
+    }
+    
+    const feed = document.querySelector('[role="feed"]');
+    if (!feed) {
+      if (isAlwaysCapture) {
+        // In always-on mode, keep waiting for a feed
+        setTimeout(autoScroll, 2000);
+      }
+      return;
+    }
+    
+    const prevHeight = feed.scrollHeight;
+    
+    // Aggressive deep scroll - scroll to absolute bottom multiple times
+    feed.scrollTo({ top: feed.scrollHeight + 10000, behavior: 'instant' });
+    await sleep(100);
+    feed.scrollTo({ top: feed.scrollHeight + 10000, behavior: 'instant' });
+    await sleep(100);
+    feed.scrollTo({ top: feed.scrollHeight + 10000, behavior: 'instant' });
+    
+    scrollCount++;
+    totalScrollCount++;
+    
+    await sleep(800);
+    
+    // Check for "You've reached the end" message
+    if (document.getElementsByClassName('HlvSq').length > 0) {
+      isExtracting = false;
+      scrollCount = 0;
+      if (isAlwaysCapture) {
+        // Stay in always-on mode but wait for next area
+        showAreaDoneAlert(extractedLeads.size);
+        isWaitingForSearchRefresh = true;
+      } else {
+        stopExtraction();
+      }
+      return;
+    }
+    
+    // Check if stuck (height didn't change after 30 scrolls)
+    if (feed.scrollHeight === prevHeight) {
+      const items = feed.querySelectorAll('[role="article"]');
+      if (items.length > 0) {
+        // Scroll to last item aggressively
+        const lastItem = items[items.length - 1];
+        lastItem.scrollIntoView({ behavior: 'instant', block: 'end' });
+        await sleep(200);
+        feed.scrollTo({ top: feed.scrollHeight + 10000, behavior: 'instant' });
+        await sleep(300);
+      }
+      
+      if (scrollCount > 30) {
+        isExtracting = false;
+        scrollCount = 0;
+        if (isAlwaysCapture) {
+          showAreaDoneAlert(extractedLeads.size);
+          isWaitingForSearchRefresh = true;
+        } else {
+          stopExtraction();
+        }
+        return;
+      }
+    }
+    
+    // Update display with current lead count
+    updateStatus('extracting', '🔄 Extracting... ' + extractedLeads.size + ' leads');
+    updateStats();
+    updateEnrichmentProgress();
+    
+    const stillEnabled = document.getElementById('gme-auto-scroll');
+    if (isExtracting && stillEnabled && stillEnabled.checked) {
+      setTimeout(autoScroll, 600);  // Faster interval
+    }
+  }
+  
+  function stopExtraction() {
+    isExtracting = false;
+    isWaitingForSearchRefresh = false;
+    isAlwaysCapture = false;
+    
+    const toast = document.getElementById('gme-toast');
+    if (toast) toast.remove();
+    
+    const btn = document.getElementById('gme-start-btn');
+    if (btn) {
+      btn.textContent = '▶ Start';
+      btn.classList.remove('active');
+    }
+    
+    updateStatus('ready', '✅ Done! ' + extractedLeads.size + ' leads extracted');
+    updateStats();
+  }
+  
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  
+  // ============================================
+  // UI UPDATES
+  // ============================================
+  
+  function updateStats() {
+    const leads = Array.from(extractedLeads.values());
+    
+    const total = leads.length;
+    const withPhone = leads.filter(l => l.phone).length;
+    const withEmail = leads.filter(l => l.email && l.email !== 'Fetching...').length;
+    const noWebsite = leads.filter(l => !l.has_website).length;
+    
+    const totalEl = document.getElementById('gme-total');
+    const noWebsiteEl = document.getElementById('gme-no-website');
+    const withPhoneEl = document.getElementById('gme-with-phone');
+    const withEmailEl = document.getElementById('gme-with-email');
+    const miniStats = document.getElementById('gme-mini-stats');
+    
+    if (totalEl) totalEl.textContent = total;
+    if (noWebsiteEl) noWebsiteEl.textContent = noWebsite;
+    if (withPhoneEl) withPhoneEl.textContent = withPhone;
+    if (withEmailEl) withEmailEl.textContent = withEmail;
+    if (miniStats) miniStats.textContent = total;
+    
+    // Also update status text with current lead count if extracting
+    // Don't update if we're stopping with enrichment (waiting state)
+    if ((isExtracting || isAlwaysCapture) && !isStoppingWithEnrichment) {
+      const statusText = document.getElementById('gme-status-text');
+      if (statusText && !isWaitingForSearchRefresh) {
+        statusText.textContent = '🔄 Extracting... ' + total + ' leads';
+      }
+    }
+    
+    // Update filter counts in options panel
+    updateFilterCounts();
+  }
+  
+  // Update the live counter for each filter option and aggregate export count
+  function updateFilterCounts() {
+    const allLeads = Array.from(extractedLeads.values());
+    
+    // Calculate count for each individual filter (standalone, not combined)
+    const noWebsiteCount = allLeads.filter(l => !l.has_website).length;
+    const withEmailCount = allLeads.filter(l => l.email && l.email !== 'Fetching...').length;
+    const withPhoneCount = allLeads.filter(l => l.phone && l.phone.trim()).length;
+    
+    // Update individual filter counter elements
+    const countNoWebsite = document.getElementById('gme-count-no-website');
+    const countWithEmail = document.getElementById('gme-count-with-email');
+    const countWithPhone = document.getElementById('gme-count-with-phone');
+    
+    if (countNoWebsite) countNoWebsite.textContent = `(${noWebsiteCount})`;
+    if (countWithEmail) countWithEmail.textContent = `(${withEmailCount})`;
+    if (countWithPhone) countWithPhone.textContent = `(${withPhoneCount})`;
+    
+    // Calculate aggregate export count based on current filter selections
+    const onlyNoWebsite = document.getElementById('gme-only-no-website');
+    const onlyWithEmail = document.getElementById('gme-only-with-email');
+    const onlyWithPhone = document.getElementById('gme-only-with-phone');
+    
+    let filteredLeads = allLeads;
+    
+    if (onlyNoWebsite && onlyNoWebsite.checked) {
+      filteredLeads = filteredLeads.filter(l => !l.has_website);
+    }
+    if (onlyWithEmail && onlyWithEmail.checked) {
+      filteredLeads = filteredLeads.filter(l => l.email && l.email !== 'Fetching...');
+    }
+    if (onlyWithPhone && onlyWithPhone.checked) {
+      filteredLeads = filteredLeads.filter(l => l.phone && l.phone.trim());
+    }
+    
+    // Update aggregate export count
+    const exportCountEl = document.getElementById('gme-export-count');
+    if (exportCountEl) exportCountEl.textContent = filteredLeads.length;
+  }
+  
+  function updateStatus(state, text) {
+    const statusEl = document.getElementById('gme-status');
+    const textEl = document.getElementById('gme-status-text');
+    
+    if (statusEl) {
+      statusEl.className = 'gme-status ' + state;
+    }
+    if (textEl) {
+      textEl.textContent = text;
+      textEl.style.color = '';
+      textEl.style.fontWeight = '';
+      textEl.style.fontSize = '';
+      textEl.style.animation = '';
+    }
+  }
+  
+  function showAreaDoneAlert(leadCount) {
+    const statusEl = document.getElementById('gme-status');
+    const textEl = document.getElementById('gme-status-text');
+    
+    if (statusEl) {
+      statusEl.className = 'gme-status area-done';
+    }
+    if (textEl) {
+      textEl.innerHTML = `
+        <div style="text-align: center;">
+          <div style="font-size: 13px; font-weight: 700; color: white; margin-bottom: 4px;">
+            AREA COMPLETE!
+          </div>
+          <div style="font-size: 22px; font-weight: 800; color: #fef08a; margin-bottom: 6px;">
+            ${leadCount} leads
+          </div>
+          <div style="font-size: 11px; color: rgba(255,255,255,0.95); background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px;">
+            👆 Move map & click <strong>"Search this area"</strong>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Also show a toast
+    showToast('🎉 Area complete! Move map to continue extracting', 4000, 'success');
+  }
+  
+  function resetStatusStyle() {
+    const statusEl = document.getElementById('gme-status');
+    if (statusEl) {
+      statusEl.style.background = '';
+      statusEl.style.padding = '';
+      statusEl.style.borderRadius = '';
+      statusEl.style.boxShadow = '';
+      statusEl.style.animation = '';
+    }
+  }
+
+  // ============================================
+  // EXPORT & CLEAR
+  // ============================================
+  
+  function exportCSV() {
+    if (enrichmentInProgress > 0 || enrichmentQueue.length > 0) {
+      showToast('Please wait for email fetching to complete', 3000, 'warning');
+      return;
+    }
+    
+    let leads = Array.from(extractedLeads.values());
+    
+    if (!isLicenseValid && hasUsedFreeExport) {
+      showToast('Free export already used — upgrade to export more leads', 3500, 'warning');
+      return;
+    }
+    
+    // Apply filters from options sidebar
+    const onlyNoWebsite = document.getElementById('gme-only-no-website');
+    const onlyWithEmail = document.getElementById('gme-only-with-email');
+    const onlyWithPhone = document.getElementById('gme-only-with-phone');
+    
+    if (onlyNoWebsite && onlyNoWebsite.checked) {
+      leads = leads.filter(l => !l.has_website);
+    }
+    
+    if (onlyWithEmail && onlyWithEmail.checked) {
+      leads = leads.filter(l => l.email && l.email !== 'Fetching...');
+    }
+    
+    if (onlyWithPhone && onlyWithPhone.checked) {
+      leads = leads.filter(l => l.phone && l.phone.trim());
+    }
+    
+    // Apply sorting
+    const sortRadios = document.getElementsByName('sort');
+    let sortBy = 'none';
+    for (const radio of sortRadios) {
+      if (radio.checked) {
+        sortBy = radio.value;
+        break;
+      }
+    }
+    
+    if (sortBy === 'rating') {
+      // Check sub-option for order
+      const ratingOrderRadios = document.getElementsByName('rating-order');
+      let ratingOrder = 'high-low';
+      for (const radio of ratingOrderRadios) {
+        if (radio.checked) {
+          ratingOrder = radio.value;
+          break;
+        }
+      }
+      if (ratingOrder === 'high-low') {
+        leads.sort((a, b) => (parseFloat(b.averageRating) || 0) - (parseFloat(a.averageRating) || 0));
+      } else {
+        leads.sort((a, b) => (parseFloat(a.averageRating) || 0) - (parseFloat(b.averageRating) || 0));
+      }
+    } else if (sortBy === 'reviews') {
+      // Check sub-option for order
+      const reviewsOrderRadios = document.getElementsByName('reviews-order');
+      let reviewsOrder = 'high-low';
+      for (const radio of reviewsOrderRadios) {
+        if (radio.checked) {
+          reviewsOrder = radio.value;
+          break;
+        }
+      }
+      if (reviewsOrder === 'high-low') {
+        leads.sort((a, b) => (parseInt(b.reviewCount) || 0) - (parseInt(a.reviewCount) || 0));
+      } else {
+        leads.sort((a, b) => (parseInt(a.reviewCount) || 0) - (parseInt(b.reviewCount) || 0));
+      }
+    }
+    
+    if (leads.length === 0) {
+      showToast('No leads to export with current filters', 3000, 'warning');
+      return;
+    }
+    
+    // Helper function to perform the actual CSV download
+    const performDownload = (leadsToExport) => {
+      const headers = ['Name', 'Phone', 'Email', 'Website', 'Address', 'Instagram', 'Facebook', 'Twitter', 'LinkedIn', 'YouTube', 'TikTok', 'ReviewCount', 'AverageRating', 'Category', 'GoogleMapsLink'];
+      
+      const csvContent = [
+        headers.join(','),
+        ...leadsToExport.map(lead => {
+          let email = lead.email || '';
+          if (email === 'Fetching...') email = '';
+          
+          return [
+            `"${(lead.name || '').replace(/"/g, '""')}"`,
+            `"${(lead.phone || '').replace(/"/g, '""')}"`,
+            `"${email.replace(/"/g, '""')}"`,
+            `"${(lead.website || '').replace(/"/g, '""')}"`,
+            `"${(lead.address || '').replace(/"/g, '""')}"`,
+            `"${(lead.instagram || '').replace(/"/g, '""')}"`,
+            `"${(lead.facebook || '').replace(/"/g, '""')}"`,
+            `"${(lead.twitter || '').replace(/"/g, '""')}"`,
+            `"${(lead.linkedin || '').replace(/"/g, '""')}"`,
+            `"${(lead.youtube || '').replace(/"/g, '""')}"`,
+            `"${(lead.tiktok || '').replace(/"/g, '""')}"`,
+            `"${lead.reviewCount || ''}"`,
+            `"${lead.averageRating || ''}"`,
+            `"${(lead.category || '').replace(/"/g, '""')}"`,
+            `"${(lead.googleMapsLink || '').replace(/"/g, '""')}"`
+          ].join(',');
+        })
+      ].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `google_maps_leads_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      showToast('✅ Exported ' + leadsToExport.length + ' leads to CSV', 3000, 'success');
+    };
+    
+    // FREE LICENSE LIMIT: Only export first 50 leads
+    const FREE_EXPORT_LIMIT = 50;
+    const totalLeads = leads.length;
+    const isLimited = totalLeads > FREE_EXPORT_LIMIT && !isLicenseValid;
+    
+    if (isLimited) {
+      // Show the upgrade modal - CSV will only download when user clicks "Continue"
+      const limitedLeads = leads.slice(0, FREE_EXPORT_LIMIT);
+      showExportLimitModal(totalLeads, FREE_EXPORT_LIMIT, () => {
+        performDownload(limitedLeads);
+        // Mark that user has used their free export and show upgrade prompts
+        hasUsedFreeExport = true;
+        chrome.storage.local.set({ hasUsedFreeExport: true });
+        showUpgradePrompts();
+      });
+      return; // Don't download automatically - wait for user to click continue
+    }
+    
+    // No limit - download all leads directly
+    performDownload(leads);
+    if (!isLicenseValid) {
+      hasUsedFreeExport = true;
+      chrome.storage.local.set({ hasUsedFreeExport: true });
+      showUpgradePrompts();
+    }
+  }
+  
+  // Show upgrade prompts after free export is used
+  function showUpgradePrompts() {
+    if (isLicenseValid) return; // Don't show if licensed
+    
+    // Add upgrade badge to export button
+    const exportBtn = document.getElementById('gme-export-btn');
+    if (exportBtn && !exportBtn.querySelector('.upgrade-badge')) {
+      exportBtn.innerHTML = 'Export <span class="upgrade-badge" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 600;">UPGRADE</span>';
+      exportBtn.title = 'Free export used! Upgrade to export unlimited leads';
+    }
+    
+    // Add upgrade badge to Export to Sheets button
+    const sheetsBtn = document.getElementById('gme-sheets-btn');
+    if (sheetsBtn && !sheetsBtn.classList.contains('premium-locked')) {
+      sheetsBtn.innerHTML = '🔒 Export to Sheets';
+      sheetsBtn.classList.add('premium-locked');
+      sheetsBtn.title = 'Premium Feature - Upgrade to export to Google Sheets';
+      const upgradeText = document.querySelector('.gme-upgrade-text');
+      if (upgradeText) upgradeText.style.display = 'block';
+    }
+    
+    // Add subtle upgrade banner below stats
+    const statsSection = document.querySelector('.gme-stats');
+    if (statsSection && !document.getElementById('gme-upgrade-banner')) {
+      const banner = document.createElement('div');
+      banner.id = 'gme-upgrade-banner';
+      banner.innerHTML = `
+        <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(147, 51, 234, 0.15)); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 10px; margin: 10px 0; text-align: center; cursor: pointer;" onclick="window.open('https://mapsreach.com/pricing', '_blank')">
+          <span style="color: #93c5fd; font-size: 12px;">✨ Free export used! <strong style="color: white;">Upgrade for unlimited exports</strong></span>
+        </div>
+      `;
+      statsSection.after(banner);
+    }
+  }
+  
+  // Check and restore upgrade prompts on load
+  function checkFreeExportStatus() {
+    chrome.storage.local.get(['hasUsedFreeExport'], (result) => {
+      if (result.hasUsedFreeExport && !isLicenseValid) {
+        hasUsedFreeExport = true;
+        setTimeout(showUpgradePrompts, 1000); // Wait for panel to be ready
+      }
+    });
+  }
+  
+  // Remove upgrade prompts when user gets a license
+  function removeUpgradePrompts() {
+    // Reset export button
+    const exportBtn = document.getElementById('gme-export-btn');
+    if (exportBtn) {
+      exportBtn.textContent = 'Export';
+      exportBtn.title = 'Export leads to CSV';
+    }
+    
+    // Reset Export to Sheets button
+    const sheetsBtn = document.getElementById('gme-sheets-btn');
+    if (sheetsBtn) {
+      sheetsBtn.textContent = 'Export to Sheets';
+      sheetsBtn.classList.remove('premium-locked');
+      sheetsBtn.title = 'Export leads to Google Sheets';
+      const upgradeText = document.querySelector('.gme-upgrade-text');
+      if (upgradeText) upgradeText.style.display = 'none';
+    }
+    
+    // Remove upgrade banner
+    const banner = document.getElementById('gme-upgrade-banner');
+    if (banner) banner.remove();
+    
+    // Clear the hasUsedFreeExport flag since they're now licensed
+    hasUsedFreeExport = false;
+    
+    showToast('🎉 License activated! Unlimited exports unlocked!', 3000, 'success');
+  }
+  
+  // Export leads to Google Sheets (PREMIUM ONLY)
+  function exportToSheets() {
+    // Check if user has valid license
+    if (!isLicenseValid) {
+      showToast('🔒 Export to Sheets is a Premium feature! Upgrade to unlock unlimited sheet exports.', 4000, 'warning');
+      return;
+    }
+    
+    // Check if user has opted to never show tutorial
+    chrome.storage.local.get(['hasSeenSheetsTutorial', 'sheetsNeverShowTutorial'], (result) => {
+      if (!result.hasSeenSheetsTutorial && !result.sheetsNeverShowTutorial) {
+        // Show tutorial modal
+        const tutorialModal = document.getElementById('gme-sheets-tutorial');
+        if (tutorialModal) {
+          tutorialModal.style.display = 'flex';
+          chrome.storage.local.set({ hasSeenSheetsTutorial: true });
+        }
+        return;
+      }
+      
+      // Check if sheets sync is configured
+      if (!sheetsSyncEnabled || !sheetsConfig.sheetId) {
+        showToast('Please configure Google Sheets sync in the extension popup first!', 4000, 'warning');
+        return;
+      }
+      
+      if (enrichmentInProgress > 0 || enrichmentQueue.length > 0) {
+        showToast('Please wait for email fetching to complete', 3000, 'warning');
+        return;
+      }
+      
+      const leads = Array.from(extractedLeads.values());
+      
+      if (leads.length === 0) {
+        showToast('No leads to export!', 3000, 'warning');
+        return;
+      }
+      
+      // Generate tab name based on current search or timestamp
+      const searchQuery = document.querySelector('input[aria-label="Search Google Maps"]')?.value || 'Leads';
+      const timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const tabName = `${searchQuery.slice(0, 20)} - ${timestamp}`;
+      
+      // Update sheets config with new tab name
+      sheetsConfig.tabName = tabName;
+      
+      // Queue all leads for sheets sync
+      leads.forEach(lead => queueLeadForSync(lead));
+      
+      // Force immediate sync
+      sendBatchToSheets();
+      
+      showToast(`✅ ${leads.length} leads queued for export to new tab: "${tabName}"!`, 4000, 'success');
+    });
+  }
+  
+  function clearData() {
+    if (extractedLeads.size > 0 && !confirm('Clear all ' + extractedLeads.size + ' leads?')) {
+      return;
+    }
+    
+    const clearedCount = extractedLeads.size;
+    extractedLeads.clear();
+    leads_lnglat.clear();
+    scrollCount = 0;
+    updateStats();
+    updateStatus('ready', 'Ready — Click Start to extract leads');
+    
+    if (clearedCount > 0) {
+      showToast('🗑️ Cleared ' + clearedCount + ' leads', 2000);
+    }
+  }
+  
+  // ============================================
+  // COMMUNICATION WITH POPUP
+  // ============================================
+  
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.type === 'GET_STATS') {
+      const leads = Array.from(extractedLeads.values());
+      sendResponse({
+        total: leads.length,
+        withPhone: leads.filter(l => l.phone).length,
+        noWebsite: leads.filter(l => !l.has_website).length,
+        withEmail: leads.filter(l => l.email && l.email !== 'Fetching...').length,
+        scrolls: scrollCount,
+        isExtracting: isExtracting,
+        isStoppingWithEnrichment: isStoppingWithEnrichment,
+        enrichmentRemaining: enrichmentQueue.length + enrichmentInProgress
+      });
+    } else if (msg.type === 'LICENSE_REVOKED') {
+      // License was revoked - immediately lock out\n      isLicenseValid = false;
+      isExtracting = false;
+      isAlwaysCapture = false;
+      userClickedStart = false;
+      isLicenseRevoked = true;
+      
+      // Remove the floating panel
+      const panel = document.getElementById('gme-floating-panel');
+      if (panel) panel.remove();
+      if (panelObserver) {
+        panelObserver.disconnect();
+        panelObserver = null;
+      }
+      
+      log('License revoked - panel removed');
+      sendResponse({ success: true });
+    } else if (msg.type === 'LICENSE_ACTIVATED') {
+      // License was just activated from popup
+      // Note: storage.onChanged will also fire, so just update the flag
+      // The storage listener will handle panel creation
+      isLicenseValid = true;
+      isLicenseRevoked = false;
+      if (!document.getElementById('gme-floating-panel')) {
+        createFloatingPanel();
+        setupSearchListeners();
+      }
+      if (!panelObserver) {
+        panelObserver = new MutationObserver(async () => {
+          if (isLicenseRevoked) return;
+          if (!document.getElementById('gme-floating-panel')) {
+            createFloatingPanel();
+            setupSearchListeners();
+          }
+        });
+        panelObserver.observe(document.body, { childList: true, subtree: true });
+      }
+      sendResponse({ success: true });
+    } else if (msg.type === 'EXPORT') {
+      exportCSV();
+      sendResponse({ success: true });
+    } else if (msg.type === 'CLEAR_LEADS' || msg.type === 'CLEAR') {
+      extractedLeads.clear();
+      leads_lnglat.clear();
+      scrollCount = 0;
+      updateStats();
+      sendResponse({ success: true });
+    } else if (msg.type === 'GET_LEADS') {
+      sendResponse({ leads: Array.from(extractedLeads.values()) });
+    }
+    return true;
+  });
+  
+  // ============================================
+  // SETUP SEARCH LISTENERS
+  // ============================================
+  
+  function setupSearchListeners() {
+    // Called after license activation
+  }
+
+  // Listen for settings changes from popup
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+    if (changes.sheetsApiKey) {
+      sheetsApiKey = changes.sheetsApiKey.newValue || '';
+    }
+    if (changes.gmeEnrichmentConsent) {
+      enrichmentConsent = changes.gmeEnrichmentConsent.newValue === true;
+      const enrichmentToggle = document.getElementById('gme-allow-enrichment');
+      if (enrichmentToggle) enrichmentToggle.checked = enrichmentConsent;
+    }
+  });
+  
+  // ============================================
+  // INITIALIZE
+  // ============================================
+  
+  async function init() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+      return;
+    }
+    
+    // FREE MODE: Always show panel - no license check
+    // Limit is on export only (100 leads max)
+    createFloatingPanel();
+    setupSearchListeners();
+    checkFreeExportStatus(); // Check if user has used free export
+    
+    // Show premium badge on sheets button for trial users
+    if (!isLicenseValid) {
+      showUpgradePrompts();
+    }
+    
+    panelObserver = new MutationObserver(async () => {
+      if (isLicenseRevoked) return;
+      if (!document.getElementById('gme-floating-panel')) {
+        createFloatingPanel();
+        setupSearchListeners();
+      }
+    });
+    
+    panelObserver.observe(document.body, { childList: true, subtree: true });
+  }
+  
+  init();
+  
+})();

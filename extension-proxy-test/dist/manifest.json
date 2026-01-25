@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "MapsReach - Google Maps Lead Extractor",
+  "version": "2.1.0",
+  "description": "Extract business leads from Google Maps with one click. Export to CSV or Google Sheets instantly.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.google.com/maps/*",
+    "https://maps.google.com/*",
+    "https://gle3-git-main-rimenehmaid-3753s-projects.vercel.app/*",
+    "https://mapsreach.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.google.com/maps/*",
+        "https://maps.google.com/*"
+      ],
+      "js": [
+        "trial-system.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/logo.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/logo.png"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "injected.js",
+        "icons/logo.png"
+      ],
+      "matches": [
+        "https://www.google.com/*",
+        "https://maps.google.com/*"
+      ]
+    }
+  ]
+}

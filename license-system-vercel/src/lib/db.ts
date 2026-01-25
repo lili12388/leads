@@ -151,12 +151,11 @@ export function generateId(): string {
   return crypto.randomUUID();
 }
 
-export { db };
-export default db;
-
 // Expose legacy-friendly alias to reduce changes
 export const db = {
   execute: (statement: any, params?: any) =>
     getDb().execute(statement as any, params as any),
   batch: (statements: any) => getDb().batch(statements as any),
 };
+
+export default db;
