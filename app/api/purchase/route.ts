@@ -26,7 +26,7 @@ function generateId(): string {
 // POST - Create new purchase request
 const PLAN_CONFIG: Record<string, { price: number; name: string }> = {
   single: { price: 59, name: 'MapsReach Extension – Single License' },
-  extended: { price: 99, name: 'MapsReach Extension – Extended License' },
+  extended: { price: 69, name: 'MapsReach Extension – Extended License' },
   outreach: { price: 49, name: 'MapsReach Outreach Tool' },
   bundle: { price: 89, name: 'Extension + Outreach Bundle' },
 }
