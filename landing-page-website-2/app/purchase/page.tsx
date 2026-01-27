@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useEffect, useState } from "react"
 import { safeLocalStorageGet, safeLocalStorageSet } from "@/lib/safe-storage"
 
 // Cookie helper function
@@ -11,7 +11,7 @@ function getCookie(name: string): string | null {
   return match ? decodeURIComponent(match[2]) : null
 }
 
-export default function PurchasePage() {
+function PurchaseContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [name, setName] = useState("")
@@ -236,10 +236,18 @@ export default function PurchasePage() {
         {/* Back Link */}
         <div className="text-center mt-6">
           <a href="/" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
-            ← Back to homepage
+            ? Back to homepage
           </a>
         </div>
       </div>
     </main>
+  )
+}
+
+export default function PurchasePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-b from-[#020a18] via-[#041225] to-[#020510]" />}> 
+      <PurchaseContent />
+    </Suspense>
   )
 }
