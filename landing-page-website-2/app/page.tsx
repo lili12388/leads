@@ -426,13 +426,7 @@ export default function Home() {
                     href="/download/chrome"
                     className="group inline-flex items-center justify-center gap-3 px-10 py-4 min-w-[260px] whitespace-nowrap bg-gradient-to-r from-[#4285F4] to-[#1a73e8] text-white font-semibold rounded-xl text-lg hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105"
                   >
-                    <svg className="w-6 h-6" viewBox="0 0 48 48">
-                      <circle cx="24" cy="24" r="20" fill="#fff" fillOpacity="0.15"/>
-                      <circle cx="24" cy="24" r="8" fill="white"/>
-                      <path d="M24 4a20 20 0 0116.97 9.39l-9.49 5.48a8 8 0 00-7.48-5.14V4z" fill="#fff" fillOpacity="0.6"/>
-                      <path d="M40.97 13.39A20 20 0 0144 24a20 20 0 01-7.03 15.18l-9.49-16.44a8 8 0 00.52-6.87l12.97-2.48z" fill="#fff" fillOpacity="0.4"/>
-                      <path d="M36.97 39.18A20 20 0 014 24a20 20 0 013.03-10.61l9.49 16.44a8 8 0 007.48 2.74l12.97 6.61z" fill="#fff" fillOpacity="0.5"/>
-                    </svg>
+                    <img src="/Google_Chrome_icon.png" alt="Chrome" className="w-6 h-6" />
                     <span>Add to Chrome</span>
                     <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -442,10 +436,7 @@ export default function Home() {
                     href="/download/edge"
                     className="group inline-flex items-center justify-center gap-3 px-10 py-4 min-w-[260px] whitespace-nowrap bg-gradient-to-r from-[#0078D4] to-[#1CA3EC] text-white font-semibold rounded-xl text-lg hover:shadow-xl hover:shadow-cyan-500/40 transition-all duration-300 hover:scale-105"
                   >
-                    <svg className="w-6 h-6" viewBox="0 0 48 48">
-                      <circle cx="24" cy="24" r="20" fill="#fff" fillOpacity="0.15"/>
-                      <path d="M24 8c-8.837 0-16 7.163-16 16 0 4.418 1.791 8.418 4.686 11.314C15.58 32.418 19.58 30 24 30c8.837 0 16-7.163 16-16 0-3.313-1.005-6.392-2.729-8.951C34.392 9.005 29.313 8 24 8z" fill="#fff" fillOpacity="0.5"/>
-                    </svg>
+                    <img src="/edge.png" alt="Edge" className="w-6 h-6" />
                     <span>Add to Edge</span>
                     <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />

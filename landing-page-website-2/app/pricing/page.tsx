@@ -20,7 +20,7 @@ export default function PricingPage() {
           </Link>
           
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/pricing" className="text-accent hover:text-foreground transition-all duration-300 text-base font-semibold px-4 py-2 rounded-lg border border-accent/30 hover:border-accent/60 hover:bg-accent/10">💰 Pricing</Link>
+            <Link href="/pricing" className="text-accent hover:text-foreground transition-all duration-300 text-base font-semibold px-4 py-2 rounded-lg border border-accent/30 hover:border-accent/60 hover:bg-accent/10">💰 Plans</Link>
             <Link href="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10">How it Works</Link>
             <Link href="/#features" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10">Features</Link>
             <Link href="/#faq" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10">FAQ</Link>
@@ -35,16 +35,16 @@ export default function PricingPage() {
         </div>
       </nav>
 
-      {/* Pricing Section */}
+      {/* Plans Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto text-center">
           <div className="mb-8">
-            <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Pricing</span>
+            <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Plans</span>
             <h1 className="text-4xl md:text-6xl font-bold mb-4 gradient-text">One Price. Unlimited Value.</h1>
             <p className="text-muted-foreground text-lg">No subscriptions. No hidden fees. Just results.</p>
           </div>
 
-          {/* Pricing Cards */}
+          {/* Plan Cards */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             
             {/* Single License - Most Popular */}
@@ -170,6 +170,97 @@ export default function PricingPage() {
               >
                 Get Team License →
               </Link>
+            </div>
+          </div>
+
+          {/* Outreach Tool Plans */}
+          <div className="mt-16">
+            <div className="text-center mb-8">
+              <span className="inline-block px-4 py-1 bg-green-500/10 text-green-400 rounded-full text-sm font-medium mb-4">Outreach Tool</span>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3 text-foreground">WhatsApp & Email Outreach</h2>
+              <p className="text-muted-foreground text-lg">Desktop automation to message leads directly with WhatsApp and email.</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Outreach Tool */}
+              <div className="bg-card border border-green-500/40 rounded-3xl p-8 relative overflow-hidden shadow-xl shadow-green-500/10">
+                <div className="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-2xl font-semibold text-sm">
+                  ONE-TIME
+                </div>
+                <h3 className="text-xl font-bold text-foreground mt-4 mb-6">Outreach Tool</h3>
+                <div className="mb-6">
+                  <div className="text-5xl font-bold text-foreground">$49</div>
+                  <p className="text-muted-foreground mt-2">One-time payment • Windows app</p>
+                </div>
+                <div className="space-y-3 text-left mb-8">
+                  {[
+                    "WhatsApp + email outreach",
+                    "Import leads from CSV",
+                    "Personalized templates",
+                    "Message scheduling",
+                    "Desktop shortcuts",
+                    "License key activation"
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-foreground text-sm">{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  href="/download/outreach"
+                  className="block w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-full hover:shadow-xl hover:shadow-green-500/40 transition-all text-center"
+                >
+                  Get Outreach Tool →
+                </Link>
+              </div>
+
+              {/* Bundle */}
+              <div className="relative bg-gradient-to-br from-primary/10 via-secondary/5 to-green-500/10 border border-primary/40 rounded-3xl p-8 overflow-hidden shadow-2xl shadow-primary/10">
+                <div className="absolute top-0 right-0 bg-gradient-to-r from-primary to-green-500 text-white px-4 py-1 rounded-bl-2xl font-semibold text-sm">
+                  BEST DEAL
+                </div>
+                <h3 className="text-xl font-bold text-foreground mt-4 mb-6">Extension + Outreach Bundle</h3>
+                <div className="mb-6">
+                  <div className="flex items-end justify-center gap-3">
+                    <span className="text-xl text-muted-foreground line-through">$99</span>
+                    <span className="text-5xl font-bold text-foreground">$89</span>
+                  </div>
+                  <p className="text-muted-foreground mt-2">One-time payment • Save $19</p>
+                </div>
+                <div className="space-y-3 text-left mb-8">
+                  {[
+                    "MapsReach Extension (lifetime)",
+                    "Outreach Tool (WhatsApp + email)",
+                    "Unlimited lead extraction",
+                    "CSV + Google Sheets export",
+                    "Templates + scheduling",
+                    "Priority updates"
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-foreground text-sm">{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  href="/purchase"
+                  className="block w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all text-center"
+                >
+                  Get Bundle →
+                </Link>
+                <p className="text-xs text-muted-foreground mt-3 text-center">
+                  Includes MapsReach Extension ($59) + Outreach Tool ($49)
+                </p>
+              </div>
             </div>
           </div>
 
