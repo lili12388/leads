@@ -10,6 +10,8 @@ export const redis = new Redis({
 export interface Purchase {
   id: string
   token: string
+  plan?: string
+  productName?: string
   name: string
   email: string
   affiliateCode: string | null

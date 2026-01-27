@@ -24,9 +24,16 @@ function generateId(): string {
 }
 
 // POST - Create new purchase request
+const PLAN_CONFIG: Record<string, { price: number; name: string }> = {
+  single: { price: 59, name: 'MapsReach Extension – Single License' },
+  extended: { price: 99, name: 'MapsReach Extension – Extended License' },
+  outreach: { price: 49, name: 'MapsReach Outreach Tool' },
+  bundle: { price: 89, name: 'Extension + Outreach Bundle' },
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, affiliateCode } = await request.json()
+    const { name, email, affiliateCode, plan } = await request.json()
 
     if (!name || !email) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
@@ -48,12 +55,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const productPrice = 59 // $59 USD
+    const planKey = typeof plan === 'string' && PLAN_CONFIG[plan] ? plan : 'single'
+    const productPrice = PLAN_CONFIG[planKey].price
+    const productName = PLAN_CONFIG[planKey].name
     const commission = affiliate ? (productPrice * commissionRate / 100) : 0
 
     const purchase: Purchase = {
       id: generateId(),
       token: generateToken(),
+      plan: planKey,
+      productName,
       name,
       email,
       affiliateCode: affiliateCode?.toUpperCase() || null,
@@ -74,7 +85,7 @@ export async function POST(request: NextRequest) {
     purchase.auditLog.push({
       timestamp: new Date().toISOString(),
       action: 'CREATED',
-      details: `Purchase request created by ${email}`,
+      details: `Purchase request created by ${email} for ${productName} ($${productPrice})`,
       actor: 'user'
     })
     
@@ -122,7 +133,9 @@ export async function GET(request: NextRequest) {
         status: purchase.status,
         paymentMethod: purchase.paymentMethod,
         amount: purchase.amount,
-        createdAt: purchase.createdAt
+        createdAt: purchase.createdAt,
+        plan: purchase.plan,
+        productName: purchase.productName
       }
     })
   }

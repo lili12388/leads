@@ -40,6 +40,8 @@ export default function PaymentMethodPage() {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState("")
   const [purchaseToken, setPurchaseToken] = useState<string | null>(null)
+  const [amount, setAmount] = useState<number>(59)
+  const [productName, setProductName] = useState<string>('MapsReach License')
 
   useEffect(() => {
     const token = safeLocalStorageGet('purchaseToken')
@@ -49,6 +51,21 @@ export default function PaymentMethodPage() {
     }
     setPurchaseToken(token)
   }, [router])
+
+  useEffect(() => {
+    if (!purchaseToken) return
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/purchase?token=${purchaseToken}`)
+        const data = await res.json()
+        if (data?.purchase?.amount) setAmount(Number(data.purchase.amount))
+        if (data?.purchase?.productName) setProductName(data.purchase.productName)
+      } catch {
+        // ignore
+      }
+    }
+    load()
+  }, [purchaseToken])
 
   const selectMethod = async (methodId: string) => {
     if (!purchaseToken) return
@@ -151,7 +168,7 @@ export default function PaymentMethodPage() {
             Step 2 of 3
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Choose Payment Method</h1>
-          <p className="text-gray-400">Select how you&apos;d like to pay for your lifetime license</p>
+          <p className="text-gray-400">Select how you&apos;d like to pay for {productName}</p>
         </div>
 
         {/* Error */}
@@ -197,7 +214,7 @@ export default function PaymentMethodPage() {
         {/* Amount Reminder */}
         <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-6 text-center">
           <p className="text-gray-400 mb-2">Total Amount</p>
-          <p className="text-4xl font-bold text-white">$59 <span className="text-lg text-gray-500 font-normal">USD</span></p>
+          <p className="text-4xl font-bold text-white">${amount} <span className="text-lg text-gray-500 font-normal">USD</span></p>
           <p className="text-green-400 text-sm mt-2">✓ Lifetime access • No monthly fees</p>
         </div>
 

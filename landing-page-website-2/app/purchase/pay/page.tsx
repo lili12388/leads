@@ -4,89 +4,89 @@ import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { safeLocalStorageGet } from "@/lib/safe-storage"
 
-const paymentDetails: Record<string, {
+const buildPaymentDetails = (amount: number, productName: string): Record<string, {
   title: string
   icon: string
   instructions: string[]
   details: { label: string; value: string; copyable?: boolean }[]
-}> = {
+}> => ({
   usdt: {
     title: 'USDT (Tether) Payment',
-    icon: '💵',
+    icon: '??',
     instructions: [
-      'Send exactly $59 USDT to the wallet address below',
+      `Send exactly $${amount} USDT to the wallet address below`,
       'You can use TRC20 (recommended - lower fees) or ERC20 network',
       'Double-check the address before sending',
-      'After sending, click "I\'ve Paid!" below'
+      'After sending, click "I've Paid!" below'
     ],
     details: [
       { label: 'USDT Address (TRC20)', value: 'TYourUSDTWalletAddressHere', copyable: true },
       { label: 'Network', value: 'TRC20 (Tron) - Recommended' },
-      { label: 'Amount', value: '$59 USDT' }
+      { label: 'Amount', value: `$${amount} USDT` }
     ]
   },
   skrill: {
     title: 'Skrill Payment',
-    icon: '💳',
+    icon: '??',
     instructions: [
-      'Send $59 USD to the Skrill email below',
-      'Use "Send Money" → "Send to Skrill account"',
+      `Send $${amount} USD to the Skrill email below`,
+      'Use "Send Money" ? "Send to Skrill account"',
       'Add your email in the message for reference',
-      'After sending, click "I\'ve Paid!" below'
+      'After sending, click "I've Paid!" below'
     ],
     details: [
       { label: 'Skrill Email', value: 'your-skrill@email.com', copyable: true },
-      { label: 'Amount', value: '$59 USD' },
-      { label: 'Reference', value: 'MapsReach License' }
+      { label: 'Amount', value: `$${amount} USD` },
+      { label: 'Reference', value: productName }
     ]
   },
   neteller: {
     title: 'Neteller Payment',
-    icon: '💰',
+    icon: '??',
     instructions: [
-      'Send $59 USD to the Neteller account below',
+      `Send $${amount} USD to the Neteller account below`,
       'Use "Money Transfer" in your Neteller app',
       'Add your email in the message for reference',
-      'After sending, click "I\'ve Paid!" below'
+      'After sending, click "I've Paid!" below'
     ],
     details: [
       { label: 'Neteller Email', value: 'your-neteller@email.com', copyable: true },
-      { label: 'Amount', value: '$59 USD' },
-      { label: 'Reference', value: 'MapsReach License' }
+      { label: 'Amount', value: `$${amount} USD` },
+      { label: 'Reference', value: productName }
     ]
   },
   redotpay: {
     title: 'RedotPay Payment',
-    icon: '🔴',
+    icon: '??',
     instructions: [
-      'Send $59 USD via RedotPay',
+      `Send $${amount} USD via RedotPay`,
       'Use the payment ID below',
       'Add your email in the message',
-      'After sending, click "I\'ve Paid!" below'
+      'After sending, click "I've Paid!" below'
     ],
     details: [
       { label: 'RedotPay ID', value: 'your-redotpay-id', copyable: true },
-      { label: 'Amount', value: '$59 USD' }
+      { label: 'Amount', value: `$${amount} USD` }
     ]
   },
   bank: {
     title: 'Bank Transfer',
-    icon: '🏧',
+    icon: '??',
     instructions: [
-      'Send $59 USD to the bank account below',
+      `Send $${amount} USD to the bank account below`,
       'International transfers may take 1-3 business days',
       'Include your email as reference',
-      'After sending, click "I\'ve Paid!" below'
+      'After sending, click "I've Paid!" below'
     ],
     details: [
       { label: 'Bank Name', value: 'Your Bank Name' },
       { label: 'Account Name', value: 'Your Account Name' },
       { label: 'IBAN', value: 'XX00 0000 0000 0000 0000 00', copyable: true },
       { label: 'SWIFT/BIC', value: 'BANKCODE', copyable: true },
-      { label: 'Amount', value: '$59 USD' }
+      { label: 'Amount', value: `$${amount} USD` }
     ]
   }
-}
+})
 
 export default function PayPage() {
   const router = useRouter()
@@ -95,6 +95,8 @@ export default function PayPage() {
   const [purchaseToken, setPurchaseToken] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [error, setError] = useState("")
+  const [amount, setAmount] = useState<number>(59)
+  const [productName, setProductName] = useState<string>('MapsReach License')
   
   // Payment proof fields
   const [transactionHash, setTransactionHash] = useState("")
@@ -112,6 +114,23 @@ export default function PayPage() {
     setPurchaseToken(token)
     setPaymentMethod(method)
   }, [router])
+
+  useEffect(() => {
+    if (!purchaseToken) return
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/purchase?token=${purchaseToken}`)
+        const data = await res.json()
+        if (data?.purchase?.amount) setAmount(Number(data.purchase.amount))
+        if (data?.purchase?.productName) setProductName(data.purchase.productName)
+      } catch {
+        // ignore
+      }
+    }
+    load()
+  }, [purchaseToken])
+
+  const paymentDetails = buildPaymentDetails(amount, productName)
 
   const copyToClipboard = (value: string, label: string) => {
     navigator.clipboard.writeText(value)
