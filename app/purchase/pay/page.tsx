@@ -17,7 +17,7 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
       `Send exactly $${amount} USDT to the wallet address below`,
       'You can use TRC20 (recommended - lower fees) or ERC20 network',
       'Double-check the address before sending',
-      'After sending, click "I've Paid!" below'
+      "After sending, click \"I've Paid!\" below"
     ],
     details: [
       { label: 'USDT Address (TRC20)', value: 'TYourUSDTWalletAddressHere', copyable: true },
@@ -32,7 +32,7 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
       `Send $${amount} USD to the Skrill email below`,
       'Use "Send Money" ? "Send to Skrill account"',
       'Add your email in the message for reference',
-      'After sending, click "I've Paid!" below'
+      "After sending, click \"I've Paid!\" below"
     ],
     details: [
       { label: 'Skrill Email', value: 'your-skrill@email.com', copyable: true },
@@ -47,7 +47,7 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
       `Send $${amount} USD to the Neteller account below`,
       'Use "Money Transfer" in your Neteller app',
       'Add your email in the message for reference',
-      'After sending, click "I've Paid!" below'
+      "After sending, click \"I've Paid!\" below"
     ],
     details: [
       { label: 'Neteller Email', value: 'your-neteller@email.com', copyable: true },
@@ -62,7 +62,7 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
       `Send $${amount} USD via RedotPay`,
       'Use the payment ID below',
       'Add your email in the message',
-      'After sending, click "I've Paid!" below'
+      "After sending, click \"I've Paid!\" below"
     ],
     details: [
       { label: 'RedotPay ID', value: 'your-redotpay-id', copyable: true },
@@ -76,7 +76,7 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
       `Send $${amount} USD to the bank account below`,
       'International transfers may take 1-3 business days',
       'Include your email as reference',
-      'After sending, click "I've Paid!" below'
+      "After sending, click \"I've Paid!\" below"
     ],
     details: [
       { label: 'Bank Name', value: 'Your Bank Name' },
