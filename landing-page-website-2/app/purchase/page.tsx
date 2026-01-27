@@ -23,7 +23,7 @@ function PurchaseContent() {
 
   const planConfig = {
     single: { price: 59, title: 'Get Single License', label: 'MapsReach Extension' },
-    extended: { price: 99, title: 'Get Extended License', label: 'MapsReach Extension' },
+    extended: { price: 69, title: 'Get Extended License', label: 'MapsReach Extension' },
     outreach: { price: 49, title: 'Get Outreach Tool', label: 'WhatsApp & Email Outreach' },
     bundle: { price: 89, title: 'Get Bundle Deal', label: 'Extension + Outreach Bundle' }
   }

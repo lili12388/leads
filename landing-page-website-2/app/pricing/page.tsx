@@ -96,7 +96,7 @@ export default function PricingPage() {
               <h3 className="text-xl font-bold text-foreground mt-4 mb-6">Extended License</h3>
               
               <div className="mb-6">
-                <div className="text-5xl font-bold text-foreground">$99</div>
+                <div className="text-5xl font-bold text-foreground">$69</div>
                 <p className="text-muted-foreground mt-2">One-time payment • Forever access</p>
               </div>
               
