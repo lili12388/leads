@@ -136,6 +136,28 @@ export async function initDatabase() {
     `CREATE INDEX IF NOT EXISTS idx_whatsapp_trials_hwid ON whatsapp_trials(hardware_id)`,
     `CREATE INDEX IF NOT EXISTS idx_whatsapp_licenses_hash ON whatsapp_licenses(license_key_hash)`,
     `CREATE INDEX IF NOT EXISTS idx_whatsapp_activations_license ON whatsapp_activations(license_id)`,
+    
+    // Download tracking table
+    `CREATE TABLE IF NOT EXISTS downloads (
+      id TEXT PRIMARY KEY,
+      download_type TEXT NOT NULL CHECK(download_type IN ('chrome_extension', 'edge_extension', 'whatsapp_tool')),
+      count INTEGER DEFAULT 0,
+      last_download_at TEXT DEFAULT (datetime('now')),
+      created_at TEXT DEFAULT (datetime('now'))
+    )`,
+    
+    // Page views tracking table  
+    `CREATE TABLE IF NOT EXISTS page_views (
+      id TEXT PRIMARY KEY,
+      page_path TEXT UNIQUE NOT NULL,
+      view_count INTEGER DEFAULT 0,
+      last_viewed_at TEXT DEFAULT (datetime('now')),
+      created_at TEXT DEFAULT (datetime('now'))
+    )`,
+    
+    // Index for tracking tables
+    `CREATE INDEX IF NOT EXISTS idx_downloads_type ON downloads(download_type)`,
+    `CREATE INDEX IF NOT EXISTS idx_page_views_path ON page_views(page_path)`,
   ]);
 
   // Migration: Add license_key_plaintext column if it doesn't exist
@@ -143,6 +165,15 @@ export async function initDatabase() {
     await db.execute(`ALTER TABLE licenses ADD COLUMN license_key_plaintext TEXT`);
   } catch (e) {
     // Column already exists, ignore error
+  }
+  
+  // Initialize download counters if they don't exist
+  try {
+    await db.execute(`INSERT OR IGNORE INTO downloads (id, download_type, count) VALUES ('chrome', 'chrome_extension', 0)`);
+    await db.execute(`INSERT OR IGNORE INTO downloads (id, download_type, count) VALUES ('edge', 'edge_extension', 0)`);
+    await db.execute(`INSERT OR IGNORE INTO downloads (id, download_type, count) VALUES ('whatsapp', 'whatsapp_tool', 0)`);
+  } catch (e) {
+    // Ignore if already exists
   }
 }
 

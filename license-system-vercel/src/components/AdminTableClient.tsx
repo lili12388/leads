@@ -164,90 +164,50 @@ export default function AdminTableClient({ initialLicenses = [], token = '' }: {
   const visibleLicenses = showRevoked ? licenses : licenses.filter((l: any) => String(l.status || '').toLowerCase() !== 'revoked');
 
   return (
-    <div
-      style={{
-        padding: 24,
-        fontFamily: 'system-ui, sans-serif',
-        background: 'rgba(15,23,42,0.02)',
-        borderRadius: 16,
-        border: '1px solid #e5e7eb',
-        boxShadow: '0 18px 45px rgba(15,23,42,0.12)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 20,
-          gap: 16,
-        }}
-      >
-        <div>
-          <h2
-            style={{
-              margin: 0,
-              fontSize: 22,
-              fontWeight: 600,
-              color: '#0f172a',
-            }}
-          >
-            Licenses
-          </h2>
-          <p
-            style={{
-              margin: 0,
-              marginTop: 4,
-              fontSize: 13,
-              color: '#6b7280',
-            }}
-          >
-            Create, revoke and reset licenses for your extension.
-          </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            onClick={() => setShowRevoked(v => !v)}
-            style={{
-              padding: '9px 14px',
-              background: showRevoked ? '#111827' : '#ffffff',
-              color: showRevoked ? '#ffffff' : '#374151',
-              border: '1px solid #e5e7eb',
-              borderRadius: 999,
-              fontSize: 13,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {showRevoked ? 'Hide revoked' : 'Show revoked'}
-          </button>
-          <button
-            onClick={() => setShowCreate(true)}
-            style={{
-              padding: '9px 14px',
-              background: '#2563eb',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 500,
-              boxShadow: '0 10px 20px rgba(37,99,235,0.35)',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            + Add License
-          </button>
-          <button
-            onClick={refresh}
-            style={{
-              padding: '9px 14px',
-              background: '#f3f4f6',
-              border: '1px solid #e5e7eb',
-              borderRadius: 999,
-              fontSize: 13,
-              color: '#374151',
-              cursor: 'pointer',
+    <div style={{ fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 20, gap: 8 }}>
+        <button
+          onClick={() => setShowRevoked(v => !v)}
+          style={{
+            padding: '9px 14px',
+            background: showRevoked ? '#111827' : '#ffffff',
+            color: showRevoked ? '#ffffff' : '#374151',
+            border: '1px solid #e5e7eb',
+            borderRadius: 999,
+            fontSize: 13,
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {showRevoked ? 'Hide revoked' : 'Show revoked'}
+        </button>
+        <button
+          onClick={() => setShowCreate(true)}
+          style={{
+            padding: '9px 14px',
+            background: '#2563eb',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 999,
+            fontSize: 13,
+            fontWeight: 500,
+            boxShadow: '0 10px 20px rgba(37,99,235,0.35)',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          + Add License
+        </button>
+        <button
+          onClick={refresh}
+          style={{
+            padding: '9px 14px',
+            background: '#f3f4f6',
+            border: '1px solid #e5e7eb',
+            borderRadius: 999,
+            fontSize: 13,
+            color: '#374151',
+            cursor: 'pointer',
               whiteSpace: 'nowrap',
             }}
           >

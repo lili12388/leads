@@ -193,16 +193,8 @@ export default function WhatsAppAdminClient({ token }: { token: string }) {
   const visibleLicenses = showRevoked ? licenses : licenses.filter(l => l.status !== 'revoked');
 
   return (
-    <div style={{ padding: 24, fontFamily: 'system-ui, sans-serif', background: 'rgba(37,211,102,0.03)', borderRadius: 16, border: '1px solid #e5e7eb', marginTop: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 28 }}>📱</span> WhatsApp Sender
-          </h2>
-          <p style={{ margin: 0, marginTop: 4, fontSize: 13, color: '#6b7280' }}>
-            Manage WhatsApp Sender licenses and trial users.
-          </p>
-        </div>
+    <div style={{ fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => { fetchLicenses(); fetchTrials(); }}
