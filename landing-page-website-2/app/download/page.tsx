@@ -226,7 +226,6 @@ export default function DownloadPage() {
 
                 {/* Download Details */}
                 <div className={`relative p-8 rounded-3xl ${activeDownload.borderColor} border bg-gradient-to-br from-white/5 via-white/0 to-transparent`}>
-                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${activeDownload.topBar} rounded-t-3xl`} />
 
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center">
@@ -326,7 +325,6 @@ export default function DownloadPage() {
 
               <div className="max-w-2xl mx-auto">
                 <div className="relative p-8 rounded-3xl border border-green-500/30 bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent">
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-emerald-400 rounded-t-3xl" />
                   
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center">
