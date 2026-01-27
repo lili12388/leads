@@ -21,13 +21,13 @@ export default function OutreachDownloadPage() {
     },
     {
       number: 4,
-      title: "Activate with License",
-      description: "Enter your license key to unlock all features.",
+      title: "Start a Free Trial",
+      description: "Download and use a free trial to explore the tool before you buy.",
     },
     {
       number: 5,
       title: "Import Leads & Send",
-      description: "Import your CSV and start WhatsApp or email outreach.",
+      description: "Import your CSV and start WhatsApp or email outreach anytime.",
     },
   ]
 
@@ -63,7 +63,8 @@ export default function OutreachDownloadPage() {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
             Automate WhatsApp and email outreach to the leads you extracted.
           </p>
-          <p className="text-sm text-muted-foreground mb-8">Windows 10/11 only</p>
+          <p className="text-sm text-muted-foreground mb-2">Windows 10/11 only</p>
+          <p className="text-sm text-muted-foreground mb-8">No credit card required</p>
 
           {/* Download Button */}
           <a
