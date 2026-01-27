@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { safeLocalStorageGet, safeLocalStorageSet } from "@/lib/safe-storage"
 
 // Cookie helper function
@@ -13,11 +13,22 @@ function getCookie(name: string): string | null {
 
 export default function PurchasePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [affiliateCode, setAffiliateCode] = useState<string | null>(null)
+  const [planKey, setPlanKey] = useState<'single' | 'extended' | 'outreach' | 'bundle'>('single')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  const planConfig = {
+    single: { price: 59, title: 'Get Single License', label: 'MapsReach Extension' },
+    extended: { price: 99, title: 'Get Extended License', label: 'MapsReach Extension' },
+    outreach: { price: 49, title: 'Get Outreach Tool', label: 'WhatsApp & Email Outreach' },
+    bundle: { price: 89, title: 'Get Bundle Deal', label: 'Extension + Outreach Bundle' }
+  }
+
+  const plan = planConfig[planKey]
 
   useEffect(() => {
     // Get affiliate code from localStorage first, then cookie as fallback
@@ -34,6 +45,14 @@ export default function PurchasePage() {
     }
   }, [])
 
+  useEffect(() => {
+    const planParam = searchParams.get('plan')
+    if (planParam === 'single' || planParam === 'extended' || planParam === 'outreach' || planParam === 'bundle') {
+      setPlanKey(planParam)
+      safeLocalStorageSet('purchasePlan', planParam)
+    }
+  }, [searchParams])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -46,7 +65,8 @@ export default function PurchasePage() {
         body: JSON.stringify({
           name,
           email,
-          affiliateCode
+          affiliateCode,
+          plan: planKey
         })
       })
 
@@ -129,8 +149,10 @@ export default function PurchasePage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">Get Lifetime Access</h1>
-          <p className="text-gray-400 mt-2">MapsReach Pro - One-time payment of <span className="text-green-400 font-semibold">$59</span></p>
+          <h1 className="text-2xl font-bold text-white">{plan.title}</h1>
+          <p className="text-gray-400 mt-2">
+            {plan.label} - One-time payment of <span className="text-green-400 font-semibold">${plan.price}</span>
+          </p>
         </div>
 
         {/* Form */}

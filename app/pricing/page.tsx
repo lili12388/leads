@@ -80,7 +80,7 @@ export default function PricingPage() {
               </div>
               
               <Link
-                href="/purchase"
+                href="/purchase?plan=single"
                 className="block w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all text-center mt-auto"
               >
                 Get Single License →
@@ -122,7 +122,7 @@ export default function PricingPage() {
               </div>
               
               <Link
-                href="/purchase"
+                href="/purchase?plan=extended"
                 className="block w-full py-4 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-full transition-all text-center mt-auto"
               >
                 Get Extended License →
@@ -163,7 +163,7 @@ export default function PricingPage() {
               </div>
               
               <Link
-                href="/download/outreach"
+                href="/purchase?plan=outreach"
                 className="block w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-full hover:shadow-xl hover:shadow-green-500/40 transition-all text-center mt-auto"
               >
                 Get Outreach Tool →
@@ -210,7 +210,7 @@ export default function PricingPage() {
                   </div>
                   
                   <Link
-                    href="/purchase"
+                    href="/purchase?plan=bundle"
                     className="block w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all text-center mt-auto"
                   >
                     Get Bundle →
