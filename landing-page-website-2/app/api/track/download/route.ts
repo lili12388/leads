@@ -6,7 +6,8 @@ const redis = new Redis({
   token: process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '',
 })
 
-const ADMIN_KEY = process.env.ADMIN_KEY || 'M@psR3ach_S3cr3t_K3y_2024!'
+// Keep admin auth consistent with the rest of the admin APIs.
+const ADMIN_KEY = process.env.ADMIN_SECRET || process.env.ADMIN_KEY || 'M@psR3ach_S3cr3t_K3y_2024!'
 
 // GET - Fetch download stats (admin only)
 export async function GET(request: NextRequest) {
