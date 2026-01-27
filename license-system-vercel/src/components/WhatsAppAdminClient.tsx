@@ -547,13 +547,13 @@ export default function WhatsAppAdminClient({ token }: { token: string }) {
                 Cancel
               </button>
               <button
-                disabled={actionLoading || bonusMessages < 1}
+                disabled={!!actionLoading || bonusMessages < 1}
                 onClick={async () => {
                   await trialAction(showBonusModal.id, 'add_messages', { bonus_messages: bonusMessages });
                   setShowBonusModal(null);
                   setBonusMessages(10);
                 }}
-                style={{ padding: '8px 12px', borderRadius: 999, border: 'none', background: '#25d366', color: '#fff', fontSize: 13, cursor: actionLoading ? 'wait' : 'pointer', opacity: actionLoading || bonusMessages < 1 ? 0.6 : 1 }}
+                style={{ padding: '8px 12px', borderRadius: 999, border: 'none', background: '#25d366', color: '#fff', fontSize: 13, cursor: actionLoading ? 'wait' : 'pointer', opacity: !!actionLoading || bonusMessages < 1 ? 0.6 : 1 }}
               >
                 {actionLoading ? 'Adding...' : `Add ${bonusMessages} Messages`}
               </button>
