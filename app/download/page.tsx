@@ -24,6 +24,44 @@ export default function DownloadPage() {
 
   const steps = activeTab === 'edge' ? edgeSteps : chromeSteps
 
+  const activeDownload = activeTab === 'edge' ? {
+    title: 'Microsoft Edge Extension',
+    subtitle: 'Edge & Chromium browsers ? Quick setup',
+    buttonText: 'Download for Edge',
+    buttonGradient: 'from-[#0078D4] to-[#1CA3EC]',
+    topBar: 'from-[#0078D4] to-[#50E6FF]',
+    borderColor: 'border-[#0078D4]/30',
+    iconSrc: '/edge.png',
+    downloadType: 'edge_extension',
+    note: 'Installs in Edge via load-unpacked (developer mode)',
+    features: [
+      'Extract business emails & phones',
+      'Export to CSV or Google Sheets',
+      'Auto-scroll + lead dedupe',
+      'Unlimited lead extraction',
+      'Works on Edge & Chromium browsers',
+      '2-minute setup',
+    ],
+  } : {
+    title: 'Google Chrome Extension',
+    subtitle: 'Chrome browser extension ? Quick setup',
+    buttonText: 'Download for Chrome',
+    buttonGradient: 'from-[#4285F4] to-[#1a73e8]',
+    topBar: 'from-[#EA4335] via-[#FBBC05] to-[#34A853]',
+    borderColor: 'border-[#4285F4]/30',
+    iconSrc: '/Google_Chrome_icon.png',
+    downloadType: 'chrome_extension',
+    note: 'Installs in Chrome via load-unpacked (developer mode)',
+    features: [
+      'Extract business emails & phones',
+      'Export to CSV or Google Sheets',
+      'Auto-scroll + lead dedupe',
+      'Unlimited lead extraction',
+      'Works on Chrome, Brave, Opera',
+      '2-minute setup',
+    ],
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#020a18] via-[#041225] to-[#020510]">
       {/* Header */}
@@ -77,13 +115,7 @@ export default function DownloadPage() {
               
               <div className="flex items-center gap-4 mb-6">
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${activeTab === 'chrome' ? 'bg-white/20 scale-110' : 'bg-white/10'}`}>
-                  <svg className="w-10 h-10" viewBox="0 0 48 48">
-                    <circle cx="24" cy="24" r="20" fill="#4285F4"/>
-                    <circle cx="24" cy="24" r="8" fill="white"/>
-                    <path d="M24 4a20 20 0 0116.97 9.39l-9.49 5.48a8 8 0 00-7.48-5.14V4z" fill="#EA4335"/>
-                    <path d="M40.97 13.39A20 20 0 0144 24a20 20 0 01-7.03 15.18l-9.49-16.44a8 8 0 00.52-6.87l12.97-2.48z" fill="#FBBC05"/>
-                    <path d="M36.97 39.18A20 20 0 014 24a20 20 0 013.03-10.61l9.49 16.44a8 8 0 007.48 2.74l12.97 6.61z" fill="#34A853"/>
-                  </svg>
+                  <img src="/Google_Chrome_icon.png" alt="Google Chrome" className="w-10 h-10" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">Google Chrome</h2>
@@ -100,26 +132,6 @@ export default function DownloadPage() {
                 )}
               </div>
 
-              {activeTab === 'chrome' && (
-                <a
-                  href="/MapsReach-Extension.zip"
-                  download="MapsReach-Extension.zip"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    fetch('/api/track/download', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ type: 'chrome_extension' })
-                    }).catch(() => {})
-                  }}
-                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#4285F4] to-[#1a73e8] text-white font-bold rounded-xl text-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200 hover:scale-[1.02]"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download for Chrome
-                </a>
-              )}
             </div>
 
             {/* Divider */}
@@ -137,20 +149,7 @@ export default function DownloadPage() {
               
               <div className="flex items-center gap-4 mb-6">
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${activeTab === 'edge' ? 'bg-white/20 scale-110' : 'bg-white/10'}`}>
-                  <svg className="w-10 h-10" viewBox="0 0 48 48">
-                    <defs>
-                      <linearGradient id="edgeGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#0078D4"/>
-                        <stop offset="100%" stopColor="#1CA3EC"/>
-                      </linearGradient>
-                      <linearGradient id="edgeGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#50E6FF"/>
-                        <stop offset="100%" stopColor="#32BEDD"/>
-                      </linearGradient>
-                    </defs>
-                    <circle cx="24" cy="24" r="20" fill="url(#edgeGrad1)"/>
-                    <path d="M24 8c-8.837 0-16 7.163-16 16 0 4.418 1.791 8.418 4.686 11.314C15.58 32.418 19.58 30 24 30c8.837 0 16-7.163 16-16 0-3.313-1.005-6.392-2.729-8.951C34.392 9.005 29.313 8 24 8z" fill="url(#edgeGrad2)" opacity="0.8"/>
-                  </svg>
+                  <img src="/edge.png" alt="Microsoft Edge" className="w-10 h-10" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">Microsoft Edge</h2>
@@ -167,26 +166,6 @@ export default function DownloadPage() {
                 )}
               </div>
 
-              {activeTab === 'edge' && (
-                <a
-                  href="/MapsReach-Extension.zip"
-                  download="MapsReach-Extension.zip"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    fetch('/api/track/download', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ type: 'edge_extension' })
-                    }).catch(() => {})
-                  }}
-                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#0078D4] to-[#1CA3EC] text-white font-bold rounded-xl text-lg hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-200 hover:scale-[1.02]"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download for Edge
-                </a>
-              )}
             </div>
 
             {/* Outreach Side */}
@@ -227,45 +206,94 @@ export default function DownloadPage() {
           {/* Installation Steps - Dynamic based on selected browser */}
           {activeTab !== 'outreach' && (
             <div className="mt-12">
-            <div className="flex items-center justify-center gap-3 mb-8">
-              <div className={`w-3 h-3 rounded-full ${activeTab === 'chrome' ? 'bg-[#4285F4]' : 'bg-[#0078D4]'}`} />
-              <h3 className="text-xl font-semibold text-foreground">
-                {activeTab === 'chrome' ? 'Chrome' : 'Edge'} Installation Steps
-              </h3>
-            </div>
-
-            {/* Video Placeholder */}
-            <div className={`aspect-video max-w-3xl mx-auto rounded-2xl mb-10 flex items-center justify-center border ${
-              activeTab === 'chrome' ? 'border-[#4285F4]/30 bg-[#4285F4]/5' : 'border-[#0078D4]/30 bg-[#0078D4]/5'
-            }`}>
-              <div className="text-center">
-                <div className="text-6xl mb-3"></div>
-                <p className="text-xl text-muted-foreground">Video tutorial coming soon</p>
+              <div className="flex items-center justify-center gap-3 mb-8">
+                <div className={`w-3 h-3 rounded-full ${activeTab === 'chrome' ? 'bg-[#4285F4]' : 'bg-[#0078D4]'}`} />
+                <h3 className="text-xl font-semibold text-foreground">
+                  {activeTab === 'chrome' ? 'Chrome' : 'Edge'} Installation Steps
+                </h3>
               </div>
-            </div>
 
-            {/* Steps as horizontal timeline */}
-            <div className="relative max-w-4xl mx-auto">
-              {/* Connection line */}
-              <div className={`absolute top-6 left-[10%] right-[10%] h-0.5 ${
-                activeTab === 'chrome' ? 'bg-[#4285F4]/30' : 'bg-[#0078D4]/30'
-              }`} />
-              
-              <div className="grid grid-cols-5 gap-2">
-                {steps.map((step) => (
-                  <div key={step.number} className="relative flex flex-col items-center text-center">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center z-10 ${
-                      activeTab === 'chrome' ? 'bg-[#4285F4]' : 'bg-[#0078D4]'
-                    }`}>
-                      <span className="text-white font-bold">{step.number}</span>
-                    </div>
-                    <h4 className="font-semibold text-foreground mt-3 text-sm">{step.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-1 px-1">{step.description}</p>
+              <div className="grid lg:grid-cols-2 gap-8 items-start mb-10">
+                {/* Video Placeholder */}
+                <div className={`aspect-video rounded-2xl flex items-center justify-center border ${
+                  activeTab === 'chrome' ? 'border-[#4285F4]/30 bg-[#4285F4]/5' : 'border-[#0078D4]/30 bg-[#0078D4]/5'
+                }`}>
+                  <div className="text-center">
+                    <div className="text-6xl mb-3"></div>
+                    <p className="text-xl text-muted-foreground">Video tutorial coming soon</p>
                   </div>
-                ))}
+                </div>
+
+                {/* Download Details */}
+                <div className={`relative p-8 rounded-3xl ${activeDownload.borderColor} border bg-gradient-to-br from-white/5 via-white/0 to-transparent`}>
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${activeDownload.topBar} rounded-t-3xl`} />
+
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center">
+                      <img src={activeDownload.iconSrc} alt={activeDownload.title} className="w-10 h-10" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-foreground">{activeDownload.title}</h3>
+                      <p className="text-muted-foreground text-sm">{activeDownload.subtitle}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    {activeDownload.features.map((feature) => (
+                      <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <a
+                    href="/MapsReach-Extension.zip"
+                    download="MapsReach-Extension.zip"
+                    onClick={() => {
+                      fetch('/api/track/download', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ type: activeDownload.downloadType })
+                      }).catch(() => {})
+                    }}
+                    className={`w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r ${activeDownload.buttonGradient} text-white font-bold rounded-xl text-lg hover:shadow-lg transition-all duration-200 hover:scale-[1.02]`}
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    {activeDownload.buttonText}
+                  </a>
+
+                  <p className="text-center text-xs text-muted-foreground mt-4">
+                    {activeDownload.note}
+                  </p>
+                </div>
+              </div>
+
+              {/* Steps as horizontal timeline */}
+              <div className="relative max-w-4xl mx-auto">
+                <div className={`absolute top-6 left-[10%] right-[10%] h-0.5 ${
+                  activeTab === 'chrome' ? 'bg-[#4285F4]/30' : 'bg-[#0078D4]/30'
+                }`} />
+                
+                <div className="grid grid-cols-5 gap-2">
+                  {steps.map((step) => (
+                    <div key={step.number} className="relative flex flex-col items-center text-center">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center z-10 ${
+                        activeTab === 'chrome' ? 'bg-[#4285F4]' : 'bg-[#0078D4]'
+                      }`}>
+                        <span className="text-white font-bold">{step.number}</span>
+                      </div>
+                      <h4 className="font-semibold text-foreground mt-3 text-sm">{step.title}</h4>
+                      <p className="text-xs text-muted-foreground mt-1 px-1">{step.description}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
           )}
 
           {activeTab !== 'outreach' ? (
