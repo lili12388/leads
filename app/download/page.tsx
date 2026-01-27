@@ -298,17 +298,16 @@ export default function DownloadPage() {
                   ))}
                 </div>
 
-                <a
-                  href="/MapsReach-Outreach-Setup.exe"
-                  download="MapsReach-Outreach-Setup.exe"
+                <Link
+                  href="/download/outreach"
                   className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold rounded-xl text-lg hover:shadow-lg hover:shadow-green-500/30 transition-all duration-200 hover:scale-[1.02]"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
-                  Download Outreach Tool
+                  Open Outreach Tool Page
                   <span className="text-sm opacity-80">(Windows)</span>
-                </a>
+                </Link>
 
                 <p className="text-center text-xs text-muted-foreground mt-4">
                   Installs to your computer with desktop shortcut  Requires license key

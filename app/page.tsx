@@ -435,8 +435,7 @@ export default function Home() {
                     </svg>
                   </a>
                   <a
-                    href="/MapsReach-Outreach-Setup.exe"
-                    download="MapsReach-Outreach-Setup.exe"
+                    href="/download/outreach"
                     className="group inline-flex items-center justify-center gap-3 px-7 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl text-lg hover:shadow-xl hover:shadow-green-500/40 transition-all duration-300 hover:scale-105"
                   >
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
@@ -883,4 +882,3 @@ export default function Home() {
     </main>
   )
 }
-
