@@ -52,6 +52,52 @@ export default function WhatsAppAdminClient({ token }: { token: string }) {
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedLicenseId, setCopiedLicenseId] = useState<string | null>(null);
   const [form, setForm] = useState({ max_activations: 2, expires_days: 0, customer_email: '', customer_name: '', notes: '' });
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showBonusModal, setShowBonusModal] = useState<WhatsAppTrial | null>(null);
+  const [bonusMessages, setBonusMessages] = useState(10);
+
+  async function trialAction(trialId: string, action: string, extraData?: any) {
+    setActionLoading(trialId + action);
+    try {
+      const res = await fetch('/api/v1/whatsapp/admin/trials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ trial_id: trialId, action, ...extraData }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchTrials();
+      } else {
+        alert('Action failed: ' + (data.message || data.error || JSON.stringify(data)));
+      }
+    } catch (err: any) {
+      alert('Request failed: ' + (err?.message || err));
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function deleteTrial(trialId: string) {
+    if (!confirm('Delete this trial user? This cannot be undone.')) return;
+    setActionLoading(trialId + 'delete');
+    try {
+      const res = await fetch('/api/v1/whatsapp/admin/trials', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ trial_id: trialId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchTrials();
+      } else {
+        alert('Delete failed: ' + (data.message || data.error || JSON.stringify(data)));
+      }
+    } catch (err: any) {
+      alert('Request failed: ' + (err?.message || err));
+    } finally {
+      setActionLoading(null);
+    }
+  }
 
   async function fetchLicenses() {
     setLoading(true);
@@ -323,15 +369,17 @@ export default function WhatsAppAdminClient({ token }: { token: string }) {
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>License</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>Last Seen</th>
                 <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600 }}>IP</th>
+                <th style={{ padding: '12px 14px', color: '#6b7280', fontWeight: 600, textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {trials.length === 0 && (
-                <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: '#9ca3af' }}>No trial users yet.</td></tr>
+                <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: '#9ca3af' }}>No trial users yet.</td></tr>
               )}
               {trials.map((trial, index) => {
                 const isLocked = trial.is_locked === 1 && !trial.license_id;
                 const hasLicense = !!trial.license_id;
+                const isLoadingThis = actionLoading?.startsWith(trial.id);
 
                 return (
                   <tr key={trial.id} style={{ borderBottom: '1px solid #f3f4f6', background: index % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
@@ -366,6 +414,72 @@ export default function WhatsAppAdminClient({ token }: { token: string }) {
                     </td>
                     <td style={{ padding: '10px 14px', color: '#4b5563', fontSize: 11 }}>{fmtDate(trial.last_seen_at)}</td>
                     <td style={{ padding: '10px 14px', fontSize: 11, fontFamily: 'monospace', color: '#6b7280' }}>{trial.last_ip || '-'}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                        {/* Reset Trial Button */}
+                        <button
+                          onClick={() => trialAction(trial.id, 'reset_trial')}
+                          disabled={isLoadingThis}
+                          title="Reset trial: Set messages to 0 and unlock"
+                          style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: 'rgba(59,130,246,0.12)', color: '#2563eb', fontSize: 10, fontWeight: 500, cursor: 'pointer', opacity: isLoadingThis ? 0.5 : 1 }}
+                        >
+                          🔄 Reset
+                        </button>
+                        
+                        {/* Add Messages Button */}
+                        <button
+                          onClick={() => { setShowBonusModal(trial); setBonusMessages(10); }}
+                          disabled={isLoadingThis}
+                          title="Add bonus messages"
+                          style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: 'rgba(34,197,94,0.12)', color: '#16a34a', fontSize: 10, fontWeight: 500, cursor: 'pointer', opacity: isLoadingThis ? 0.5 : 1 }}
+                        >
+                          ➕ Add
+                        </button>
+                        
+                        {/* Lock/Unlock Button */}
+                        {isLocked ? (
+                          <button
+                            onClick={() => trialAction(trial.id, 'unlock')}
+                            disabled={isLoadingThis}
+                            title="Unlock trial"
+                            style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: 'rgba(34,197,94,0.12)', color: '#16a34a', fontSize: 10, fontWeight: 500, cursor: 'pointer', opacity: isLoadingThis ? 0.5 : 1 }}
+                          >
+                            🔓 Unlock
+                          </button>
+                        ) : !hasLicense && (
+                          <button
+                            onClick={() => trialAction(trial.id, 'lock')}
+                            disabled={isLoadingThis}
+                            title="Lock trial"
+                            style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: 'rgba(234,179,8,0.12)', color: '#b45309', fontSize: 10, fontWeight: 500, cursor: 'pointer', opacity: isLoadingThis ? 0.5 : 1 }}
+                          >
+                            🔒 Lock
+                          </button>
+                        )}
+                        
+                        {/* Unlink License Button */}
+                        {hasLicense && (
+                          <button
+                            onClick={() => trialAction(trial.id, 'unlink_license')}
+                            disabled={isLoadingThis}
+                            title="Remove license from this user"
+                            style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: 'rgba(234,179,8,0.12)', color: '#b45309', fontSize: 10, fontWeight: 500, cursor: 'pointer', opacity: isLoadingThis ? 0.5 : 1 }}
+                          >
+                            ⛓️ Unlink
+                          </button>
+                        )}
+                        
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => deleteTrial(trial.id)}
+                          disabled={isLoadingThis}
+                          title="Delete trial user"
+                          style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: 'rgba(220,38,38,0.12)', color: '#b91c1c', fontSize: 10, fontWeight: 500, cursor: 'pointer', opacity: isLoadingThis ? 0.5 : 1 }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -403,6 +517,48 @@ export default function WhatsAppAdminClient({ token }: { token: string }) {
               <button type="submit" style={{ padding: '8px 14px', borderRadius: 999, border: 'none', background: '#25d366', color: '#ffffff', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>Create</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Add Bonus Messages Modal */}
+      {showBonusModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ background: '#ffffff', padding: 20, borderRadius: 12, minWidth: 320, maxWidth: 400, boxShadow: '0 20px 50px rgba(15,23,42,0.35)' }}>
+            <h3 style={{ marginTop: 0, marginBottom: 6, fontSize: 18, fontWeight: 600 }}>➕ Add Bonus Messages</h3>
+            <p style={{ marginTop: 0, marginBottom: 12, fontSize: 13, color: '#6b7280' }}>
+              Add extra messages to this trial user's allowance.
+            </p>
+            <p style={{ marginTop: 0, marginBottom: 12, fontSize: 13, color: '#374151' }}>
+              <strong>Machine:</strong> {showBonusModal.machine_name}
+            </p>
+            <input
+              type="number"
+              min="1"
+              value={bonusMessages}
+              onChange={(e) => setBonusMessages(parseInt(e.target.value) || 0)}
+              placeholder="Number of bonus messages"
+              style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 14, marginBottom: 12 }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button
+                onClick={() => { setShowBonusModal(null); setBonusMessages(10); }}
+                style={{ padding: '8px 12px', borderRadius: 999, border: '1px solid #e5e7eb', background: '#ffffff', fontSize: 13, color: '#374151', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                disabled={actionLoading || bonusMessages < 1}
+                onClick={async () => {
+                  await trialAction(showBonusModal.id, 'add_messages', { bonus_messages: bonusMessages });
+                  setShowBonusModal(null);
+                  setBonusMessages(10);
+                }}
+                style={{ padding: '8px 12px', borderRadius: 999, border: 'none', background: '#25d366', color: '#fff', fontSize: 13, cursor: actionLoading ? 'wait' : 'pointer', opacity: actionLoading || bonusMessages < 1 ? 0.6 : 1 }}
+              >
+                {actionLoading ? 'Adding...' : `Add ${bonusMessages} Messages`}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
