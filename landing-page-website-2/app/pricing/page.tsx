@@ -36,19 +36,18 @@ export default function PricingPage() {
       </nav>
 
       {/* Plans Section */}
-      <section className="py-16 px-4">
+      <section className="py-10 px-4">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="mb-8">
-            <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Plans</span>
+          <div className="mb-6">
             <h1 className="text-4xl md:text-6xl font-bold mb-4 gradient-text">One Price. Unlimited Value.</h1>
             <p className="text-muted-foreground text-lg">No subscriptions. No hidden fees. Just results.</p>
           </div>
 
           {/* Plan Cards */}
-          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-8 mb-12">
             
             {/* Single License - Most Popular */}
-            <div className="bg-card border-2 border-primary/50 rounded-3xl p-8 relative overflow-hidden shadow-2xl shadow-primary/10">
+            <div className="bg-card border-2 border-primary/50 rounded-3xl p-8 relative overflow-hidden shadow-2xl shadow-primary/10 flex flex-col">
               <div className="absolute top-0 right-0 bg-gradient-to-r from-primary to-secondary text-white px-4 py-1 rounded-bl-2xl font-semibold text-sm">
                 MOST POPULAR
               </div>
@@ -60,7 +59,7 @@ export default function PricingPage() {
                 <p className="text-muted-foreground mt-2">One-time payment • Forever access</p>
               </div>
               
-              <div className="space-y-3 text-left mb-8">
+              <div className="space-y-3 text-left mb-8 flex-1">
                 {[
                   "1 User, 1 Browser",
                   "Unlimited lead extractions",
@@ -82,14 +81,14 @@ export default function PricingPage() {
               
               <Link
                 href="/purchase"
-                className="block w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all text-center"
+                className="block w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all text-center mt-auto"
               >
                 Get Single License →
               </Link>
             </div>
 
             {/* Extended License - Professional */}
-            <div className="bg-card border border-border/50 rounded-3xl p-8 relative overflow-hidden shadow-xl">
+            <div className="bg-card border border-border/50 rounded-3xl p-8 relative overflow-hidden shadow-xl flex flex-col">
               <div className="absolute top-0 right-0 bg-secondary/20 text-secondary px-4 py-1 rounded-bl-2xl font-semibold text-sm">
                 PROFESSIONAL
               </div>
@@ -101,7 +100,7 @@ export default function PricingPage() {
                 <p className="text-muted-foreground mt-2">One-time payment • Forever access</p>
               </div>
               
-              <div className="space-y-3 text-left mb-8">
+              <div className="space-y-3 text-left mb-8 flex-1">
                 {[
                   "1 User, Up to 3 Browsers",
                   "Unlimited lead extractions",
@@ -124,14 +123,14 @@ export default function PricingPage() {
               
               <Link
                 href="/purchase"
-                className="block w-full py-4 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-full transition-all text-center"
+                className="block w-full py-4 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-full transition-all text-center mt-auto"
               >
                 Get Extended License →
               </Link>
             </div>
 
             {/* Outreach Tool */}
-            <div className="bg-card border border-green-500/40 rounded-3xl p-8 relative overflow-hidden shadow-xl shadow-green-500/10">
+            <div className="bg-card border border-green-500/40 rounded-3xl p-8 relative overflow-hidden shadow-xl shadow-green-500/10 flex flex-col">
               <div className="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-2xl font-semibold text-sm">
                 OUTREACH
               </div>
@@ -143,14 +142,14 @@ export default function PricingPage() {
                 <p className="text-muted-foreground mt-2">One-time payment • Windows app</p>
               </div>
               
-              <div className="space-y-3 text-left mb-8">
+              <div className="space-y-3 text-left mb-8 flex-1">
                 {[
                   "WhatsApp + email outreach",
                   "Import leads from CSV",
                   "Personalized templates",
-                  "Message scheduling",
-                  "Desktop shortcuts",
-                  "License key activation"
+                  "Save hours every week",
+                  "Simple 2‑minute setup",
+                  "Begin outreach in minutes"
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
@@ -165,16 +164,16 @@ export default function PricingPage() {
               
               <Link
                 href="/download/outreach"
-                className="block w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-full hover:shadow-xl hover:shadow-green-500/40 transition-all text-center"
+                className="block w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-full hover:shadow-xl hover:shadow-green-500/40 transition-all text-center mt-auto"
               >
                 Get Outreach Tool →
               </Link>
             </div>
 
             {/* Bundle - Best Deal */}
-            <div className="relative rounded-3xl p-[2px] bg-gradient-to-r from-primary via-emerald-400 to-secondary shadow-[0_0_45px_rgba(59,130,246,0.35)]">
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary/30 via-emerald-400/30 to-secondary/30 blur-2xl opacity-80"></div>
-              <div className="relative bg-card rounded-3xl p-8 overflow-hidden">
+            <div className="relative rounded-3xl p-[2px] bg-gradient-to-r from-primary via-emerald-400 to-secondary shadow-[0_0_30px_rgba(59,130,246,0.30)]">
+              <div className="absolute -inset-2 bg-gradient-to-r from-primary/25 via-emerald-400/25 to-secondary/25 blur-xl opacity-70"></div>
+              <div className="relative bg-card rounded-3xl p-8 overflow-hidden flex flex-col">
                 <div className="absolute top-0 right-0 bg-gradient-to-r from-primary to-green-500 text-white px-4 py-1 rounded-bl-2xl font-semibold text-sm">
                   BEST DEAL
                 </div>
@@ -191,13 +190,12 @@ export default function PricingPage() {
                     <p className="text-muted-foreground mt-2">One-time payment • Save $19</p>
                   </div>
                   
-                  <div className="space-y-3 text-left mb-8">
+                  <div className="space-y-3 text-left mb-8 flex-1">
                     {[
                       "MapsReach Extension (lifetime)",
                       "Outreach Tool (WhatsApp + email)",
                       "Unlimited lead extraction",
                       "CSV + Google Sheets export",
-                      "Templates + scheduling",
                       "Priority updates"
                     ].map((item, idx) => (
                       <div key={idx} className="flex items-center gap-3">
@@ -213,7 +211,7 @@ export default function PricingPage() {
                   
                   <Link
                     href="/purchase"
-                    className="block w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all text-center"
+                    className="block w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-full hover:shadow-xl hover:shadow-primary/40 transition-all text-center mt-auto"
                   >
                     Get Bundle →
                   </Link>
