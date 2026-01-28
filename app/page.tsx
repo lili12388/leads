@@ -209,11 +209,11 @@ export default function Home() {
     },
     {
       question: "Is there a limit on how many leads I can extract?",
-      answer: "No limits whatsoever. With your lifetime license, you can extract unlimited leads from unlimited niches. Extract 100 leads or 100,000 – it's all included."
+      answer: "No limits whatsoever. With your lifetime license, you can extract unlimited leads from unlimited niches. Extract 100 leads or 100,000 - it's all included."
     },
     {
       question: "What payment methods do you accept?",
-      answer: "We accept USDT (TRC20/ERC20), RedotPay, Skrill, and Neteller. Choose the method that works best for you – all transactions are secure and processed quickly."
+      answer: "We accept USDT (TRC20/ERC20), RedotPay, Skrill, and Neteller. Choose the method that works best for you - all transactions are secure and processed quickly."
     },
     {
       question: "Do I need technical skills to use this?",
@@ -221,7 +221,7 @@ export default function Home() {
     },
     {
       question: "What's included in the lifetime license?",
-      answer: "Everything! Unlimited extractions, all data fields (emails, phones, social media, reviews), export to Google Sheets/CSV, priority support, and all future updates – forever."
+      answer: "Everything! Unlimited extractions, all data fields (emails, phones, social media, reviews), export to Google Sheets/CSV, priority support, and all future updates - forever."
     },
     {
       question: "What's your refund policy?",
@@ -276,7 +276,7 @@ export default function Home() {
             <a href="/pricing" className="text-accent hover:text-foreground transition-all duration-300 text-base font-semibold px-4 py-2 rounded-lg border border-accent/30 hover:border-accent/60 hover:bg-accent/10">💰 Pricing</a>
             <button onClick={() => scrollToSection("how-it-works")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">How it Works</button>
             <button onClick={() => scrollToSection("features")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Features</button>
-            <button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">FAQ</button>
+            <button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Questions</button>
             <a href="/blog" className="text-muted-foreground hover:text-foreground transition-all duration-300 text-base font-medium px-4 py-2 rounded-lg hover:bg-white/10 hover:backdrop-blur-sm">Blog</a>
           </div>
           
@@ -585,10 +585,10 @@ export default function Home() {
       <section id="how-it-works" className="py-10 px-6 relative">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8">
-            <span className="inline-block px-5 py-2 bg-primary/10 text-primary rounded-full text-base font-medium mb-5">Simple Process</span>
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">Google Maps Scraper – Extract Leads in 5 Steps</h2>
+            <span className="inline-block px-5 py-2 bg-primary/10 text-primary rounded-full text-base font-medium mb-5">Quick Setup</span>
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">Google Maps Scraper - Extract Leads in 5 Steps</h2>
             <p className="text-muted-foreground text-xl max-w-3xl mx-auto">
-              No learning curve. No complex setup. The best lead generation tool for 2026 – just install and start extracting.
+              No learning curve. No complex setup. The best lead generation tool for 2026 - just install and start extracting.
             </p>
           </div>
 
@@ -631,7 +631,7 @@ export default function Home() {
       <section id="features" className="py-10 px-4 relative bg-muted/10">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-6">
-            <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Benefits</span>
+            <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Highlights</span>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Why Choose MapsReach?</h2>
             <p className="text-muted-foreground text-lg">Powerful Google Maps scraping tool with features designed for lead generation</p>
           </div>
@@ -692,7 +692,7 @@ export default function Home() {
       <section className="py-10 px-4 relative">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-6">
-            <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">Pricing Comparison</span>
+            <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">One-Time Value</span>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Pay Once, Extract Forever</h2>
             <p className="text-muted-foreground text-lg">Best paid Google Maps scraper with one-time pricing vs expensive monthly subscriptions</p>
           </div>
@@ -757,8 +757,8 @@ export default function Home() {
       <section id="faq" className="py-10 px-4 relative">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-6">
-            <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">FAQ</span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Google Maps Lead Extractor FAQ</h2>
+            <span className="inline-block px-4 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium mb-4">Questions</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Google Maps Lead Extractor Questions</h2>
             <p className="text-muted-foreground text-lg">Everything about our Google Maps scraper and lead generation features</p>
           </div>
 
@@ -806,10 +806,10 @@ export default function Home() {
 
           <div data-animate className="opacity-0 translate-y-10 transition-all duration-1000 flex flex-col sm:flex-row gap-4 justify-center items-center mb-8" style={{ transitionDelay: "100ms" }}>
             <a
-              href="/purchase"
+              href="/pricing"
               className="group px-10 py-5 bg-gradient-to-r from-primary to-secondary text-white font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 flex items-center gap-3"
             >
-              <span>Get Lifetime Access – $59</span>
+              <span>Get Lifetime Access</span>
               <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
@@ -871,7 +871,7 @@ export default function Home() {
                 <li><button onClick={() => scrollToSection("features")} className="text-muted-foreground hover:text-foreground transition-colors">Features</button></li>
                 <li><a href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
                 <li><a href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
-                <li><button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-colors">FAQ</button></li>
+                <li><button onClick={() => scrollToSection("faq")} className="text-muted-foreground hover:text-foreground transition-colors">Questions</button></li>
               </ul>
             </div>
           </div>
@@ -891,3 +891,7 @@ export default function Home() {
     </main>
   )
 }
+
+
+
+
