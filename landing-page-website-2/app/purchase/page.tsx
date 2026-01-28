@@ -22,10 +22,54 @@ function PurchaseContent() {
   const [error, setError] = useState("")
 
   const planConfig = {
-    single: { price: 59, title: 'Get Single License', label: 'MapsReach Extension' },
-    extended: { price: 69, title: 'Get Extended License', label: 'MapsReach Extension' },
-    outreach: { price: 49, title: 'Get Outreach Tool', label: 'WhatsApp & Email Outreach' },
-    bundle: { price: 89, title: 'Get Bundle Deal', label: 'Extension + Outreach Bundle' }
+    single: {
+      price: 59,
+      title: 'Single License',
+      label: 'MapsReach Extension',
+      tag: 'Most Popular',
+      highlights: [
+        '1 browser license',
+        'Unlimited lead extractions',
+        'Export to Sheets and CSV',
+        'Lifetime updates'
+      ]
+    },
+    extended: {
+      price: 69,
+      title: 'Extended License',
+      label: 'MapsReach Extension',
+      tag: 'Professional',
+      highlights: [
+        'Up to 3 browsers',
+        'Unlimited lead extractions',
+        'Priority email support',
+        'Lifetime updates'
+      ]
+    },
+    outreach: {
+      price: 49,
+      title: 'Outreach Tool',
+      label: 'WhatsApp and Email Outreach',
+      tag: 'Outreach',
+      highlights: [
+        'WhatsApp and email outreach',
+        'CSV lead import',
+        'Campaign templates',
+        'Windows desktop app'
+      ]
+    },
+    bundle: {
+      price: 89,
+      title: 'Bundle Deal',
+      label: 'Extension + Outreach Bundle',
+      tag: 'Best Deal',
+      highlights: [
+        'Extension + outreach tool',
+        'Save vs buying separately',
+        'Unlimited lead extractions',
+        'Lifetime updates'
+      ]
+    }
   }
 
   const plan = planConfig[planKey]
@@ -90,7 +134,7 @@ function PurchaseContent() {
   }
 
   return (
-    <main className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+    <main className="min-h-screen relative overflow-hidden flex items-center justify-center px-4 py-10">
       {/* Premium Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a1628] via-[#0d1f38] to-[#0a1220]">
         {/* Central radial spotlight */}
@@ -141,102 +185,154 @@ function PurchaseContent() {
       {/* Grid pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(34,197,94,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(34,197,94,0.05)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
 
-      <div className="relative z-10 bg-gray-800/40 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-8 w-full max-w-lg">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-500/25">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+      <div className="relative z-10 w-full max-w-6xl">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs uppercase tracking-[0.25em] text-cyan-200/80">
+            Secure Checkout
           </div>
-          <h1 className="text-2xl font-bold text-white">{plan.title}</h1>
-          <p className="text-gray-400 mt-2">
-            {plan.label} - One-time payment of <span className="text-green-400 font-semibold">${plan.price}</span>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mt-5">Complete your purchase</h1>
+          <p className="text-gray-400 text-base md:text-lg mt-3">
+            Lifetime access, no subscriptions. Start extracting in minutes.
           </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
-              placeholder="John Doe"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
-              placeholder="john@example.com"
-            />
-            <p className="text-xs text-gray-500 mt-1">Your license will be sent to this email</p>
-          </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3">
-              <p className="text-red-400 text-sm text-center">{error}</p>
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="relative overflow-hidden rounded-3xl border border-emerald-400/20 bg-gray-900/40 p-8 backdrop-blur-xl">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500"></div>
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-emerald-200/80">Selected plan</p>
+                <h2 className="text-3xl font-bold text-white mt-2">{plan.title}</h2>
+                <p className="text-gray-400">{plan.label}</p>
+              </div>
+              {plan.tag && (
+                <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-200 text-xs font-semibold uppercase">
+                  {plan.tag}
+                </span>
+              )}
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-green-500/25 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                Processing...
-              </>
-            ) : (
-              <>
-                Continue to Payment
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            <div className="flex items-end gap-3 mb-6">
+              <div className="text-5xl font-bold text-white">${plan.price}</div>
+              <div className="text-sm text-gray-400 pb-2">one-time payment</div>
+            </div>
+
+            <p className="text-gray-300 mb-6">
+              Unlock unlimited leads and keep every update forever. One payment and you are set.
+            </p>
+
+            <div className="space-y-3">
+              {plan.highlights.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-3 text-gray-200 text-sm">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/15 text-emerald-300 flex items-center justify-center">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  {item}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 text-sm text-gray-300">
+              {[
+                'Instant license delivery',
+                'Lifetime updates',
+                'Secure checkout',
+                'Email support'
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-3xl border border-gray-700/60 bg-gray-800/40 p-8 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-cyan-200/80">Step 1 of 2</p>
+                <h3 className="text-xl font-bold text-white mt-2">Your details</h3>
+                <p className="text-gray-400 text-sm mt-1">We email your license and updates here.</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-200">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c.552 0 1-.448 1-1V7a1 1 0 10-2 0v3c0 .552.448 1 1 1zm0 2a1.25 1.25 0 100 2.5 1.25 1.25 0 000-2.5z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7a8 8 0 1116 0v6a4 4 0 01-4 4H8a4 4 0 01-4-4V7z" />
                 </svg>
-              </>
-            )}
-          </button>
-        </form>
+              </div>
+            </div>
 
-        {/* Trust Badges */}
-        <div className="mt-8 pt-6 border-t border-gray-700/50">
-          <div className="flex items-center justify-center gap-6 text-gray-400 text-xs">
-            <div className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              Secure
-            </div>
-            <div className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              Lifetime License
-            </div>
-            <div className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              Email Support
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full bg-gray-900/40 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all"
+                  placeholder="John Doe"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full bg-gray-900/40 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all"
+                  placeholder="john@example.com"
+                />
+                <p className="text-xs text-gray-500 mt-1">We never share your email.</p>
+              </div>
+
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3">
+                  <p className="text-red-400 text-sm text-center">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    Continue to Payment
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-8 pt-6 border-t border-gray-700/50">
+              <div className="flex flex-wrap items-center justify-center gap-4 text-gray-400 text-xs">
+                {['Secure', 'Lifetime license', 'Instant delivery', 'Email support'].map((item) => (
+                  <div key={item} className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                    {item}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Back Link */}
         <div className="text-center mt-6">
           <a href="/" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
-            ? Back to homepage
+            Back to homepage
           </a>
         </div>
       </div>
