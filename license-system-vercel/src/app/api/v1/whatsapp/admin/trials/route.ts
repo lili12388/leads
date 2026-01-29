@@ -129,6 +129,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, message: 'Trial reset successfully' });
       }
 
+      case 'restore_trial': {
+        // Restore free trial to default allowance and unlock
+        const defaultMax = 10;
+        await db.execute(
+          `UPDATE whatsapp_trials 
+           SET messages_sent = 0, max_messages = ?, is_locked = 0, license_id = NULL 
+           WHERE ${whereClause}`,
+          [defaultMax, identifier]
+        );
+        return NextResponse.json({ success: true, message: 'Trial restored successfully' });
+      }
+
       case 'unlock': {
         // Just unlock without resetting messages
         await db.execute(

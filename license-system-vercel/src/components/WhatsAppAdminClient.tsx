@@ -418,6 +418,22 @@ export default function WhatsAppAdminClient({ token }: { token: string }) {
                           🔄 Reset
                         </button>
                         
+
+                        {!hasLicense && (
+                          <button
+                            onClick={() => {
+                              if (confirm("Restore this user's free trial to the default allowance?")) {
+                                trialAction(trial.id, 'restore_trial');
+                              }
+                            }}
+                            disabled={isLoadingThis}
+                            title="Restore free trial: reset usage + default allowance"
+                            style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: 'rgba(16,185,129,0.12)', color: '#059669', fontSize: 10, fontWeight: 500, cursor: 'pointer', opacity: isLoadingThis ? 0.5 : 1 }}
+                          >
+                            Restore
+                          </button>
+                        )}
+
                         {/* Add Messages Button */}
                         <button
                           onClick={() => { setShowBonusModal(trial); setBonusMessages(10); }}
@@ -589,3 +605,9 @@ export default function WhatsAppAdminClient({ token }: { token: string }) {
     </div>
   );
 }
+
+
+
+
+
+
