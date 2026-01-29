@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { safeLocalStorageGet } from "@/lib/safe-storage"
+import QRCode from "qrcode"
 
 const buildPaymentDetails = (amount: number, productName: string): Record<string, {
   title: string
@@ -15,13 +16,13 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
     icon: '??',
     instructions: [
       `Send exactly $${amount} USDT to the wallet address below`,
-      'You can use TRC20 (recommended - lower fees) or ERC20 network',
+      'Select your preferred network from the dropdown',
+      'Copy the address or scan the QR code',
       'Double-check the address before sending',
       "After sending, click \"I've Paid!\" below"
     ],
     details: [
-      { label: 'USDT Address (TRC20)', value: 'TYourUSDTWalletAddressHere', copyable: true },
-      { label: 'Network', value: 'TRC20 (Tron) - Recommended' },
+      { label: 'Asset', value: 'USDT (Tether)' },
       { label: 'Amount', value: `$${amount} USDT` }
     ]
   },
@@ -88,6 +89,92 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
   }
 })
 
+const usdtNetworks = [
+  {
+    id: 'trc20',
+    code: 'TRX',
+    name: 'Tron (TRC20)',
+    eta: '≈ 1 mins',
+    confirmations: '1 Confirmation/s',
+    address: 'TGDYK2qzrVgWGuELMMgvopKz7pNbHcvADL'
+  },
+  {
+    id: 'bep20',
+    code: 'BSC',
+    name: 'BNB Smart Chain (BEP20)',
+    eta: '≈ 1 mins',
+    confirmations: '1 Confirmation/s',
+    address: '0x84eb188586083df8cadb40dd6a4cc41490ab2895'
+  },
+  {
+    id: 'erc20',
+    code: 'ETH',
+    name: 'Ethereum (ERC20)',
+    eta: '≈ 2 mins',
+    confirmations: '6 Confirmation/s',
+    address: '0x84eb188586083df8cadb40dd6a4cc41490ab2895'
+  },
+  {
+    id: 'arbitrum',
+    code: 'ARBITRUM',
+    name: 'Arbitrum One',
+    eta: '≈ 1 mins',
+    confirmations: '1 Bundle',
+    address: '0x84eb188586083df8cadb40dd6a4cc41490ab2895'
+  },
+  {
+    id: 'polygon',
+    code: 'POL',
+    name: 'Polygon POS',
+    eta: '≈ 1 mins',
+    confirmations: '1 Bundle',
+    address: '0x84eb188586083df8cadb40dd6a4cc41490ab2895'
+  },
+  {
+    id: 'optimism',
+    code: 'OPTIMISM',
+    name: 'Optimism',
+    eta: '≈ 1 mins',
+    confirmations: '1 Bundle',
+    address: '0x84eb188586083df8cadb40dd6a4cc41490ab2895'
+  },
+  {
+    id: 'sol',
+    code: 'SOL',
+    name: 'Solana',
+    eta: '≈ 1 mins',
+    confirmations: '1 Confirmation/s',
+    address: 'Dj4J6F9PCrUtPynhcn44yNR25aMeYzgoeqdGKxukk6FK',
+    warning: 'SOL addresses are case sensitive. Please double-check before sending.'
+  },
+  {
+    id: 'ton',
+    code: 'TON',
+    name: 'The Open Network (TON)',
+    eta: '≈ 1 mins',
+    confirmations: '1 Confirmation/s',
+    address: 'UQCAt1P0hHjtHbUzsC-XH6ZvUXqinGi6i2tMHtU9CnTZ0fAR',
+    warning: 'TON deposits do not require a memo. Test with a small amount first.'
+  },
+  {
+    id: 'aptos',
+    code: 'APT',
+    name: 'Aptos',
+    eta: '≈ 1 mins',
+    confirmations: '1 Confirmation/s',
+    address: '0x160b9cc400ac84a7f06f17c00dce94082a906207ad98b9c510c106aecb4760fd',
+    warning: 'Ensure the USDT coin on Aptos ends with the contract address 9dc2b.'
+  },
+  {
+    id: 'plasma',
+    code: 'PLASMA',
+    name: 'Plasma',
+    eta: '≈ 1 mins',
+    confirmations: '1 Confirmation/s',
+    address: '0x84eb188586083df8cadb40dd6a4cc41490ab2895'
+  }
+]
+
 export default function PayPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -97,6 +184,9 @@ export default function PayPage() {
   const [error, setError] = useState("")
   const [amount, setAmount] = useState<number>(59)
   const [productName, setProductName] = useState<string>('MapsReach License')
+  const [selectedNetworkId, setSelectedNetworkId] = useState(usdtNetworks[0].id)
+  const [networkMenuOpen, setNetworkMenuOpen] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   
   // Payment proof fields
   const [transactionHash, setTransactionHash] = useState("")
@@ -129,6 +219,15 @@ export default function PayPage() {
     }
     load()
   }, [purchaseToken])
+
+  const selectedNetwork = usdtNetworks.find((network) => network.id === selectedNetworkId) || usdtNetworks[0]
+
+  useEffect(() => {
+    if (paymentMethod !== 'usdt') return
+    QRCode.toDataURL(selectedNetwork.address, { width: 220, margin: 1 })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null))
+  }, [selectedNetworkId, paymentMethod, selectedNetwork.address])
 
   const paymentDetails = buildPaymentDetails(amount, productName)
 
@@ -275,28 +374,142 @@ export default function PayPage() {
             Payment Details
           </h2>
           
-          <div className="space-y-4">
-            {method.details.map((detail, index) => (
-              <div key={index} className="bg-gray-700/50 rounded-xl p-4">
-                <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">{detail.label}</div>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-white font-mono text-sm break-all">{detail.value}</div>
-                  {detail.copyable && (
-                    <button
-                      onClick={() => copyToClipboard(detail.value, detail.label)}
-                      className={`shrink-0 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                        copied === detail.label
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-600 hover:bg-gray-500 text-gray-200'
-                      }`}
-                    >
-                      {copied === detail.label ? '✓ Copied!' : 'Copy'}
-                    </button>
-                  )}
+          {paymentMethod === 'usdt' ? (
+            <div className="space-y-4">
+              <div className="bg-gray-700/50 rounded-xl p-4">
+                <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Asset</div>
+                <div className="text-white font-semibold">USDT (Tether)</div>
+              </div>
+
+              <div className="bg-gray-700/50 rounded-xl p-4">
+                <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Select Network</div>
+                <button
+                  type="button"
+                  onClick={() => setNetworkMenuOpen((prev) => !prev)}
+                  className="w-full flex items-center justify-between gap-3 bg-gray-800/60 border border-gray-600 rounded-xl px-4 py-3 text-left hover:border-green-500/60 transition-colors"
+                >
+                  <div>
+                    <div className="text-white font-semibold">{selectedNetwork.code}</div>
+                    <div className="text-xs text-gray-400">{selectedNetwork.name}</div>
+                  </div>
+                  <div className={`text-gray-400 transition-transform ${networkMenuOpen ? 'rotate-180' : ''}`}>
+                    v
+                  </div>
+                </button>
+
+                {networkMenuOpen && (
+                  <div className="mt-3 grid gap-2">
+                    {usdtNetworks.map((network) => (
+                      <button
+                        key={network.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedNetworkId(network.id)
+                          setNetworkMenuOpen(false)
+                        }}
+                        className={`w-full rounded-xl border px-4 py-3 text-left transition-all ${
+                          selectedNetworkId === network.id
+                            ? 'border-green-500/60 bg-green-500/10'
+                            : 'border-gray-600/60 bg-gray-800/50 hover:border-gray-500'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <div className="text-white font-semibold">{network.code}</div>
+                            <div className="text-xs text-gray-400">{network.name}</div>
+                          </div>
+                          <div className="text-xs text-gray-400 text-right">
+                            <div>{network.eta}</div>
+                            <div>{network.confirmations}</div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {selectedNetwork.warning && (
+                <div className="bg-yellow-500/10 border border-yellow-500/40 rounded-xl p-4 text-yellow-200 text-sm">
+                  ! {selectedNetwork.warning}
+                </div>
+              )}
+
+              <div className="bg-gray-700/50 rounded-xl p-4">
+                <div className="grid gap-4 md:grid-cols-[160px_1fr] items-center">
+                  <div className="bg-gray-900/60 rounded-xl p-3 flex items-center justify-center">
+                    {qrDataUrl ? (
+                      <img src={qrDataUrl} alt="USDT QR code" className="w-36 h-36 rounded-lg bg-white p-2" />
+                    ) : (
+                      <div className="w-36 h-36 rounded-lg bg-gray-800 flex items-center justify-center text-xs text-gray-400">
+                        Generating QR...
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="bg-gray-800/60 rounded-xl p-3">
+                      <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">
+                        USDT Address ({selectedNetwork.code})
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-white font-mono text-sm break-all">{selectedNetwork.address}</div>
+                        <button
+                          onClick={() => copyToClipboard(selectedNetwork.address, 'USDT Address')}
+                          className={`shrink-0 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                            copied === 'USDT Address'
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-600 hover:bg-gray-500 text-gray-200'
+                          }`}
+                        >
+                          {copied === 'USDT Address' ? '✓ Copied!' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div className="bg-gray-800/60 rounded-xl p-3">
+                        <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">ETA</div>
+                        <div className="text-white text-sm">{selectedNetwork.eta}</div>
+                      </div>
+                      <div className="bg-gray-800/60 rounded-xl p-3">
+                        <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Confirmations</div>
+                        <div className="text-white text-sm">{selectedNetwork.confirmations}</div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-800/60 rounded-xl p-3">
+                      <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Amount</div>
+                      <div className="text-white text-sm font-semibold">${amount} USDT</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {method.details.map((detail, index) => (
+                <div key={index} className="bg-gray-700/50 rounded-xl p-4">
+                  <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">{detail.label}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-white font-mono text-sm break-all">{detail.value}</div>
+                    {detail.copyable && (
+                      <button
+                        onClick={() => copyToClipboard(detail.value, detail.label)}
+                        className={`shrink-0 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                          copied === detail.label
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-600 hover:bg-gray-500 text-gray-200'
+                        }`}
+                      >
+                        {copied === detail.label ? '✓ Copied!' : 'Copy'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Instructions */}
@@ -429,3 +642,6 @@ export default function PayPage() {
     </main>
   )
 }
+
+
+
