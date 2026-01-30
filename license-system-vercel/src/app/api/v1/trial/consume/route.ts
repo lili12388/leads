@@ -6,7 +6,9 @@ const FREE_LEAD_LIMIT = 50
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { fingerprint_hash, leadsCount } = body || {}
+    // Accept both 'fingerprint' (from extension) and 'fingerprint_hash' (legacy)
+    const fingerprint_hash = body?.fingerprint || body?.fingerprint_hash
+    const { leadsCount } = body || {}
 
     if (!fingerprint_hash || typeof fingerprint_hash !== 'string' || fingerprint_hash.length < 8) {
       return NextResponse.json({ ok: false, error: 'Invalid fingerprint' }, { status: 400 })
