@@ -127,7 +127,13 @@ export async function POST(request: NextRequest) {
     const today = new Date().toISOString().split('T')[0]
     const isTunisia = country.toUpperCase() === 'TN' || country.toLowerCase() === 'tunisia'
 
+    // ALWAYS track unique visitors and pageviews - even for Tunisia
+    // This ensures the admin dashboard shows accurate visitor counts
+    await redis.sadd(`visitors:unique:${today}`, ip)
+    await redis.incr(`visitors:pageviews:${today}`)
+
     if (isTunisia) {
+      // Track Tunisia-specific stats separately
       await redis.incr(`visitors:tn:count:${today}`)
       await redis.incr('visitors:tn:count:total')
       await redis.set(`visitors:tn:last:${today}`, JSON.stringify(visitorData))
