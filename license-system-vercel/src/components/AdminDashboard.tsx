@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import AdminTableClient from './AdminTableClient';
+import ExtensionAdminClient from './ExtensionAdminClient';
 import WhatsAppAdminClient from './WhatsAppAdminClient';
-import AnalyticsClient from './AnalyticsClient';
 
-type TabType = 'extension' | 'whatsapp' | 'analytics';
+type TabType = 'extension' | 'whatsapp';
 
 interface AdminDashboardProps {
   token: string;
@@ -16,9 +15,8 @@ export default function AdminDashboard({ token, initialLicenses }: AdminDashboar
   const [activeTab, setActiveTab] = useState<TabType>('extension');
 
   const tabs: { id: TabType; label: string; icon: string }[] = [
-    { id: 'extension', label: 'Extension Licenses', icon: '🧩' },
-    { id: 'whatsapp', label: 'WhatsApp Licenses', icon: '📱' },
-    { id: 'analytics', label: 'Analytics', icon: '📊' },
+    { id: 'extension', label: 'MapsReach Extension', icon: '🧩' },
+    { id: 'whatsapp', label: 'WhatsApp Sender', icon: '📱' },
   ];
 
   return (
@@ -61,15 +59,11 @@ export default function AdminDashboard({ token, initialLicenses }: AdminDashboar
       {/* Tab Content */}
       <div>
         {activeTab === 'extension' && (
-          <AdminTableClient initialLicenses={initialLicenses} token={token} />
+          <ExtensionAdminClient initialLicenses={initialLicenses} token={token} />
         )}
         
         {activeTab === 'whatsapp' && (
           <WhatsAppAdminClient token={token} />
-        )}
-        
-        {activeTab === 'analytics' && (
-          <AnalyticsClient token={token} />
         )}
       </div>
     </div>
