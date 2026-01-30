@@ -269,10 +269,19 @@ export async function GET(request: NextRequest) {
         count: Number(tunisiaCount),
         lastSeen: tunisiaLast?.timestamp || null
       },
-      monthStats
+      monthStats,
+      debug: {
+        redisUrl: process.env.KV_REST_API_URL ? 'KV_REST_API_URL set' : (process.env.UPSTASH_REDIS_REST_URL ? 'UPSTASH_REDIS_REST_URL set' : 'NO REDIS URL'),
+        hasToken: !!(process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN),
+        allKeysCheck: await redis.keys('visitors:*').then(k => k.slice(0, 20)).catch(() => [])
+      }
     })
   } catch (error) {
     console.error('Get visitors error:', error)
-    return NextResponse.json({ error: 'Failed to fetch visitors' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to fetch visitors', 
+      details: error instanceof Error ? error.message : String(error),
+      redisUrl: process.env.KV_REST_API_URL ? 'KV set' : (process.env.UPSTASH_REDIS_REST_URL ? 'UPSTASH set' : 'NONE')
+    }, { status: 500 })
   }
 }
