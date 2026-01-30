@@ -123,13 +123,29 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
       sessionId: body.sessionId || 'unknown'
     }
+
+    const today = new Date().toISOString().split('T')[0]
+    const isTunisia = country.toUpperCase() === 'TN' || country.toLowerCase() === 'tunisia'
+
+    if (isTunisia) {
+      await redis.incr(`visitors:tn:count:${today}`)
+      await redis.incr('visitors:tn:count:total')
+      await redis.set(`visitors:tn:last:${today}`, JSON.stringify(visitorData))
+      await redis.set('visitors:tn:last:total', JSON.stringify(visitorData))
+      return NextResponse.json({ success: true, skipped: 'tunisia' })
+    }
     
-    // Store in Redis - keep last 1000 visitors
+    // Store in Redis - keep last 1000 recent visitors
     await redis.lpush('visitors', JSON.stringify(visitorData))
     await redis.ltrim('visitors', 0, 999) // Keep only last 1000
+
+    // Store per-day visitors for long-term history
+    await redis.lpush(`visitors:day:${today}`, JSON.stringify(visitorData))
+    
+    // Increment total tracked (non-Tunisia only)
+    await redis.incr('visitors:count:total')
     
     // Also track unique visitors today
-    const today = new Date().toISOString().split('T')[0]
     await redis.sadd(`visitors:unique:${today}`, ip)
     
     // Track page views today
@@ -151,13 +167,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    // Get visitors
-    const visitors = await redis.lrange('visitors', 0, 99) // Last 100
+    const url = new URL(request.url)
+    const dateParam = url.searchParams.get('date')
+    const monthParam = url.searchParams.get('month')
+    const limitParam = url.searchParams.get('limit')
+    const limit = Math.max(1, Math.min(Number(limitParam) || 200, 1000))
     
     // Get today's stats
     const today = new Date().toISOString().split('T')[0]
     const uniqueToday = await redis.scard(`visitors:unique:${today}`)
     const pageviewsToday = await redis.get(`visitors:pageviews:${today}`) || 0
+
+    const selectedDate = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today
+    let visitors = await redis.lrange(`visitors:day:${selectedDate}`, 0, limit - 1)
+    const selectedUnique = await redis.scard(`visitors:unique:${selectedDate}`)
+    const selectedPageviews = await redis.get(`visitors:pageviews:${selectedDate}`) || 0
+    const totalTrackedRaw = await redis.get('visitors:count:total')
+    let totalTracked = Number(totalTrackedRaw || 0)
+    if (!totalTracked) {
+      const recentCount = await redis.llen('visitors')
+      totalTracked = Number(recentCount || 0)
+    }
+    
+    const tunisiaCount = await redis.get(`visitors:tn:count:${selectedDate}`) || 0
+    const tunisiaLastRaw = await redis.get(`visitors:tn:last:${selectedDate}`)
+    const tunisiaLast = tunisiaLastRaw ? JSON.parse(tunisiaLastRaw as string) : null
     
     // Get last 7 days stats
     const stats: { date: string; unique: number; pageviews: number }[] = []
@@ -169,14 +203,67 @@ export async function GET(request: NextRequest) {
       const pageviews = await redis.get(`visitors:pageviews:${dateStr}`) || 0
       stats.push({ date: dateStr, unique: unique || 0, pageviews: Number(pageviews) })
     }
+
+    // Optional month stats for deeper history
+    let monthStats: { date: string; unique: number; pageviews: number }[] = []
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+      const [yearStr, monthStr] = monthParam.split('-')
+      const year = Number(yearStr)
+      const monthIndex = Number(monthStr) - 1
+      const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${yearStr}-${monthStr}-${String(day).padStart(2, '0')}`
+        const unique = await redis.scard(`visitors:unique:${dateStr}`)
+        const pageviews = await redis.get(`visitors:pageviews:${dateStr}`) || 0
+        monthStats.push({ date: dateStr, unique: unique || 0, pageviews: Number(pageviews) })
+      }
+    }
+
+    let parsedVisitors = visitors.map(v => typeof v === 'string' ? JSON.parse(v) : v)
+    if (parsedVisitors.length === 0) {
+      const recent = await redis.lrange('visitors', 0, 999)
+      const recentParsed = recent.map(v => typeof v === 'string' ? JSON.parse(v) : v)
+      parsedVisitors = recentParsed.filter((v: VisitorData) => v.timestamp?.startsWith(selectedDate)).slice(0, limit)
+    }
+    if (Number(tunisiaCount) > 0) {
+      parsedVisitors.unshift({
+        ip: 'TN',
+        country: 'TN',
+        city: tunisiaLast?.city || 'Tunisia',
+        region: tunisiaLast?.region || '',
+        browser: 'Self',
+        os: '',
+        device: 'Self',
+        page: tunisiaLast?.page || '/',
+        referrer: 'Direct',
+        screenWidth: 0,
+        screenHeight: 0,
+        language: 'N/A',
+        timestamp: tunisiaLast?.timestamp || new Date().toISOString(),
+        sessionId: 'tunisia',
+        count: Number(tunisiaCount),
+        isAggregate: true
+      })
+    }
     
     return NextResponse.json({
-      visitors: visitors.map(v => typeof v === 'string' ? JSON.parse(v) : v),
+      visitors: parsedVisitors,
       today: {
         unique: uniqueToday,
         pageviews: Number(pageviewsToday)
       },
-      stats
+      stats,
+      selectedDate,
+      selectedDay: {
+        unique: selectedUnique || 0,
+        pageviews: Number(selectedPageviews)
+      },
+      totalTracked: Number(totalTracked),
+      tunisia: {
+        count: Number(tunisiaCount),
+        lastSeen: tunisiaLast?.timestamp || null
+      },
+      monthStats
     })
   } catch (error) {
     console.error('Get visitors error:', error)

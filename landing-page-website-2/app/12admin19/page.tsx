@@ -60,6 +60,8 @@ interface Visitor {
   language: string
   timestamp: string
   sessionId: string
+  count?: number
+  isAggregate?: boolean
 }
 
 interface VisitorStats {
@@ -90,6 +92,11 @@ export default function AdminDashboard() {
   const [visitors, setVisitors] = useState<Visitor[]>([])
   const [visitorStats, setVisitorStats] = useState<VisitorStats[]>([])
   const [todayVisitors, setTodayVisitors] = useState({ unique: 0, pageviews: 0 })
+  const [selectedDayStats, setSelectedDayStats] = useState({ unique: 0, pageviews: 0 })
+  const [monthStats, setMonthStats] = useState<VisitorStats[]>([])
+  const [selectedDate, setSelectedDate] = useState("")
+  const [selectedMonth, setSelectedMonth] = useState("")
+  const [totalTracked, setTotalTracked] = useState(0)
   const [downloads, setDownloads] = useState<DownloadStat[]>([])
 
   // New affiliate form
@@ -142,17 +149,6 @@ export default function AdminDashboard() {
         setAffiliates(affiliatesData.affiliates || [])
       }
       
-      // Fetch visitors
-      const visitorsRes = await fetch('/api/track', {
-        headers: { 'x-admin-key': adminKey }
-      })
-      const visitorsData = await visitorsRes.json()
-      if (!visitorsData.error) {
-        setVisitors(visitorsData.visitors || [])
-        setVisitorStats(visitorsData.stats || [])
-        setTodayVisitors(visitorsData.today || { unique: 0, pageviews: 0 })
-      }
-      
       // Fetch downloads
       const downloadsRes = await fetch('/api/track/download', {
         headers: { 'x-admin-key': adminKey }
@@ -161,10 +157,43 @@ export default function AdminDashboard() {
       if (!downloadsData.error) {
         setDownloads(downloadsData.downloads || [])
       }
+
+      await fetchVisitors()
     } catch (err) {
       console.error('Failed to fetch data:', err)
     }
     setLoading(false)
+  }
+
+  const fetchVisitors = async (dateOverride?: string, monthOverride?: string) => {
+    if (!adminKey) return
+    const today = new Date().toISOString().split('T')[0]
+    const date = dateOverride || selectedDate || today
+    const month = monthOverride || selectedMonth || date.slice(0, 7)
+    const params = new URLSearchParams()
+    if (date) params.set('date', date)
+    if (month) params.set('month', month)
+    
+    const visitorsRes = await fetch(`/api/track?${params.toString()}`, {
+      headers: { 'x-admin-key': adminKey }
+    })
+    const visitorsData = await visitorsRes.json()
+    if (!visitorsData.error) {
+      setVisitors(visitorsData.visitors || [])
+      setVisitorStats(visitorsData.stats || [])
+      setTodayVisitors(visitorsData.today || { unique: 0, pageviews: 0 })
+      setSelectedDayStats(visitorsData.selectedDay || { unique: 0, pageviews: 0 })
+      setMonthStats(visitorsData.monthStats || [])
+      setTotalTracked(visitorsData.totalTracked || 0)
+    }
+  }
+
+  const selectDay = (dateStr: string) => {
+    if (!dateStr) return
+    const monthStr = dateStr.slice(0, 7)
+    setSelectedDate(dateStr)
+    setSelectedMonth(monthStr)
+    fetchVisitors(dateStr, monthStr)
   }
 
   const verifyPayment = async (purchaseId: string, action: 'verify' | 'complete' | 'reject') => {
@@ -260,10 +289,28 @@ export default function AdminDashboard() {
   }, [])
 
   useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
+    setSelectedDate(today)
+    setSelectedMonth(today.slice(0, 7))
+  }, [])
+
+  useEffect(() => {
     if (isLoggedIn && adminKey) {
       fetchData()
     }
   }, [isLoggedIn, adminKey])
+
+  useEffect(() => {
+    if (isLoggedIn && adminKey && selectedDate) {
+      fetchVisitors()
+    }
+  }, [selectedDate, selectedMonth, isLoggedIn, adminKey])
+
+  useEffect(() => {
+    if (selectedMonth && selectedDate && !selectedDate.startsWith(selectedMonth)) {
+      setSelectedDate(`${selectedMonth}-01`)
+    }
+  }, [selectedMonth])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -628,16 +675,31 @@ export default function AdminDashboard() {
               </div>
               <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
                 <div className="text-gray-400 text-sm mb-2">Total Tracked</div>
-                <div className="text-4xl font-bold text-green-400">{visitors.length}</div>
+                <div className="text-4xl font-bold text-green-400">{totalTracked}</div>
               </div>
             </div>
 
             {/* 7 Day Chart */}
             <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
-              <h3 className="font-semibold mb-4">Last 7 Days</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">Last 7 Days</h3>
+                {selectedDate && (
+                  <div className="text-xs text-gray-400">
+                    Selected: <span className="text-white">{selectedDate}</span>
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-7 gap-2">
                 {visitorStats.map((day, i) => (
-                  <div key={i} className="text-center">
+                  <button
+                    key={i}
+                    onClick={() => selectDay(day.date)}
+                    className={`text-center rounded-lg transition-all ${
+                      selectedDate === day.date
+                        ? 'ring-2 ring-purple-500/60 bg-purple-500/10'
+                        : 'hover:bg-gray-700/40'
+                    }`}
+                  >
                     <div className="text-xs text-gray-500 mb-2">{new Date(day.date).toLocaleDateString('en', { weekday: 'short' })}</div>
                     <div className="bg-gray-700/50 rounded-lg p-3">
                       <div className="text-lg font-bold text-purple-400">{day.unique}</div>
@@ -645,14 +707,72 @@ export default function AdminDashboard() {
                       <div className="text-sm text-blue-400 mt-1">{day.pageviews}</div>
                       <div className="text-xs text-gray-400">views</div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
 
+            {/* Month Selector */}
+            <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Browse History</div>
+                  <div className="text-white font-semibold">Select a month</div>
+                </div>
+                <input
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="bg-gray-700/50 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white"
+                />
+                <button
+                  onClick={() => {
+                    const today = new Date().toISOString().split('T')[0]
+                    setSelectedDate(today)
+                    setSelectedMonth(today.slice(0, 7))
+                  }}
+                  className="text-xs text-gray-300 hover:text-white border border-gray-600/60 px-3 py-2 rounded-lg"
+                >
+                  Jump to Today
+                </button>
+              </div>
+              {monthStats.length > 0 && (
+                <div className="grid grid-cols-7 gap-2">
+                  {monthStats.map((day) => (
+                    <button
+                      key={day.date}
+                      onClick={() => selectDay(day.date)}
+                      className={`rounded-lg border border-transparent p-2 text-xs ${
+                        selectedDate === day.date
+                          ? 'border-cyan-400/60 bg-cyan-500/10'
+                          : 'bg-gray-700/40 hover:bg-gray-700/60'
+                      }`}
+                    >
+                      <div className="text-gray-400">{day.date.split('-')[2]}</div>
+                      <div className="text-purple-300 font-semibold">{day.unique}</div>
+                      <div className="text-[10px] text-blue-300">{day.pageviews} views</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Recent Visitors Table */}
             <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
-              <h3 className="font-semibold mb-4">Recent Visitors</h3>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                  <h3 className="font-semibold">Visitors on {selectedDate || 'Today'}</h3>
+                  <p className="text-xs text-gray-400">
+                    {selectedDayStats.unique} unique â€¢ {selectedDayStats.pageviews} views
+                  </p>
+                </div>
+                <button
+                  onClick={() => fetchVisitors(selectedDate, selectedMonth)}
+                  className="text-xs text-gray-300 hover:text-white border border-gray-600/60 px-3 py-2 rounded-lg"
+                >
+                  Refresh Day
+                </button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -666,14 +786,20 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {visitors.slice(0, 50).map((visitor, i) => (
+                    {visitors.slice(0, 100).map((visitor, i) => (
                       <tr key={i} className="border-b border-gray-700/30 hover:bg-gray-700/20">
                         <td className="py-3 pr-4 text-gray-400">
                           {new Date(visitor.timestamp).toLocaleString()}
                         </td>
                         <td className="py-3 pr-4">
                           <span className="text-lg mr-1">{getCountryFlag(visitor.country)}</span>
-                          <span>{visitor.city}, {visitor.country}</span>
+                          {visitor.isAggregate ? (
+                            <span className="text-orange-300 font-semibold">
+                              Tunisia (x{visitor.count || 0})
+                            </span>
+                          ) : (
+                            <span>{visitor.city}, {visitor.country}</span>
+                          )}
                         </td>
                         <td className="py-3 pr-4">
                           <span className={`px-2 py-1 rounded text-xs ${
@@ -681,13 +807,17 @@ export default function AdminDashboard() {
                             visitor.device === 'Tablet' ? 'bg-yellow-500/20 text-yellow-400' :
                             'bg-blue-500/20 text-blue-400'
                           }`}>
-                            {visitor.device}
+                            {visitor.isAggregate ? 'Owner' : visitor.device}
                           </span>
                         </td>
-                        <td className="py-3 pr-4 text-gray-300">{visitor.browser} / {visitor.os}</td>
+                        <td className="py-3 pr-4 text-gray-300">
+                          {visitor.isAggregate ? 'Tunisia (ignored)' : `${visitor.browser} / ${visitor.os}`}
+                        </td>
                         <td className="py-3 pr-4 text-purple-400">{visitor.page}</td>
                         <td className="py-3 text-gray-400 truncate max-w-[200px]" title={visitor.referrer}>
-                          {visitor.referrer === 'Direct' ? (
+                          {visitor.isAggregate ? (
+                            'Filtered'
+                          ) : visitor.referrer === 'Direct' ? (
                             '🔗 Direct'
                           ) : visitor.referrer.startsWith('http') ? (
                             <a 
@@ -852,3 +982,8 @@ export default function AdminDashboard() {
     </main>
   )
 }
+
+
+
+
+

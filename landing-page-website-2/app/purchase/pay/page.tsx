@@ -36,7 +36,7 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
       "After sending, click \"I've Paid!\" below"
     ],
     details: [
-      { label: 'Skrill Email', value: 'your-skrill@email.com', copyable: true },
+      { label: 'Skrill Email', value: 'laithou123@gmail.com', copyable: true },
       { label: 'Amount', value: `$${amount} USD` },
       { label: 'Reference', value: productName }
     ]
@@ -51,7 +51,7 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
       "After sending, click \"I've Paid!\" below"
     ],
     details: [
-      { label: 'Neteller Email', value: 'your-neteller@email.com', copyable: true },
+      { label: 'Neteller Email', value: 'laithou123@gmail.com', copyable: true },
       { label: 'Amount', value: `$${amount} USD` },
       { label: 'Reference', value: productName }
     ]
@@ -61,12 +61,12 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
     icon: '??',
     instructions: [
       `Send $${amount} USD via RedotPay`,
-      'Use the payment ID below',
+      'Use the RedotPay UID below',
       'Add your email in the message',
       "After sending, click \"I've Paid!\" below"
     ],
     details: [
-      { label: 'RedotPay ID', value: 'your-redotpay-id', copyable: true },
+      { label: 'RedotPay UID', value: '1280516473', copyable: true },
       { label: 'Amount', value: `$${amount} USD` }
     ]
   },
@@ -488,6 +488,28 @@ export default function PayPage() {
             </div>
           ) : (
             <div className="space-y-4">
+              {paymentMethod === 'redotpay' && (
+                <div className="bg-gray-700/50 rounded-xl p-4">
+                  <div className="grid gap-4 md:grid-cols-[160px_1fr] items-center">
+                    <div className="bg-gray-900/60 rounded-xl p-3 flex items-center justify-center">
+                      <img
+                        src="/payments/redotpay-qr.jpg"
+                        alt="RedotPay QR code"
+                        className="w-36 h-36 rounded-lg bg-white p-2"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-xs text-gray-400 uppercase tracking-wider">Scan to Pay</div>
+                      <div className="text-white text-sm">
+                        Scan this QR code with the RedotPay app to send your payment quickly.
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        RedotPay UID: <span className="text-gray-200">1280516473</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               {method.details.map((detail, index) => (
                 <div key={index} className="bg-gray-700/50 rounded-xl p-4">
                   <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">{detail.label}</div>
