@@ -197,7 +197,10 @@ export async function GET(request: NextRequest) {
     
     const tunisiaCount = await redis.get(`visitors:tn:count:${selectedDate}`) || 0
     const tunisiaLastRaw = await redis.get(`visitors:tn:last:${selectedDate}`)
-    const tunisiaLast = tunisiaLastRaw ? JSON.parse(tunisiaLastRaw as string) : null
+    // Upstash auto-parses JSON, so check if it's already an object
+    const tunisiaLast = tunisiaLastRaw 
+      ? (typeof tunisiaLastRaw === 'string' ? JSON.parse(tunisiaLastRaw) : tunisiaLastRaw)
+      : null
     
     // Get last 7 days stats
     const stats: { date: string; unique: number; pageviews: number }[] = []
