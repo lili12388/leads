@@ -69,23 +69,6 @@ const buildPaymentDetails = (amount: number, productName: string): Record<string
       { label: 'RedotPay UID', value: '1280516473', copyable: true },
       { label: 'Amount', value: `$${amount} USD` }
     ]
-  },
-  bank: {
-    title: 'Bank Transfer',
-    icon: '??',
-    instructions: [
-      `Send $${amount} USD to the bank account below`,
-      'International transfers may take 1-3 business days',
-      'Include your email as reference',
-      "After sending, click \"I've Paid!\" below"
-    ],
-    details: [
-      { label: 'Bank Name', value: 'Your Bank Name' },
-      { label: 'Account Name', value: 'Your Account Name' },
-      { label: 'IBAN', value: 'XX00 0000 0000 0000 0000 00', copyable: true },
-      { label: 'SWIFT/BIC', value: 'BANKCODE', copyable: true },
-      { label: 'Amount', value: `$${amount} USD` }
-    ]
   }
 })
 
@@ -191,6 +174,10 @@ export default function PayPage() {
   // Payment proof fields
   const [transactionHash, setTransactionHash] = useState("")
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
+  const [proofError, setProofError] = useState("")
+
+  // Check if proof is provided
+  const hasProof = (paymentMethod === 'usdt' && transactionHash.trim().length > 0) || screenshotPreview !== null
 
   useEffect(() => {
     const token = safeLocalStorageGet('purchaseToken')
@@ -250,6 +237,7 @@ export default function PayPage() {
     const reader = new FileReader()
     reader.onload = () => {
       setScreenshotPreview(reader.result as string)
+      setProofError(\"\") // Clear proof error when screenshot uploaded
     }
     reader.readAsDataURL(file)
   }
@@ -257,6 +245,13 @@ export default function PayPage() {
   const handlePaid = async () => {
     if (!purchaseToken) return
     
+    // Check if proof is provided
+    if (!hasProof) {
+      setProofError("Please provide payment proof (transaction hash or screenshot) before confirming")
+      return
+    }
+    
+    setProofError("")
     setLoading(true)
     setError("")
 
@@ -560,21 +555,24 @@ export default function PayPage() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            Proof of Payment <span className="text-gray-400 font-normal text-sm">(optional but speeds up verification)</span>
+            Proof of Payment <span className=\"text-red-400 font-normal text-sm\">(required)</span>
           </h2>
-          <p className="text-gray-400 text-sm mb-4">
-            Attach proof to get verified faster and avoid back-and-forth.
+          <p className=\"text-gray-400 text-sm mb-4\">
+            Please provide proof of payment to confirm your purchase.
           </p>
           
           {paymentMethod === 'usdt' ? (
             <div>
-              <label className="block text-sm text-gray-300 mb-2">Transaction Hash (TxID)</label>
+              <label className=\"block text-sm text-gray-300 mb-2\">Transaction Hash (TxID)</label>
               <input
-                type="text"
+                type=\"text\"
                 value={transactionHash}
-                onChange={(e) => setTransactionHash(e.target.value)}
-                className="w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 text-white font-mono text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                placeholder="e.g., 0x1234abcd..."
+                onChange={(e) => {
+                  setTransactionHash(e.target.value)
+                  if (e.target.value.trim()) setProofError(\"\")
+                }}
+                className=\"w-full bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 text-white font-mono text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500\"
+                placeholder=\"e.g., 0x1234abcd...\"
               />
             </div>
           ) : (
@@ -619,11 +617,22 @@ export default function PayPage() {
           </div>
         )}
 
+        {/* Proof Error */}
+        {proofError && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 text-center">
+            <p className="text-yellow-400">{proofError}</p>
+          </div>
+        )}
+
         {/* I've Paid Button */}
         <button
           onClick={handlePaid}
-          disabled={loading}
-          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-5 rounded-2xl text-lg transition-all duration-300 hover:shadow-lg hover:shadow-green-500/25 flex items-center justify-center gap-3"
+          disabled={loading || !hasProof}
+          className={`w-full font-bold py-5 rounded-2xl text-lg transition-all duration-300 flex items-center justify-center gap-3 ${
+            hasProof 
+              ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white hover:shadow-lg hover:shadow-green-500/25' 
+              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {loading ? (
             <>
@@ -641,7 +650,9 @@ export default function PayPage() {
         </button>
 
         <p className="text-center text-gray-500 text-sm mt-4">
-          Click above after you&apos;ve completed your payment
+          {hasProof 
+            ? "Click above after you've completed your payment" 
+            : "Please upload a screenshot or enter transaction hash above to confirm payment"}
         </p>
 
         {/* Help */}

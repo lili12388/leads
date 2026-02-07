@@ -19,6 +19,11 @@ interface Purchase {
   verifiedAt: string | null
   completedAt: string | null
   auditLog: Array<{ timestamp: string; action: string; details: string; actor: string }>
+  paymentProof?: {
+    type: 'transaction_hash' | 'screenshot'
+    value: string
+    submittedAt: string
+  }
 }
 
 interface Affiliate {
@@ -98,6 +103,7 @@ export default function AdminDashboard() {
   const [selectedMonth, setSelectedMonth] = useState("")
   const [totalTracked, setTotalTracked] = useState(0)
   const [downloads, setDownloads] = useState<DownloadStat[]>([])
+  const [proofImageUrl, setProofImageUrl] = useState<string | null>(null)
 
   // New affiliate form
   const [newAffiliate, setNewAffiliate] = useState({ name: '', code: '', email: '', password: '', commission: 20 })
@@ -940,6 +946,35 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                {/* Payment Proof */}
+                {selectedPurchase.paymentProof && (
+                  <div className="bg-gray-700/50 rounded-xl p-4">
+                    <div className="text-xs text-gray-400 uppercase mb-3">Payment Proof</div>
+                    {selectedPurchase.paymentProof.type === 'screenshot' ? (
+                      <div>
+                        <button
+                          onClick={() => setProofImageUrl(selectedPurchase.paymentProof?.value || null)}
+                          className="text-blue-400 hover:text-blue-300 underline"
+                        >
+                          📷 View Screenshot
+                        </button>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Submitted: {new Date(selectedPurchase.paymentProof.submittedAt).toLocaleString()}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="font-mono text-sm text-green-400 break-all bg-gray-800 p-2 rounded">
+                          {selectedPurchase.paymentProof.value}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Submitted: {new Date(selectedPurchase.paymentProof.submittedAt).toLocaleString()}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Audit Log */}
                 <div className="bg-gray-700/50 rounded-xl p-4">
                   <div className="text-xs text-gray-400 uppercase mb-3">Audit Log</div>
@@ -950,7 +985,29 @@ export default function AdminDashboard() {
                           {new Date(entry.timestamp).toLocaleString()}
                         </div>
                         <div>
-                          <span className="text-blue-400">[{entry.action}]</span> {entry.details}
+                          <span className="text-blue-400">[{entry.action}]</span>{' '}
+                          {entry.action === 'PROOF_SUBMITTED' && selectedPurchase.paymentProof ? (
+                            selectedPurchase.paymentProof.type === 'screenshot' ? (
+                              <>
+                                Payment proof submitted:{' '}
+                                <button
+                                  onClick={() => setProofImageUrl(selectedPurchase.paymentProof?.value || null)}
+                                  className="text-blue-400 hover:text-blue-300 underline"
+                                >
+                                  View Screenshot
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                Transaction hash:{' '}
+                                <span className="font-mono text-green-400">
+                                  {selectedPurchase.paymentProof.value.slice(0, 20)}...
+                                </span>
+                              </>
+                            )
+                          ) : (
+                            entry.details
+                          )}
                         </div>
                       </div>
                     ))}
@@ -975,6 +1032,38 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Proof Image Modal */}
+        {proofImageUrl && (
+          <div 
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+            onClick={() => setProofImageUrl(null)}
+          >
+            <div className="relative max-w-4xl max-h-[90vh] w-full">
+              <button
+                onClick={() => setProofImageUrl(null)}
+                className="absolute -top-10 right-0 text-white hover:text-gray-300 text-xl"
+              >
+                ✕ Close
+              </button>
+              <img
+                src={proofImageUrl}
+                alt="Payment Proof"
+                className="max-w-full max-h-[85vh] object-contain mx-auto rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <a
+                href={proofImageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center text-blue-400 hover:text-blue-300 mt-3"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Open in new tab
+              </a>
             </div>
           </div>
         )}
